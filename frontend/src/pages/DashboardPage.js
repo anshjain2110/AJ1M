@@ -65,6 +65,22 @@ export default function DashboardPage() {
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
+  const formatValue = (val) => {
+    if (!val) return '';
+    // Convert IDs like "1.0_1.4" to "1.0 – 1.4 ct" etc
+    const mappings = {
+      '0.5_0.9': '0.5 – 0.9 ct', '1.0_1.4': '1.0 – 1.4 ct', '1.5_1.9': '1.5 – 1.9 ct',
+      '2.0_2.9': '2.0 – 2.9 ct', '3.0_plus': '3.0+ ct', 'not_sure': 'Not sure',
+      'under_2000': 'Under $2,000', '2000_5000': '$2,000 – $5,000', '5000_10000': '$5,000 – $10,000',
+      '10000_15000': '$10,000 – $15,000', '15000_plus': '$15,000+',
+      '14k_white_gold': '14k White Gold', '14k_yellow_gold': '14k Yellow Gold',
+      '14k_rose_gold': '14k Rose Gold', '18k_gold': '18k Gold',
+      'best_value': 'Best Value', 'best_sparkle': 'Best Sparkle', 'biggest_look': 'Biggest Look',
+      'whitest_color': 'Whitest Color', 'cleanest_clarity': 'Cleanest Clarity',
+    };
+    return mappings[val] || val.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
   const getProductLabel = (type) => {
     const labels = {
       engagement_ring: 'Engagement Ring',
