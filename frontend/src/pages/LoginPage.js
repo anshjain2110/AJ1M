@@ -192,7 +192,7 @@ export default function LoginPage() {
               className="text-[13px] transition-colors duration-300"
               style={{ color: 'var(--lj-muted)' }}
             >
-              \u2190 Back to home
+                          ← Back to home
             </button>
           </div>
         </div>
