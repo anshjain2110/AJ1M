@@ -37,7 +37,7 @@ export default function RingSizeScreen() {
         >
           <option value="">Select ring size</option>
           {RING_SIZES.map(s => (
-            <option key={s} value={s} style={{ background: '#121214', color: '#F5F2EA' }}>
+            <option key={s} value={s}>
               US Size {s}
             </option>
           ))}
