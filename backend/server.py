@@ -39,11 +39,14 @@ async def lifespan(app: FastAPI):
     await db.leads.create_index("email")
     await db.wizard_sessions.create_index("lead_id", unique=True)
     await db.users.create_index("email", unique=True, sparse=True)
-    # Recreate phone index as sparse (only indexes docs where phone exists and is non-null)
-    await db.users.create_index(
-        "phone", unique=True, sparse=True,
-        partialFilterExpression={"phone": {"$type": "string", "$ne": ""}}
-    )
+    # Recreate phone index - unique where phone exists and is non-empty
+    try:
+        await db.users.create_index(
+            "phone", unique=True,
+            partialFilterExpression={"phone": {"$type": "string", "$gt": ""}}
+        )
+    except Exception:
+        pass
     await db.otp_codes.create_index("expires_at", expireAfterSeconds=0)
     
     # Clean up empty phone strings in existing users
