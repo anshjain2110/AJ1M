@@ -79,9 +79,9 @@ export default function ValueRevealScreen() {
       >
         <span className="text-[48px] leading-[56px] font-bold" style={{ color: 'var(--lj-accent-2)' }}>
           {revealed ? (
-            prefersReducedMotion ? '$4,000 \u2013 $8,000' : (
+            prefersReducedMotion ? '$4,000 – $8,000' : (
               <>
-                $<CountUp end={4000} duration={1.2} separator="," /> \u2013 $<CountUp end={8000} duration={1.5} separator="," />
+                $<CountUp end={4000} duration={1.2} separator="," /> – $<CountUp end={8000} duration={1.5} separator="," />
               </>
             )
           ) : '$0'}
