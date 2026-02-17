@@ -19,7 +19,7 @@ export default function RingSizeScreen() {
           What's the ring size?
         </h2>
         <p className="text-[13px] leading-[18px]" style={{ color: 'var(--lj-muted)' }}>
-          Don't worry if it's approximate \u2014 we can resize later
+          Don't worry if it's approximate — we can resize later
         </p>
       </div>
 
