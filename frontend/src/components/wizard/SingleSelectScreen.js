@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useWizard } from '../../context/WizardContext';
 import OptionCard from './OptionCard';
 import { ArrowRight } from 'lucide-react';
@@ -15,13 +15,18 @@ export default function SingleSelectScreen({
 }) {
   const { state, setAnswer, goNext, setAnswerAndAdvance } = useWizard();
   const [selected, setSelected] = useState(state.answers[field] || null);
+  const isClickPending = useRef(false);
 
   const handleSelect = useCallback((id) => {
+    if (isClickPending.current) return; // Prevent rapid double-clicks
+    
     setSelected(id);
     if (autoAdvance) {
-      // Use atomic set+advance to avoid stale closure issues
+      isClickPending.current = true;
       setTimeout(() => {
         setAnswerAndAdvance(field, id, screenId);
+        // Reset after a delay to allow re-selection if user goes back
+        setTimeout(() => { isClickPending.current = false; }, 500);
       }, 250);
     } else {
       setAnswer(field, id);
