@@ -117,7 +117,7 @@ export default function ContactScreen() {
             Phone <span style={{ color: 'var(--lj-muted)' }}>(optional)</span>
           </label>
           <div className="relative">
-            <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--lj-muted)' }} />
+            <PhoneIcon size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--lj-muted)' }} />
             <input
               type="tel"
               value={form.phone}
