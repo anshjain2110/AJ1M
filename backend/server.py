@@ -195,12 +195,17 @@ async def upload_files(files: List[UploadFile] = File(...)):
 
 @app.post("/api/leads/submit")
 async def submit_lead(req: LeadSubmitRequest):
+    # Normalize phone: empty string → None (for sparse unique index)
+    phone = req.phone.strip() if req.phone else None
+    if phone == "":
+        phone = None
+    
     # Build lead record
     lead = {
         "lead_id": req.lead_id,
         "first_name": req.first_name,
         "email": req.email,
-        "phone": req.phone,
+        "phone": phone,
         "notes": req.notes,
         "product_type": req.answers.get("product_type"),
         "occasion": req.answers.get("occasion"),
@@ -231,23 +236,34 @@ async def submit_lead(req: LeadSubmitRequest):
     else:
         await db.leads.insert_one(lead)
     
-    # Auto-create user account
+    # Auto-create user account (handle duplicates gracefully)
     user = await db.users.find_one({"email": req.email})
     if not user:
         user_id = f"user_{uuid.uuid4().hex[:12]}"
-        user = {
+        user_doc = {
             "user_id": user_id,
             "email": req.email,
-            "phone": req.phone,
+            "phone": phone,
             "first_name": req.first_name,
             "created_at": datetime.now(timezone.utc),
         }
-        await db.users.insert_one(user)
+        try:
+            await db.users.insert_one(user_doc)
+        except Exception:
+            # If insert fails (duplicate), try to find existing
+            user = await db.users.find_one({"email": req.email})
+            if user:
+                user_id = user["user_id"]
+            # If still not found, try by phone
+            elif phone:
+                user = await db.users.find_one({"phone": phone})
+                if user:
+                    user_id = user["user_id"]
     else:
         user_id = user["user_id"]
         # Update phone if provided and not set
-        if req.phone and not user.get("phone"):
-            await db.users.update_one({"user_id": user_id}, {"$set": {"phone": req.phone}})
+        if phone and not user.get("phone"):
+            await db.users.update_one({"user_id": user_id}, {"$set": {"phone": phone}})
     
     # Link lead to user
     await db.leads.update_one({"lead_id": req.lead_id}, {"$set": {"user_id": user_id}})
