@@ -13,19 +13,20 @@ export default function SingleSelectScreen({
   showDesc = false,
   autoAdvance = true 
 }) {
-  const { state, setAnswer, goNext } = useWizard();
+  const { state, setAnswer, goNext, setAnswerAndAdvance } = useWizard();
   const [selected, setSelected] = useState(state.answers[field] || null);
 
   const handleSelect = useCallback((id) => {
     setSelected(id);
-    setAnswer(field, id);
     if (autoAdvance) {
-      // Short delay for visual feedback
+      // Use atomic set+advance to avoid stale closure issues
       setTimeout(() => {
-        goNext(screenId);
+        setAnswerAndAdvance(field, id, screenId);
       }, 250);
+    } else {
+      setAnswer(field, id);
     }
-  }, [field, screenId, setAnswer, goNext, autoAdvance]);
+  }, [field, screenId, setAnswer, setAnswerAndAdvance, autoAdvance]);
 
   return (
     <div className="flex-1 flex flex-col px-4 py-6 max-w-[520px] mx-auto w-full">
