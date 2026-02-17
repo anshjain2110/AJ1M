@@ -7,8 +7,8 @@ export default function ContactScreen() {
   const { state, submitLead } = useWizard();
   const [form, setForm] = useState({
     first_name: '',
-    email: '',
     phone: '',
+    email: '',
     notes: '',
   });
   const [errors, setErrors] = useState({});
@@ -17,9 +17,11 @@ export default function ContactScreen() {
   const validate = () => {
     const errs = {};
     if (!form.first_name.trim()) errs.first_name = 'Please enter your name';
-    if (!form.email.trim()) {
-      errs.email = 'Please enter your email';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+    if (!form.phone.trim()) {
+      errs.phone = 'Please enter your phone number';
+    }
+    // Email is optional, but validate format if provided
+    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       errs.email = 'Please enter a valid email';
     }
     return errs;
@@ -45,7 +47,6 @@ export default function ContactScreen() {
 
   const handleChange = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
@@ -87,10 +88,35 @@ export default function ContactScreen() {
           {errors.first_name && <p className="mt-1 text-[13px]" style={{ color: 'var(--lj-danger)' }} data-testid="contact-form-error-text">{errors.first_name}</p>}
         </div>
 
-        {/* Email */}
+        {/* Phone — required, shown first */}
         <div>
           <label className="text-[13px] leading-[18px] mb-1.5 block font-medium" style={{ color: 'var(--lj-muted)' }}>
-            Email *
+            Phone *
+          </label>
+          <div className="relative">
+            <PhoneIcon size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--lj-muted)' }} />
+            <input
+              type="tel"
+              value={form.phone}
+              onChange={(e) => handleChange('phone', e.target.value)}
+              placeholder="Your phone number"
+              data-testid="contact-form-phone-input"
+              className="w-full min-h-[48px] pl-11 pr-4 py-3 rounded-[10px] text-[16px] transition-colors duration-300"
+              style={{
+                background: 'var(--lj-surface)',
+                border: `1.5px solid ${errors.phone ? 'var(--lj-danger)' : 'var(--lj-border)'}`,
+                color: 'var(--lj-text)',
+              }}
+            />
+          </div>
+          {errors.phone && <p className="mt-1 text-[13px]" style={{ color: 'var(--lj-danger)' }} data-testid="contact-form-error-text">{errors.phone}</p>}
+          <p className="mt-1 text-[13px]" style={{ color: 'var(--lj-muted)' }}>For faster responses via call or text</p>
+        </div>
+
+        {/* Email — optional */}
+        <div>
+          <label className="text-[13px] leading-[18px] mb-1.5 block font-medium" style={{ color: 'var(--lj-muted)' }}>
+            Email <span style={{ color: 'var(--lj-muted)', opacity: 0.6 }}>(optional)</span>
           </label>
           <div className="relative">
             <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--lj-muted)' }} />
@@ -109,30 +135,6 @@ export default function ContactScreen() {
             />
           </div>
           {errors.email && <p className="mt-1 text-[13px]" style={{ color: 'var(--lj-danger)' }} data-testid="contact-form-error-text">{errors.email}</p>}
-        </div>
-
-        {/* Phone */}
-        <div>
-          <label className="text-[13px] leading-[18px] mb-1.5 block font-medium" style={{ color: 'var(--lj-muted)' }}>
-            Phone <span style={{ color: 'var(--lj-muted)' }}>(optional)</span>
-          </label>
-          <div className="relative">
-            <PhoneIcon size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--lj-muted)' }} />
-            <input
-              type="tel"
-              value={form.phone}
-              onChange={(e) => handleChange('phone', e.target.value)}
-              placeholder="For faster responses via text"
-              data-testid="contact-form-phone-input"
-              className="w-full min-h-[48px] pl-11 pr-4 py-3 rounded-[10px] text-[16px] transition-colors duration-300"
-              style={{
-                background: 'var(--lj-surface)',
-                border: '1.5px solid var(--lj-border)',
-                color: 'var(--lj-text)',
-              }}
-            />
-          </div>
-          <p className="mt-1 text-[13px]" style={{ color: 'var(--lj-muted)' }}>For faster responses via text</p>
         </div>
 
         {/* Notes */}
@@ -188,7 +190,7 @@ export default function ContactScreen() {
         <div className="flex items-center justify-center gap-2 mt-4">
           <Lock size={14} style={{ color: 'var(--lj-muted)' }} />
           <p className="text-[13px] leading-[18px] text-center" style={{ color: 'var(--lj-muted)' }}>
-            Your info stays private. No spam, ever. I'll personally reach out within 24 hours. \u2014 AJ
+            Your info stays private. No spam, ever. I'll personally reach out within 24 hours. — AJ
           </p>
         </div>
       </div>
