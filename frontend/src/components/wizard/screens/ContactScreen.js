@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useWizard } from '../../../context/WizardContext';
-import { ArrowRight, Loader2, Lock, User, Mail, Phone, MessageSquare } from 'lucide-react';
+import { ArrowRight, Loader2, Lock, User, Mail, Phone as PhoneIcon, MessageSquare } from 'lucide-react';
 import { trackEvent } from '../../../utils/analytics';
 
 export default function ContactScreen() {
