@@ -124,8 +124,8 @@ class AutosaveRequest(BaseModel):
 class LeadSubmitRequest(BaseModel):
     lead_id: str
     first_name: str
-    email: EmailStr
-    phone: Optional[str] = None
+    email: Optional[str] = None
+    phone: str
     notes: Optional[str] = None
     answers: dict = {}
     attribution: dict = {}
