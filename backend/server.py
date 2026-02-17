@@ -254,33 +254,43 @@ async def submit_lead(req: LeadSubmitRequest):
         await db.leads.insert_one(lead)
     
     # Auto-create user account (handle duplicates gracefully)
-    user = await db.users.find_one({"email": req.email})
+    # Phone is primary identifier now; email is optional
+    email = req.email.strip() if req.email else None
+    if email == "":
+        email = None
+    
+    # Look up user by phone first, then email
+    user = None
+    if phone:
+        user = await db.users.find_one({"phone": phone})
+    if not user and email:
+        user = await db.users.find_one({"email": email})
+    
     if not user:
         user_id = f"user_{uuid.uuid4().hex[:12]}"
         user_doc = {
             "user_id": user_id,
-            "email": req.email,
-            "phone": phone,
             "first_name": req.first_name,
+            "phone": phone,
             "created_at": datetime.now(timezone.utc),
         }
+        if email:
+            user_doc["email"] = email
         try:
             await db.users.insert_one(user_doc)
         except Exception:
             # If insert fails (duplicate), try to find existing
-            user = await db.users.find_one({"email": req.email})
+            if phone:
+                user = await db.users.find_one({"phone": phone})
+            if not user and email:
+                user = await db.users.find_one({"email": email})
             if user:
                 user_id = user["user_id"]
-            # If still not found, try by phone
-            elif phone:
-                user = await db.users.find_one({"phone": phone})
-                if user:
-                    user_id = user["user_id"]
     else:
         user_id = user["user_id"]
-        # Update phone if provided and not set
-        if phone and not user.get("phone"):
-            await db.users.update_one({"user_id": user_id}, {"$set": {"phone": phone}})
+        # Update email if provided and not set
+        if email and not user.get("email"):
+            await db.users.update_one({"user_id": user_id}, {"$set": {"email": email}})
     
     # Link lead to user
     await db.leads.update_one({"lead_id": req.lead_id}, {"$set": {"user_id": user_id}})
