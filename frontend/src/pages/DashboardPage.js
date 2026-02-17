@@ -182,10 +182,10 @@ export default function DashboardPage() {
                       </span>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-[13px]">
-                      {lead.diamond_shape && <div><span style={{ color: 'var(--lj-muted)' }}>Shape:</span> <span style={{ color: 'var(--lj-text)' }}>{lead.diamond_shape}</span></div>}
-                      {lead.carat_range && <div><span style={{ color: 'var(--lj-muted)' }}>Carat:</span> <span style={{ color: 'var(--lj-text)' }}>{lead.carat_range}</span></div>}
-                      {lead.budget && <div><span style={{ color: 'var(--lj-muted)' }}>Budget:</span> <span style={{ color: 'var(--lj-text)' }}>{lead.budget}</span></div>}
-                      {lead.metal && <div><span style={{ color: 'var(--lj-muted)' }}>Metal:</span> <span style={{ color: 'var(--lj-text)' }}>{lead.metal}</span></div>}
+                      {lead.diamond_shape && <div><span style={{ color: 'var(--lj-muted)' }}>Shape:</span> <span style={{ color: 'var(--lj-text)' }}>{formatValue(lead.diamond_shape)}</span></div>}
+                      {lead.carat_range && <div><span style={{ color: 'var(--lj-muted)' }}>Carat:</span> <span style={{ color: 'var(--lj-text)' }}>{formatValue(lead.carat_range)}</span></div>}
+                      {lead.budget && <div><span style={{ color: 'var(--lj-muted)' }}>Budget:</span> <span style={{ color: 'var(--lj-text)' }}>{formatValue(lead.budget)}</span></div>}
+                      {lead.metal && <div><span style={{ color: 'var(--lj-muted)' }}>Metal:</span> <span style={{ color: 'var(--lj-text)' }}>{formatValue(lead.metal)}</span></div>}
                     </div>
                   </div>
                 );
