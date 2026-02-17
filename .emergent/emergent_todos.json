@@ -1,15 +1,15 @@
 [
   {
     "content": "Phase 1: Design Agent - Get UI/UX guidelines",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "Phase 1: Backend - Models, API endpoints (wizard, leads, uploads, events)",
-    "status": "pending"
+    "status": "in_progress"
   },
   {
     "content": "Phase 1: Frontend - Complete wizard flow (14+ screens) with branching logic",
-    "status": "pending"
+    "status": "in_progress"
   },
   {
     "content": "Phase 1: Auto-save, progress indicator, analytics tracking",
