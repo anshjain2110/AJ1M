@@ -1,8 +1,8 @@
 // Wizard screen configuration and branching logic
 
 export const PRODUCT_TYPES = [
-  { id: 'engagement_ring', label: 'Engagement Ring', icon: 'Ring' },
-  { id: 'wedding_bands', label: 'Wedding Bands', icon: 'Rings' },
+  { id: 'engagement_ring', label: 'Engagement Ring', icon: 'Gem' },
+  { id: 'wedding_bands', label: 'Wedding Bands', icon: 'CircleDot' },
   { id: 'tennis_bracelet', label: 'Tennis Bracelet', icon: 'Watch' },
   { id: 'studs_earrings', label: 'Studs / Earrings', icon: 'Sparkles' },
   { id: 'necklace_pendant', label: 'Necklace / Pendant', icon: 'Link' },
