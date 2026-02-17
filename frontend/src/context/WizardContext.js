@@ -33,6 +33,29 @@ function wizardReducer(state, action) {
       const newAnswers = { ...state.answers, [action.field]: action.value };
       return { ...state, answers: newAnswers };
     }
+    case 'SET_ANSWER_AND_ADVANCE': {
+      // Combined action to avoid stale closure issues
+      const newAnswers = { ...state.answers, [action.field]: action.value };
+      const flow = getScreenFlow(newAnswers);
+      const currentIndex = flow.indexOf(action.fromScreen);
+      let newFrozenTotal = state.frozenStepTotal;
+      
+      // Freeze step total after product_type selection
+      if (action.fromScreen === 'product_type' && state.frozenStepTotal === null) {
+        newFrozenTotal = getWizardStepCount(newAnswers);
+      }
+      
+      if (currentIndex >= 0 && currentIndex < flow.length - 1) {
+        const nextScreen = flow[currentIndex + 1];
+        return { 
+          ...state, 
+          answers: newAnswers, 
+          currentScreen: nextScreen,
+          frozenStepTotal: newFrozenTotal,
+        };
+      }
+      return { ...state, answers: newAnswers, frozenStepTotal: newFrozenTotal };
+    }
     case 'SET_LEAD_ID':
       return { ...state, leadId: action.leadId };
     case 'SET_ATTRIBUTION':
@@ -61,6 +84,10 @@ export function WizardProvider({ children }) {
   const [state, dispatch] = useReducer(wizardReducer, initialState);
   const autosaveTimer = useRef(null);
   const hasInitialized = useRef(false);
+  const stateRef = useRef(state);
+  
+  // Keep stateRef in sync
+  stateRef.current = state;
 
   // Restore state from localStorage on mount
   useEffect(() => {
@@ -102,17 +129,18 @@ export function WizardProvider({ children }) {
 
   // Server autosave (debounced)
   const autosaveToServer = useCallback(async () => {
-    if (!state.leadId) return;
+    const s = stateRef.current;
+    if (!s.leadId) return;
     try {
-      await axios.put(`${BACKEND_URL}/api/wizard/${state.leadId}/autosave`, {
-        answers: state.answers,
-        current_step: state.currentScreen,
-        frozen_step_total: state.frozenStepTotal,
+      await axios.put(`${BACKEND_URL}/api/wizard/${s.leadId}/autosave`, {
+        answers: s.answers,
+        current_step: s.currentScreen,
+        frozen_step_total: s.frozenStepTotal,
       });
     } catch (e) {
       // Silent fail
     }
-  }, [state.leadId, state.answers, state.currentScreen, state.frozenStepTotal]);
+  }, []);
 
   useEffect(() => {
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
@@ -122,59 +150,71 @@ export function WizardProvider({ children }) {
     return () => {
       if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     };
-  }, [autosaveToServer]);
+  }, [state.answers, state.currentScreen, autosaveToServer]);
 
   // Start wizard
   const startWizard = useCallback(async () => {
     try {
+      const s = stateRef.current;
       const res = await axios.post(`${BACKEND_URL}/api/wizard/start`, {
-        anonymous_id: state.anonymousId,
-        session_id: state.sessionId,
-        attribution: state.attribution,
+        anonymous_id: s.anonymousId,
+        session_id: s.sessionId,
+        attribution: s.attribution,
       });
       const leadId = res.data.lead_id;
       dispatch({ type: 'SET_LEAD_ID', leadId });
       dispatch({ type: 'SET_SCREEN', screen: 'product_type' });
       
-      trackEvent('tlj_wizard_start', {}, { lead_id: leadId, anonymous_id: state.anonymousId, session_id: state.sessionId });
+      trackEvent('tlj_wizard_start', {}, { lead_id: leadId, anonymous_id: s.anonymousId, session_id: s.sessionId });
       
       return leadId;
     } catch (e) {
       console.error('Failed to start wizard:', e);
     }
-  }, [state.anonymousId, state.sessionId, state.attribution]);
+  }, []);
 
-  // Navigate to next screen
+  // Set answer AND advance (atomic operation - no stale closures)
+  const setAnswerAndAdvance = useCallback((field, value, fromScreen) => {
+    dispatch({ type: 'SET_ANSWER_AND_ADVANCE', field, value, fromScreen });
+    
+    // Track events
+    const s = stateRef.current;
+    trackEvent('tlj_step_complete', { step_id: fromScreen }, { lead_id: s.leadId });
+  }, []);
+
+  // Navigate to next screen (uses ref for latest state)
   const goNext = useCallback((fromScreen) => {
-    const flow = getScreenFlow(state.answers);
-    const currentIndex = flow.indexOf(fromScreen || state.currentScreen);
+    const s = stateRef.current;
+    const flow = getScreenFlow(s.answers);
+    const currentIndex = flow.indexOf(fromScreen || s.currentScreen);
     
     // Freeze step total after first question (product_type)
-    if (fromScreen === 'product_type' && state.frozenStepTotal === null) {
-      const total = getWizardStepCount(state.answers);
+    if (fromScreen === 'product_type' && s.frozenStepTotal === null) {
+      const total = getWizardStepCount(s.answers);
       dispatch({ type: 'FREEZE_STEP_TOTAL', total });
     }
     
     if (currentIndex >= 0 && currentIndex < flow.length - 1) {
       const nextScreen = flow[currentIndex + 1];
       dispatch({ type: 'SET_SCREEN', screen: nextScreen });
-      trackEvent('tlj_step_complete', { step_id: fromScreen || state.currentScreen }, { lead_id: state.leadId });
-      trackEvent('tlj_step_view', { step_id: nextScreen }, { lead_id: state.leadId });
+      trackEvent('tlj_step_complete', { step_id: fromScreen || s.currentScreen }, { lead_id: s.leadId });
+      trackEvent('tlj_step_view', { step_id: nextScreen }, { lead_id: s.leadId });
     }
-  }, [state.answers, state.currentScreen, state.frozenStepTotal, state.leadId]);
+  }, []);
 
-  // Navigate back
+  // Navigate back (uses ref for latest state)
   const goBack = useCallback(() => {
-    const flow = getScreenFlow(state.answers);
-    const currentIndex = flow.indexOf(state.currentScreen);
+    const s = stateRef.current;
+    const flow = getScreenFlow(s.answers);
+    const currentIndex = flow.indexOf(s.currentScreen);
     if (currentIndex > 1) { // Don't go back past product_type to landing
       const prevScreen = flow[currentIndex - 1];
       dispatch({ type: 'SET_SCREEN', screen: prevScreen });
-      trackEvent('tlj_step_back', { from_step_id: state.currentScreen, to_step_id: prevScreen }, { lead_id: state.leadId });
+      trackEvent('tlj_step_back', { from_step_id: s.currentScreen, to_step_id: prevScreen }, { lead_id: s.leadId });
     }
-  }, [state.answers, state.currentScreen, state.leadId]);
+  }, []);
 
-  // Set answer
+  // Set answer (without advancing)
   const setAnswer = useCallback((field, value) => {
     dispatch({ type: 'SET_ANSWER', field, value });
   }, []);
@@ -183,20 +223,21 @@ export function WizardProvider({ children }) {
   const submitLead = useCallback(async (contactData) => {
     dispatch({ type: 'SET_SUBMITTING', value: true });
     try {
+      const s = stateRef.current;
       const allAnswers = {
-        ...state.answers,
-        inspiration_files: state.uploadedFiles,
-        inspiration_links: state.inspirationLinks,
+        ...s.answers,
+        inspiration_files: s.uploadedFiles,
+        inspiration_links: s.inspirationLinks,
       };
       
       const res = await axios.post(`${BACKEND_URL}/api/leads/submit`, {
-        lead_id: state.leadId,
+        lead_id: s.leadId,
         first_name: contactData.first_name,
         email: contactData.email,
         phone: contactData.phone || '',
         notes: contactData.notes || '',
         answers: allAnswers,
-        attribution: state.attribution,
+        attribution: s.attribution,
       });
       
       dispatch({ type: 'SET_SUBMITTED', result: res.data });
@@ -207,7 +248,7 @@ export function WizardProvider({ children }) {
         localStorage.setItem('tlj_user', JSON.stringify({ first_name: res.data.first_name, email: contactData.email }));
       }
       
-      trackEvent('tlj_lead_created', { lead_id: state.leadId }, { lead_id: state.leadId });
+      trackEvent('tlj_lead_created', { lead_id: s.leadId }, { lead_id: s.leadId });
       
       dispatch({ type: 'SET_SCREEN', screen: 'thank_you' });
       localStorage.removeItem(STORAGE_KEY);
@@ -217,7 +258,7 @@ export function WizardProvider({ children }) {
     } finally {
       dispatch({ type: 'SET_SUBMITTING', value: false });
     }
-  }, [state.answers, state.leadId, state.attribution, state.uploadedFiles, state.inspirationLinks]);
+  }, []);
 
   const value = {
     state,
@@ -226,6 +267,7 @@ export function WizardProvider({ children }) {
     goNext,
     goBack,
     setAnswer,
+    setAnswerAndAdvance,
     submitLead,
   };
 
