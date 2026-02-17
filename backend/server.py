@@ -28,13 +28,27 @@ db = client[DB_NAME]
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup - create indexes
+    # Startup - fix indexes and create them
+    # Drop problematic phone index that fails on empty strings
+    try:
+        await db.users.drop_index("phone_1")
+    except Exception:
+        pass
+    
     await db.leads.create_index("lead_id", unique=True)
     await db.leads.create_index("email")
     await db.wizard_sessions.create_index("lead_id", unique=True)
     await db.users.create_index("email", unique=True, sparse=True)
-    await db.users.create_index("phone", unique=True, sparse=True)
+    # Recreate phone index as sparse (only indexes docs where phone exists and is non-null)
+    await db.users.create_index(
+        "phone", unique=True, sparse=True,
+        partialFilterExpression={"phone": {"$type": "string", "$ne": ""}}
+    )
     await db.otp_codes.create_index("expires_at", expireAfterSeconds=0)
+    
+    # Clean up empty phone strings in existing users
+    await db.users.update_many({"phone": ""}, {"$unset": {"phone": ""}})
+    
     yield
     client.close()
 
