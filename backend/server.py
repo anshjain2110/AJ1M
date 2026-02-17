@@ -217,11 +217,16 @@ async def submit_lead(req: LeadSubmitRequest):
     if phone == "":
         phone = None
     
+    # Normalize email: empty string → None
+    email_val = req.email.strip() if req.email else None
+    if email_val == "":
+        email_val = None
+    
     # Build lead record
     lead = {
         "lead_id": req.lead_id,
         "first_name": req.first_name,
-        "email": req.email,
+        "email": email_val,
         "phone": phone,
         "notes": req.notes,
         "product_type": req.answers.get("product_type"),
