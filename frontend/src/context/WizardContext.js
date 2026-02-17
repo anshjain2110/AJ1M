@@ -255,8 +255,8 @@ export function WizardProvider({ children }) {
       const res = await axios.post(`${BACKEND_URL}/api/leads/submit`, {
         lead_id: s.leadId,
         first_name: contactData.first_name,
-        email: contactData.email,
-        phone: contactData.phone || '',
+        phone: contactData.phone,
+        email: contactData.email || '',
         notes: contactData.notes || '',
         answers: allAnswers,
         attribution: s.attribution,
@@ -266,7 +266,7 @@ export function WizardProvider({ children }) {
       
       if (res.data.token) {
         localStorage.setItem('tlj_token', res.data.token);
-        localStorage.setItem('tlj_user', JSON.stringify({ first_name: res.data.first_name, email: contactData.email }));
+        localStorage.setItem('tlj_user', JSON.stringify({ first_name: res.data.first_name, phone: contactData.phone, email: contactData.email }));
       }
       
       trackEvent('tlj_lead_created', { lead_id: s.leadId }, { lead_id: s.leadId });
