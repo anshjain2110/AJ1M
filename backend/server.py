@@ -296,7 +296,7 @@ async def submit_lead(req: LeadSubmitRequest):
     await db.leads.update_one({"lead_id": req.lead_id}, {"$set": {"user_id": user_id}})
     
     # Generate JWT
-    token = create_jwt(user_id, req.email)
+    token = create_jwt(user_id, email or phone)
     
     return {
         "status": "submitted",
