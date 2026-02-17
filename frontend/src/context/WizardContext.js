@@ -21,20 +21,23 @@ const initialState = {
   submitResult: null,
   uploadedFiles: [],
   inspirationLinks: [],
+  isAdvancing: false,
 };
 
 function wizardReducer(state, action) {
   switch (action.type) {
     case 'RESTORE_STATE':
-      return { ...state, ...action.payload };
+      return { ...state, ...action.payload, isAdvancing: false };
     case 'SET_SCREEN':
-      return { ...state, currentScreen: action.screen };
+      return { ...state, currentScreen: action.screen, isAdvancing: false };
     case 'SET_ANSWER': {
       const newAnswers = { ...state.answers, [action.field]: action.value };
       return { ...state, answers: newAnswers };
     }
     case 'SET_ANSWER_AND_ADVANCE': {
-      // Combined action to avoid stale closure issues
+      // Guard against rapid double-clicks
+      if (state.isAdvancing) return state;
+      
       const newAnswers = { ...state.answers, [action.field]: action.value };
       const flow = getScreenFlow(newAnswers);
       const currentIndex = flow.indexOf(action.fromScreen);
@@ -52,10 +55,13 @@ function wizardReducer(state, action) {
           answers: newAnswers, 
           currentScreen: nextScreen,
           frozenStepTotal: newFrozenTotal,
+          isAdvancing: true,
         };
       }
       return { ...state, answers: newAnswers, frozenStepTotal: newFrozenTotal };
     }
+    case 'CLEAR_ADVANCING':
+      return { ...state, isAdvancing: false };
     case 'SET_LEAD_ID':
       return { ...state, leadId: action.leadId };
     case 'SET_ATTRIBUTION':
@@ -87,23 +93,41 @@ export function WizardProvider({ children }) {
   const stateRef = useRef(state);
   
   // Keep stateRef in sync
-  stateRef.current = state;
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
+  // Clear advancing flag after screen change
+  useEffect(() => {
+    if (state.isAdvancing) {
+      const t = setTimeout(() => dispatch({ type: 'CLEAR_ADVANCING' }), 300);
+      return () => clearTimeout(t);
+    }
+  }, [state.isAdvancing]);
 
   // Restore state from localStorage on mount
   useEffect(() => {
     if (hasInitialized.current) return;
     hasInitialized.current = true;
     
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed.currentScreen && parsed.currentScreen !== 'thank_you') {
-          dispatch({ type: 'RESTORE_STATE', payload: parsed });
+        // Only restore if we have meaningful state (not just landing)
+        if (parsed && parsed.currentScreen && parsed.currentScreen !== 'landing' && parsed.currentScreen !== 'thank_you' && parsed.leadId) {
+          dispatch({ type: 'RESTORE_STATE', payload: {
+            currentScreen: parsed.currentScreen,
+            answers: parsed.answers || {},
+            leadId: parsed.leadId,
+            frozenStepTotal: parsed.frozenStepTotal,
+            uploadedFiles: parsed.uploadedFiles || [],
+            inspirationLinks: parsed.inspirationLinks || [],
+          }});
         }
-      } catch (e) {
-        // Ignore
       }
+    } catch (e) {
+      localStorage.removeItem(STORAGE_KEY);
     }
     
     // Capture attribution
@@ -111,9 +135,14 @@ export function WizardProvider({ children }) {
     dispatch({ type: 'SET_ATTRIBUTION', attribution: attr });
   }, []);
 
-  // Save to localStorage on state change
+  // Save to localStorage on meaningful state changes
   useEffect(() => {
-    if (state.currentScreen === 'landing' && !state.leadId) return;
+    if (!state.leadId) return; // Don't save before wizard starts
+    if (state.currentScreen === 'thank_you') {
+      localStorage.removeItem(STORAGE_KEY);
+      return;
+    }
+    
     const toSave = {
       currentScreen: state.currentScreen,
       answers: state.answers,
@@ -121,16 +150,14 @@ export function WizardProvider({ children }) {
       frozenStepTotal: state.frozenStepTotal,
       uploadedFiles: state.uploadedFiles,
       inspirationLinks: state.inspirationLinks,
-      anonymousId: state.anonymousId,
-      sessionId: state.sessionId,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
-  }, [state.currentScreen, state.answers, state.leadId, state.frozenStepTotal, state.uploadedFiles, state.inspirationLinks, state.anonymousId, state.sessionId]);
+  }, [state.currentScreen, state.answers, state.leadId, state.frozenStepTotal, state.uploadedFiles, state.inspirationLinks]);
 
   // Server autosave (debounced)
   const autosaveToServer = useCallback(async () => {
     const s = stateRef.current;
-    if (!s.leadId) return;
+    if (!s.leadId || s.currentScreen === 'landing' || s.currentScreen === 'thank_you') return;
     try {
       await axios.put(`${BACKEND_URL}/api/wizard/${s.leadId}/autosave`, {
         answers: s.answers,
@@ -144,13 +171,13 @@ export function WizardProvider({ children }) {
 
   useEffect(() => {
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
-    autosaveTimer.current = setTimeout(() => {
-      autosaveToServer();
-    }, 2000);
+    if (state.leadId && state.currentScreen !== 'landing' && state.currentScreen !== 'thank_you') {
+      autosaveTimer.current = setTimeout(autosaveToServer, 2000);
+    }
     return () => {
       if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     };
-  }, [state.answers, state.currentScreen, autosaveToServer]);
+  }, [state.answers, state.currentScreen, state.leadId, autosaveToServer]);
 
   // Start wizard
   const startWizard = useCallback(async () => {
@@ -173,22 +200,18 @@ export function WizardProvider({ children }) {
     }
   }, []);
 
-  // Set answer AND advance (atomic operation - no stale closures)
+  // Set answer AND advance (atomic operation)
   const setAnswerAndAdvance = useCallback((field, value, fromScreen) => {
     dispatch({ type: 'SET_ANSWER_AND_ADVANCE', field, value, fromScreen });
-    
-    // Track events
-    const s = stateRef.current;
-    trackEvent('tlj_step_complete', { step_id: fromScreen }, { lead_id: s.leadId });
+    trackEvent('tlj_step_complete', { step_id: fromScreen }, { lead_id: stateRef.current.leadId });
   }, []);
 
-  // Navigate to next screen (uses ref for latest state)
+  // Navigate to next screen (for manual advance buttons)
   const goNext = useCallback((fromScreen) => {
     const s = stateRef.current;
     const flow = getScreenFlow(s.answers);
     const currentIndex = flow.indexOf(fromScreen || s.currentScreen);
     
-    // Freeze step total after first question (product_type)
     if (fromScreen === 'product_type' && s.frozenStepTotal === null) {
       const total = getWizardStepCount(s.answers);
       dispatch({ type: 'FREEZE_STEP_TOTAL', total });
@@ -198,16 +221,15 @@ export function WizardProvider({ children }) {
       const nextScreen = flow[currentIndex + 1];
       dispatch({ type: 'SET_SCREEN', screen: nextScreen });
       trackEvent('tlj_step_complete', { step_id: fromScreen || s.currentScreen }, { lead_id: s.leadId });
-      trackEvent('tlj_step_view', { step_id: nextScreen }, { lead_id: s.leadId });
     }
   }, []);
 
-  // Navigate back (uses ref for latest state)
+  // Navigate back
   const goBack = useCallback(() => {
     const s = stateRef.current;
     const flow = getScreenFlow(s.answers);
     const currentIndex = flow.indexOf(s.currentScreen);
-    if (currentIndex > 1) { // Don't go back past product_type to landing
+    if (currentIndex > 1) {
       const prevScreen = flow[currentIndex - 1];
       dispatch({ type: 'SET_SCREEN', screen: prevScreen });
       trackEvent('tlj_step_back', { from_step_id: s.currentScreen, to_step_id: prevScreen }, { lead_id: s.leadId });
@@ -242,7 +264,6 @@ export function WizardProvider({ children }) {
       
       dispatch({ type: 'SET_SUBMITTED', result: res.data });
       
-      // Store token
       if (res.data.token) {
         localStorage.setItem('tlj_token', res.data.token);
         localStorage.setItem('tlj_user', JSON.stringify({ first_name: res.data.first_name, email: contactData.email }));
@@ -251,7 +272,6 @@ export function WizardProvider({ children }) {
       trackEvent('tlj_lead_created', { lead_id: s.leadId }, { lead_id: s.leadId });
       
       dispatch({ type: 'SET_SCREEN', screen: 'thank_you' });
-      localStorage.removeItem(STORAGE_KEY);
     } catch (e) {
       console.error('Failed to submit lead:', e);
       throw e;
