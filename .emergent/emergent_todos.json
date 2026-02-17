@@ -5,31 +5,31 @@
   },
   {
     "content": "Phase 1: Backend - Models, API endpoints (wizard, leads, uploads, events)",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "Phase 1: Frontend - Complete wizard flow (14+ screens) with branching logic",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "Phase 1: Auto-save, progress indicator, analytics tracking",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Phase 1: All user stories covered in Development",
-    "status": "pending"
+    "status": "in_progress"
   },
   {
     "content": "Phase 1: End-to-end Testing via Testing Agent",
-    "status": "pending"
+    "status": "in_progress"
   },
   {
     "content": "Phase 2: OTP Login + Auto Account Creation",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Phase 2: User Dashboard (Quotations + Orders)",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Phase 2: End-to-end Testing via Testing Agent",
