@@ -35,7 +35,7 @@ export default function TrackingPage() {
     <div className="max-w-3xl">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-[28px] font-semibold" style={{ color: 'var(--lj-text)' }}>Tracking & Analytics</h1>
-        <button onClick={save} disabled={saving} className="flex items-center gap-2 px-4 py-2 rounded-[10px] text-[14px] font-medium" style={{ background: saved ? 'var(--lj-success)' : 'var(--lj-accent)', color: '#0B0B0C' }}>
+        <button onClick={save} disabled={saving} className="flex items-center gap-2 px-4 py-2 rounded-[10px] text-[14px] font-medium" style={{ background: saved ? 'var(--lj-success)' : 'var(--lj-accent)', color: '#FFFFFF' }}>
           {saving ? <Loader2 size={16} className="animate-spin" /> : saved ? <><CheckCircle size={16} /> Saved</> : <><Save size={16} /> Save</>}
         </button>
       </div>

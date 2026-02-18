@@ -74,7 +74,7 @@ export default function AnalyticsDashboard() {
                     <span style={{ color: 'var(--lj-muted)' }}>{step.label}</span>
                     <span style={{ color: 'var(--lj-text)' }}>{val}</span>
                   </div>
-                  <div className="h-2 rounded-full" style={{ background: '#1A1A1D' }}>
+                  <div className="h-2 rounded-full" style={{ background: '#EDEDEB' }}>
                     <div className="h-full rounded-full" style={{ width: `${pct}%`, background: 'var(--lj-accent)', transition: 'width 500ms' }} />
                   </div>
                 </div>

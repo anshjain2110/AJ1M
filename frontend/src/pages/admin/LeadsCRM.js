@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import { Search, Filter, Download, ChevronLeft, ChevronRight, Eye, Loader2, X, Send, MessageSquare, Plus } from 'lucide-react';
 
-const STATUS_COLORS = { new: { bg: 'rgba(201,168,106,0.1)', color: 'var(--lj-accent)' }, contacted: { bg: 'rgba(96,165,250,0.1)', color: '#60A5FA' }, quoted: { bg: 'rgba(167,139,250,0.1)', color: '#A78BFA' }, won: { bg: 'rgba(86,194,113,0.1)', color: 'var(--lj-success)' }, lost: { bg: 'rgba(226,92,92,0.1)', color: 'var(--lj-danger)' } };
+const STATUS_COLORS = { new: { bg: 'rgba(15,94,76,0.1)', color: 'var(--lj-accent)' }, contacted: { bg: 'rgba(96,165,250,0.1)', color: '#60A5FA' }, quoted: { bg: 'rgba(167,139,250,0.1)', color: '#A78BFA' }, won: { bg: 'rgba(86,194,113,0.1)', color: 'var(--lj-success)' }, lost: { bg: 'rgba(226,92,92,0.1)', color: 'var(--lj-danger)' } };
 const STATUSES = ['new', 'contacted', 'quoted', 'won', 'lost'];
 const PRODUCTS = ['engagement_ring', 'wedding_bands', 'tennis_bracelet', 'studs_earrings', 'necklace_pendant', 'loose_diamond', 'price_checking'];
 
@@ -117,7 +117,7 @@ export default function LeadsCRM() {
                 {leads.map(lead => {
                   const sc = STATUS_COLORS[lead.status] || STATUS_COLORS.new;
                   return (
-                    <tr key={lead.lead_id} className="hover:bg-[#0F0F11] cursor-pointer transition-colors" onClick={() => openDetail(lead)} style={{ borderBottom: '1px solid var(--lj-border)' }}>
+                    <tr key={lead.lead_id} className="hover:bg-[#F8F8F7] cursor-pointer transition-colors" onClick={() => openDetail(lead)} style={{ borderBottom: '1px solid var(--lj-border)' }}>
                       <td className="px-4 py-3 text-[14px]" style={{ color: 'var(--lj-text)' }}>{lead.first_name}</td>
                       <td className="px-4 py-3 text-[14px]" style={{ color: 'var(--lj-muted)' }}>{lead.phone || lead.email || '—'}</td>
                       <td className="px-4 py-3 text-[14px]" style={{ color: 'var(--lj-text)' }}>{formatLabel(lead.product_type)}</td>
@@ -160,7 +160,7 @@ export default function LeadsCRM() {
                   {STATUSES.map(s => {
                     const sc = STATUS_COLORS[s];
                     const active = detailData.lead.status === s;
-                    return <button key={s} onClick={() => updateStatus(detailData.lead.lead_id, s)} className="px-3 py-1.5 rounded-full text-[13px] font-medium capitalize transition-all" style={{ background: active ? sc.color : sc.bg, color: active ? '#0B0B0C' : sc.color, border: active ? 'none' : `1px solid ${sc.color}30` }}>{s}</button>;
+                    return <button key={s} onClick={() => updateStatus(detailData.lead.lead_id, s)} className="px-3 py-1.5 rounded-full text-[13px] font-medium capitalize transition-all" style={{ background: active ? sc.color : sc.bg, color: active ? '#FFFFFF' : sc.color, border: active ? 'none' : `1px solid ${sc.color}30` }}>{s}</button>;
                   })}
                 </div>
               </div>
@@ -211,7 +211,7 @@ export default function LeadsCRM() {
                 ))}
                 <div className="flex gap-2 mt-2">
                   <input value={noteText} onChange={e => setNoteText(e.target.value)} placeholder="Add a note..." className="flex-1 min-h-[36px] px-3 rounded-[8px] text-[14px]" style={{ background: 'var(--lj-bg)', border: '1px solid var(--lj-border)', color: 'var(--lj-text)' }} />
-                  <button onClick={addNote} className="w-9 h-9 rounded-[8px] flex items-center justify-center" style={{ background: 'var(--lj-accent)', color: '#0B0B0C' }}><Send size={14} /></button>
+                  <button onClick={addNote} className="w-9 h-9 rounded-[8px] flex items-center justify-center" style={{ background: 'var(--lj-accent)', color: '#FFFFFF' }}><Send size={14} /></button>
                 </div>
               </div>
 
@@ -222,14 +222,14 @@ export default function LeadsCRM() {
                   <div key={i} className="mb-2 p-2 rounded-[8px] flex justify-between items-center" style={{ background: 'var(--lj-bg)' }}>
                     <div>
                       <span className="text-[14px] font-medium" style={{ color: 'var(--lj-text)' }}>${q.total?.toLocaleString()}</span>
-                      <span className="ml-2 px-2 py-0.5 rounded-full text-[11px] capitalize" style={{ background: STATUS_COLORS[q.status]?.bg || 'rgba(201,168,106,0.1)', color: STATUS_COLORS[q.status]?.color || 'var(--lj-accent)' }}>{q.status}</span>
+                      <span className="ml-2 px-2 py-0.5 rounded-full text-[11px] capitalize" style={{ background: STATUS_COLORS[q.status]?.bg || 'rgba(15,94,76,0.1)', color: STATUS_COLORS[q.status]?.color || 'var(--lj-accent)' }}>{q.status}</span>
                     </div>
                     <span className="text-[11px]" style={{ color: 'var(--lj-muted)' }}>{formatDate(q.created_at)}</span>
                   </div>
                 ))}
                 <div className="flex gap-2 mt-2">
                   <input type="number" value={quoteTotal} onChange={e => setQuoteTotal(e.target.value)} placeholder="Quote amount ($)" className="flex-1 min-h-[36px] px-3 rounded-[8px] text-[14px]" style={{ background: 'var(--lj-bg)', border: '1px solid var(--lj-border)', color: 'var(--lj-text)' }} />
-                  <button onClick={createQuote} className="px-3 h-9 rounded-[8px] flex items-center gap-1 text-[13px] font-medium" style={{ background: 'var(--lj-accent)', color: '#0B0B0C' }}><Plus size={14} /> Quote</button>
+                  <button onClick={createQuote} className="px-3 h-9 rounded-[8px] flex items-center gap-1 text-[13px] font-medium" style={{ background: 'var(--lj-accent)', color: '#FFFFFF' }}><Plus size={14} /> Quote</button>
                 </div>
               </div>
             </div>

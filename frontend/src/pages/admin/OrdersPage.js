@@ -4,7 +4,7 @@ import { Package, Loader2, ChevronLeft, ChevronRight, Truck } from 'lucide-react
 
 const ORDER_STATUSES = ['processing', 'in_production', 'shipped', 'delivered'];
 const STATUS_LABELS = { processing: 'Processing', in_production: 'In Production', shipped: 'Shipped', delivered: 'Delivered' };
-const STATUS_COLORS = { processing: { bg: 'rgba(201,168,106,0.1)', color: 'var(--lj-accent)' }, in_production: { bg: 'rgba(96,165,250,0.1)', color: '#60A5FA' }, shipped: { bg: 'rgba(167,139,250,0.1)', color: '#A78BFA' }, delivered: { bg: 'rgba(86,194,113,0.1)', color: 'var(--lj-success)' } };
+const STATUS_COLORS = { processing: { bg: 'rgba(15,94,76,0.1)', color: 'var(--lj-accent)' }, in_production: { bg: 'rgba(96,165,250,0.1)', color: '#60A5FA' }, shipped: { bg: 'rgba(167,139,250,0.1)', color: '#A78BFA' }, delivered: { bg: 'rgba(86,194,113,0.1)', color: 'var(--lj-success)' } };
 
 export default function OrdersPage() {
   const { api } = useAdmin();
@@ -56,7 +56,7 @@ export default function OrdersPage() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {ORDER_STATUSES.map(s => (
-                    <button key={s} onClick={() => updateOrder(order.order_id, { status: s })} className="px-3 py-1 rounded-full text-[12px] transition-all" style={{ background: order.status === s ? STATUS_COLORS[s].color : 'var(--lj-bg)', color: order.status === s ? '#0B0B0C' : 'var(--lj-muted)', border: `1px solid ${STATUS_COLORS[s].color}30` }}>
+                    <button key={s} onClick={() => updateOrder(order.order_id, { status: s })} className="px-3 py-1 rounded-full text-[12px] transition-all" style={{ background: order.status === s ? STATUS_COLORS[s].color : 'var(--lj-bg)', color: order.status === s ? '#FFFFFF' : 'var(--lj-muted)', border: `1px solid ${STATUS_COLORS[s].color}30` }}>
                       {STATUS_LABELS[s]}
                     </button>
                   ))}
@@ -69,7 +69,7 @@ export default function OrdersPage() {
                 )}
                 <div className="mt-2 flex gap-2">
                   <input placeholder="Tracking #" value={editOrder === order.order_id ? trackingNum : ''} onChange={e => { setEditOrder(order.order_id); setTrackingNum(e.target.value); }} className="flex-1 min-h-[32px] px-2 rounded-[6px] text-[13px]" style={{ background: 'var(--lj-bg)', border: '1px solid var(--lj-border)', color: 'var(--lj-text)' }} />
-                  <button onClick={() => updateOrder(order.order_id, { tracking_number: trackingNum, shipping_url: shippingUrl })} className="px-3 h-8 rounded-[6px] text-[12px] font-medium" style={{ background: 'var(--lj-accent)', color: '#0B0B0C' }}>Update</button>
+                  <button onClick={() => updateOrder(order.order_id, { tracking_number: trackingNum, shipping_url: shippingUrl })} className="px-3 h-8 rounded-[6px] text-[12px] font-medium" style={{ background: 'var(--lj-accent)', color: '#FFFFFF' }}>Update</button>
                 </div>
               </div>
             );
