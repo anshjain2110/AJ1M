@@ -38,7 +38,10 @@ export default function LoginPage() {
               <button onClick={handleSendOtp} disabled={cooldown > 0} className="w-full text-[13px] text-center" style={{ color: cooldown > 0 ? 'var(--lj-muted)' : 'var(--lj-accent)' }}>{cooldown > 0 ? `Resend OTP in ${cooldown}s` : 'Resend OTP'}</button>
             </>)}
           </div>
-          <div className="text-center mt-6"><button onClick={() => navigate('/')} className="text-[13px]" style={{ color: 'var(--lj-muted)' }}>← Back to home</button></div>
+          <div className="text-center mt-6 space-y-3">
+            <button onClick={() => navigate('/')} className="text-[13px] block w-full" style={{ color: 'var(--lj-muted)' }}>← Back to home</button>
+            <button onClick={() => navigate('/admin/login')} className="text-[13px] block w-full" style={{ color: 'var(--lj-muted)', opacity: 0.6 }}>Admin Login</button>
+          </div>
         </div>
       </div>
     </div>
