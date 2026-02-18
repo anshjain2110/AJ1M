@@ -1,15 +1,18 @@
 import React from 'react';
-import { ArrowLeft, Phone } from 'lucide-react';
+import { ArrowLeft, Phone, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useWizard } from '../../context/WizardContext';
 import { getCurrentStepNumber } from '../../utils/wizardConfig';
 
 export default function WizardShell({ children, showBack = true, showProgress = true }) {
   const { state, goBack } = useWizard();
+  const navigate = useNavigate();
   const { currentScreen, answers, frozenStepTotal } = state;
   const currentStep = getCurrentStepNumber(currentScreen, answers);
   const totalSteps = frozenStepTotal || 12;
   const progress = totalSteps > 0 ? (currentStep / totalSteps) * 100 : 0;
   const isWizardScreen = currentScreen !== 'landing' && currentScreen !== 'thank_you';
+  const isLoggedIn = !!localStorage.getItem('tlj_token');
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--lj-bg)' }}>
@@ -22,9 +25,21 @@ export default function WizardShell({ children, showBack = true, showProgress = 
           )}
           <img src="/logo-main.png" alt="The Local Jewel" className="h-8 object-contain" />
         </div>
-        <a href="tel:+1234567890" data-testid="landing-click-to-call-button" className="flex items-center gap-2 px-3 py-2 rounded-full text-sm transition-colors duration-300 hover:bg-[#F0F0EE]" style={{ color: 'var(--lj-accent)' }}>
-          <Phone size={16} /><span className="hidden sm:inline">Call Us</span>
-        </a>
+        <div className="flex items-center gap-2">
+          <a href="tel:+1234567890" data-testid="landing-click-to-call-button" className="flex items-center gap-2 px-3 py-2 rounded-full text-sm transition-colors duration-300 hover:bg-[#F0F0EE]" style={{ color: 'var(--lj-accent)' }}>
+            <Phone size={16} /><span className="hidden sm:inline">Call Us</span>
+          </a>
+          {/* Customer Login / Dashboard button */}
+          <button
+            onClick={() => navigate(isLoggedIn ? '/dashboard' : '/login')}
+            data-testid="header-login-button"
+            className="flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-colors duration-300 hover:bg-[#F0F0EE]"
+            style={{ color: 'var(--lj-accent)' }}
+          >
+            <User size={16} />
+            <span className="hidden sm:inline">{isLoggedIn ? 'My Account' : 'Login'}</span>
+          </button>
+        </div>
       </header>
       {showProgress && isWizardScreen && currentScreen !== 'value_reveal' && currentScreen !== 'contact' && currentScreen !== 'thank_you' && (
         <div className="px-4 pt-2 pb-1">
