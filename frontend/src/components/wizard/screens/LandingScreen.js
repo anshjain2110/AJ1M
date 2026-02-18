@@ -49,6 +49,13 @@ export default function LandingScreen() {
           Start Your Custom Quote <ArrowRight size={18} />
         </button>
       </div>
+      {/* Footer with login links */}
+      <div className="px-4 py-8 text-center" style={{ borderTop: '1px solid var(--lj-border)' }}>
+        <p className="text-[13px] mb-3" style={{ color: 'var(--lj-muted)' }}>
+          Already submitted a quote? <a href="/login" className="font-medium underline" style={{ color: 'var(--lj-accent)' }}>Login to your account</a>
+        </p>
+        <a href="/admin/login" className="text-[12px]" style={{ color: 'var(--lj-muted)', opacity: 0.5 }}>Admin</a>
+      </div>
     </div>
   );
 }
