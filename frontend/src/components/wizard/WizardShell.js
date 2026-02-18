@@ -3,88 +3,40 @@ import { ArrowLeft, Phone } from 'lucide-react';
 import { useWizard } from '../../context/WizardContext';
 import { getCurrentStepNumber } from '../../utils/wizardConfig';
 
-export default function WizardShell({ children, showBack = true, showProgress = true, title }) {
+export default function WizardShell({ children, showBack = true, showProgress = true }) {
   const { state, goBack } = useWizard();
   const { currentScreen, answers, frozenStepTotal } = state;
-  
   const currentStep = getCurrentStepNumber(currentScreen, answers);
   const totalSteps = frozenStepTotal || 12;
   const progress = totalSteps > 0 ? (currentStep / totalSteps) * 100 : 0;
-  
   const isWizardScreen = currentScreen !== 'landing' && currentScreen !== 'thank_you';
-  
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--lj-bg)' }}>
-      {/* Header */}
-      <header 
-        className="sticky top-0 z-40 px-4 py-3 flex items-center justify-between"
-        style={{ 
-          background: 'var(--lj-bg)', 
-          borderBottom: '1px solid var(--lj-border)',
-          backdropFilter: 'blur(12px)',
-        }}
-      >
+      <header className="sticky top-0 z-40 px-4 py-3 flex items-center justify-between" style={{ background: 'var(--lj-bg)', borderBottom: '1px solid var(--lj-border)' }}>
         <div className="flex items-center gap-3">
           {showBack && isWizardScreen && currentScreen !== 'product_type' && (
-            <button
-              onClick={goBack}
-              data-testid="wizard-back-button"
-              className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[#1A1A1D] transition-colors duration-300"
-              aria-label="Go back"
-            >
+            <button onClick={goBack} data-testid="wizard-back-button" className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[#F0F0EE] transition-colors duration-300" aria-label="Go back">
               <ArrowLeft size={20} style={{ color: 'var(--lj-text)' }} />
             </button>
           )}
-          <img 
-            src="/logo-main.png" 
-            alt="The Local Jewel" 
-            className="h-8 object-contain"
-          />
+          <img src="/logo-main.png" alt="The Local Jewel" className="h-8 object-contain" />
         </div>
-        
-        <a 
-          href="tel:+1234567890" 
-          data-testid="landing-click-to-call-button"
-          className="flex items-center gap-2 px-3 py-2 rounded-full text-sm transition-colors duration-300 hover:bg-[#1A1A1D]"
-          style={{ color: 'var(--lj-accent)' }}
-        >
-          <Phone size={16} />
-          <span className="hidden sm:inline">Call Us</span>
+        <a href="tel:+1234567890" data-testid="landing-click-to-call-button" className="flex items-center gap-2 px-3 py-2 rounded-full text-sm transition-colors duration-300 hover:bg-[#F0F0EE]" style={{ color: 'var(--lj-accent)' }}>
+          <Phone size={16} /><span className="hidden sm:inline">Call Us</span>
         </a>
       </header>
-      
-      {/* Progress bar */}
       {showProgress && isWizardScreen && currentScreen !== 'value_reveal' && currentScreen !== 'contact' && currentScreen !== 'thank_you' && (
         <div className="px-4 pt-2 pb-1">
           <div className="flex items-center justify-between mb-2">
-            <span 
-              className="text-[13px] leading-[18px]"
-              style={{ color: 'var(--lj-muted)' }}
-              data-testid="wizard-progress"
-            >
-              Step {currentStep} of {totalSteps}
-            </span>
+            <span className="text-[13px] leading-[18px]" style={{ color: 'var(--lj-muted)' }} data-testid="wizard-progress">Step {currentStep} of {totalSteps}</span>
           </div>
-          <div 
-            className="h-1 rounded-full overflow-hidden"
-            style={{ background: '#1A1A1D' }}
-          >
-            <div 
-              className="h-full rounded-full transition-all duration-500"
-              style={{ 
-                width: `${Math.min(progress, 100)}%`, 
-                background: 'var(--lj-accent)',
-                transition: 'width 500ms var(--lj-ease)',
-              }}
-            />
+          <div className="h-1 rounded-full overflow-hidden" style={{ background: '#EDEDEB' }}>
+            <div className="h-full rounded-full" style={{ width: `${Math.min(progress, 100)}%`, background: 'var(--lj-accent)', transition: 'width 500ms var(--lj-ease)' }} />
           </div>
         </div>
       )}
-      
-      {/* Content */}
-      <div className="flex-1 flex flex-col">
-        {children}
-      </div>
+      <div className="flex-1 flex flex-col">{children}</div>
     </div>
   );
 }
