@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [devOtp, setDevOtp] = useState('');
 
   const handleSendOtp = async () => { if (!identifier.trim()) { setError('Please enter your email or phone'); return; } setError(''); setLoading(true); try { await axios.post(`${BACKEND_URL}/api/auth/request-otp`, { identifier: identifier.trim() }); setStep('otp'); setCooldown(60); const iv = setInterval(() => setCooldown(p => { if (p <= 1) { clearInterval(iv); return 0; } return p - 1; }), 1000); } catch (err) { setError(err.response?.data?.detail || 'Failed to send OTP'); } finally { setLoading(false); } };
   const handleVerifyOtp = async () => { if (otp.length !== 6) { setError('Please enter the 6-digit code'); return; } setError(''); setLoading(true); try { const res = await axios.post(`${BACKEND_URL}/api/auth/verify-otp`, { identifier: identifier.trim(), otp_code: otp }); localStorage.setItem('tlj_token', res.data.token); localStorage.setItem('tlj_user', JSON.stringify(res.data.user)); navigate('/dashboard'); } catch (err) { setError(err.response?.data?.detail || 'Invalid OTP'); } finally { setLoading(false); } };
