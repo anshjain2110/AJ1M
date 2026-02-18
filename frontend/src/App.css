@@ -1,68 +1,50 @@
-/* The Local Jewel - App CSS */
-/* Global overrides and utility styles */
+/* The Local Jewel - App CSS — Light Theme */
 
-/* Reset CRA defaults */
 .App {
   text-align: left;
 }
 
-/* Ensure select elements are styled consistently */
 select {
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23B9B2A6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 16px;
   padding-right: 36px !important;
 }
 
-/* Placeholder styles */
 input::placeholder,
 textarea::placeholder {
   color: var(--lj-muted);
   opacity: 0.7;
 }
 
-/* Auto-fill styles for dark theme */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 textarea:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0 30px #121214 inset !important;
-  -webkit-text-fill-color: #F5F2EA !important;
+  -webkit-box-shadow: 0 0 0 30px #F5F5F3 inset !important;
+  -webkit-text-fill-color: #1A1A1C !important;
   border-color: var(--lj-border) !important;
 }
 
-/* Smooth scroll for auto-save resume */
 html {
   scroll-behavior: smooth;
 }
 
-/* Mobile keyboard scroll fix */
 input:focus,
 textarea:focus,
 select:focus {
   scroll-margin-bottom: 120px;
 }
 
-/* Animation keyframes */
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes pulse-subtle {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.8;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
 }
 
 .animate-fade-in-up {
