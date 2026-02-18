@@ -26,23 +26,21 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
 
-        {/* Admin routes */}
-        <Route path="/admin/login" element={
+        {/* Admin routes — all share same AdminProvider */}
+        <Route path="/admin/*" element={
           <AdminProvider>
-            <AdminLoginPage />
+            <Routes>
+              <Route path="login" element={<AdminLoginPage />} />
+              <Route path="*" element={<AdminLayout />}>
+                <Route index element={<AnalyticsDashboard />} />
+                <Route path="leads" element={<LeadsCRM />} />
+                <Route path="orders" element={<OrdersPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+                <Route path="tracking" element={<TrackingPage />} />
+              </Route>
+            </Routes>
           </AdminProvider>
         } />
-        <Route path="/admin" element={
-          <AdminProvider>
-            <AdminLayout />
-          </AdminProvider>
-        }>
-          <Route index element={<AnalyticsDashboard />} />
-          <Route path="leads" element={<LeadsCRM />} />
-          <Route path="orders" element={<OrdersPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-          <Route path="tracking" element={<TrackingPage />} />
-        </Route>
       </Routes>
     </Router>
   );
