@@ -1,50 +1,30 @@
 [
   {
-    "content": "Phase 1: Design Agent - Get UI/UX guidelines",
-    "status": "completed"
+    "content": "Phase 4A: Admin Authentication + Backend Foundation",
+    "status": "in_progress"
   },
   {
-    "content": "Phase 1: Backend - Models, API endpoints (wizard, leads, uploads, events)",
-    "status": "completed"
+    "content": "Phase 4B: Admin Analytics Dashboard (Funnel + Attribution)",
+    "status": "pending"
   },
   {
-    "content": "Phase 1: Frontend - Complete wizard flow (14+ screens) with branching logic",
-    "status": "completed"
+    "content": "Phase 4C: Lead Management CRM (List, Detail, Status, Notes, Export)",
+    "status": "pending"
   },
   {
-    "content": "Phase 1: Auto-save, progress indicator, analytics tracking",
-    "status": "completed"
+    "content": "Phase 4D: Quotation Management",
+    "status": "pending"
   },
   {
-    "content": "Phase 1: All user stories covered in Development",
-    "status": "completed"
+    "content": "Phase 4E: Order Management",
+    "status": "pending"
   },
   {
-    "content": "Phase 1: End-to-end Testing via Testing Agent",
-    "status": "completed"
+    "content": "Phase 4F: Settings + Tracking Config Panel",
+    "status": "pending"
   },
   {
-    "content": "Phase 2: OTP Login + Auto Account Creation",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 2: User Dashboard (Quotations + Orders)",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 2: End-to-end Testing via Testing Agent",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 3: Polish - icon fixes, unicode rendering, dashboard formatting",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 3: Session persistence + rapid click protection",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 3: Final regression test - all passing",
-    "status": "completed"
+    "content": "Phase 4: End-to-end Testing via Testing Agent",
+    "status": "pending"
   }
 ]
