@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { useAdmin } from '../context/AdminContext';
+import { useAdmin } from '../../context/AdminContext';
 import { BarChart3, Users, FileText, Package, Settings, Activity, LogOut, Menu, X } from 'lucide-react';
 
 const NAV_ITEMS = [
