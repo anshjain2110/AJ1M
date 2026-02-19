@@ -24,6 +24,7 @@ export default function ContactScreen() {
       <div className="sticky bottom-0 pt-4 pb-6 mt-6" style={{ background: 'var(--lj-bg)' }}>
         {submitError && <p className="mb-3 text-[13px] text-center" style={{ color: 'var(--lj-danger)' }}>{submitError}</p>}
         <button onClick={handleSubmit} disabled={state.isSubmitting} data-testid="contact-form-submit-button" className="w-full min-h-[52px] px-6 rounded-[14px] font-medium text-[16px] flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.99]" style={{ background: 'var(--lj-accent)', color: '#FFFFFF', boxShadow: '0 4px 20px rgba(15,94,76,0.2)', opacity: state.isSubmitting ? 0.7 : 1 }}>{state.isSubmitting ? <><Loader2 size={18} className="animate-spin" /> Submitting...</> : <><span>Get My Free Quote</span><ArrowRight size={18} /></>}</button>
+        <button onClick={goBack} className="w-full mt-3 min-h-[40px] flex items-center justify-center gap-2 text-[14px] font-medium rounded-[10px] transition-colors duration-300 hover:bg-[#F0F0EE]" style={{ color: 'var(--lj-muted)' }}><ArrowLeft size={16} /> Go back and edit my answers</button>
         <div className="flex items-center justify-center gap-2 mt-4"><Lock size={14} style={{ color: 'var(--lj-muted)' }} /><p className="text-[13px] leading-[18px] text-center" style={{ color: 'var(--lj-muted)' }}>Your info stays private. No spam, ever. I'll personally reach out within 24 hours. — AJ</p></div>
       </div>
     </div>
