@@ -20,7 +20,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--lj-bg)' }}>
-      <header className="px-4 py-3 flex items-center" style={{ borderBottom: '1px solid var(--lj-border)' }}><img src="/logo-main.png" alt="The Local Jewel" className="h-8 object-contain" /></header>
+      <header className="px-4 py-3 flex items-center" style={{ borderBottom: '1px solid var(--lj-border)' }}><a href="/"><img src="/logo-main.png" alt="The Local Jewel" className="h-8 object-contain" /></a></header>
       <div className="flex-1 flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-[400px]">
           <div className="p-6 rounded-[18px]" style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)', boxShadow: 'var(--lj-shadow-2)' }}>

@@ -89,7 +89,7 @@ export default function DashboardPage() {
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--lj-bg)' }}>
       {/* Header */}
       <header className="sticky top-0 z-40 px-4 py-3 flex items-center justify-between" style={{ background: 'var(--lj-bg)', borderBottom: '1px solid var(--lj-border)' }}>
-        <img src="/logo-main.png" alt="The Local Jewel" className="h-8 object-contain" />
+        <a href="/"><img src="/logo-main.png" alt="The Local Jewel" className="h-8 object-contain" /></a>
         <div className="flex items-center gap-3">
           {user && <span className="text-[13px]" style={{ color: 'var(--lj-muted)' }}>{user.first_name || user.email}</span>}
           <button onClick={handleLogout} data-testid="dashboard-logout-button" className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#F0F0EE] transition-colors" aria-label="Logout">

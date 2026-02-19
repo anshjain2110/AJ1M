@@ -31,7 +31,7 @@ export default function WizardShell({ children, showBack = true, showProgress = 
               <span>Back</span>
             </button>
           )}
-          <img src="/logo-main.png" alt="The Local Jewel" className="h-8 object-contain" />
+          <a href="/"><img src="/logo-main.png" alt="The Local Jewel" className="h-8 object-contain" /></a>
         </div>
         <div className="flex items-center gap-2">
           <a href="tel:+1234567890" data-testid="landing-click-to-call-button" className="flex items-center gap-2 px-3 py-2 rounded-full text-sm transition-colors duration-300 hover:bg-[#F0F0EE]" style={{ color: 'var(--lj-accent)' }}>
