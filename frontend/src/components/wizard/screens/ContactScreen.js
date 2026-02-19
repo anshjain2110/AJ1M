@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, Loader2, Lock, User, Mail, Phone as PhoneIcon, M
 import { trackEvent } from '../../../utils/analytics';
 
 export default function ContactScreen() {
-  const { state, submitLead } = useWizard();
+  const { state, submitLead, goBack } = useWizard();
   const [form, setForm] = useState({ first_name: '', phone: '', email: '', notes: '' });
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
