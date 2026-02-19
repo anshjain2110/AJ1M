@@ -308,6 +308,27 @@ async def get_my_leads(user=Depends(get_current_user)):
     leads = [serialize_doc(l) async for l in db.leads.find({"user_id": user["user_id"]}).sort("created_at", -1)]
     return {"leads": leads}
 
+@app.get("/api/me/leads/{lead_id}")
+async def get_my_lead_detail(lead_id: str, user=Depends(get_current_user)):
+    lead = await db.leads.find_one({"lead_id": lead_id, "user_id": user["user_id"]})
+    if not lead:
+        raise HTTPException(404, "Lead not found")
+    quotes = [serialize_doc(q) async for q in db.quotes.find({"lead_id": lead_id}).sort("created_at", -1)]
+    orders = [serialize_doc(o) async for o in db.orders.find({"lead_id": lead_id}).sort("created_at", -1)]
+    return {"lead": serialize_doc(lead), "quotes": quotes, "orders": orders}
+
+class CommentCreate(BaseModel):
+    text: str
+
+@app.post("/api/me/leads/{lead_id}/comments")
+async def add_customer_comment(lead_id: str, req: CommentCreate, user=Depends(get_current_user)):
+    lead = await db.leads.find_one({"lead_id": lead_id, "user_id": user["user_id"]})
+    if not lead:
+        raise HTTPException(404, "Lead not found")
+    comment = {"text": req.text, "author": user.get("first_name", "Customer"), "role": "customer", "created_at": datetime.now(timezone.utc)}
+    await db.leads.update_one({"lead_id": lead_id}, {"$push": {"comments": comment}})
+    return {"status": "added", "comment": serialize_doc(comment)}
+
 @app.get("/api/me/orders")
 async def get_my_orders(user=Depends(get_current_user)):
     orders = [serialize_doc(o) async for o in db.orders.find({"user_id": user["user_id"]}).sort("created_at", -1)]
