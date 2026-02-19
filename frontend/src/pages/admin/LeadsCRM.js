@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAdmin } from '../../context/AdminContext';
-import { Search, Filter, Download, ChevronLeft, ChevronRight, Eye, Loader2, X, Send, MessageSquare, Plus } from 'lucide-react';
+import { Search, Filter, Download, ChevronLeft, ChevronRight, Eye, Loader2, X, Send, MessageSquare, Plus, Upload, PenTool, Factory, Truck, CheckCircle } from 'lucide-react';
 
 const STATUS_COLORS = { new: { bg: 'rgba(15,94,76,0.1)', color: 'var(--lj-accent)' }, contacted: { bg: 'rgba(96,165,250,0.1)', color: '#60A5FA' }, quoted: { bg: 'rgba(167,139,250,0.1)', color: '#A78BFA' }, won: { bg: 'rgba(86,194,113,0.1)', color: 'var(--lj-success)' }, lost: { bg: 'rgba(226,92,92,0.1)', color: 'var(--lj-danger)' } };
 const STATUSES = ['new', 'contacted', 'quoted', 'won', 'lost'];
