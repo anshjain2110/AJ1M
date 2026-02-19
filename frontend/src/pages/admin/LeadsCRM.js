@@ -270,6 +270,60 @@ export default function LeadsCRM() {
                   <button onClick={createQuote} className="px-3 h-9 rounded-[8px] flex items-center gap-1 text-[13px] font-medium" style={{ background: 'var(--lj-accent)', color: '#FFFFFF' }}><Plus size={14} /> Quote</button>
                 </div>
               </div>
+
+              {/* Order Stage */}
+              <div className="p-4 rounded-[10px]" style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}>
+                <h4 className="text-[13px] font-medium mb-3" style={{ color: 'var(--lj-muted)' }}>Order Stage</h4>
+                <div className="space-y-2">
+                  {ADMIN_STAGES.map(s => {
+                    const isActive = detailData.lead.order_stage === s.key;
+                    return (
+                      <button key={s.key} onClick={() => { if (s.key === 'shipped') { const tn = prompt('Enter tracking number (optional):'); if (tn) setTrackingNum(tn); } updateStage(s.key); }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-[14px] text-left transition-all"
+                        style={{ background: isActive ? 'rgba(15,94,76,0.08)' : 'var(--lj-bg)', border: `1.5px solid ${isActive ? 'var(--lj-accent)' : 'var(--lj-border)'}`, color: isActive ? 'var(--lj-accent)' : 'var(--lj-text)' }}>
+                        <s.icon size={16} /> {s.label}
+                        {isActive && <CheckCircle size={14} className="ml-auto" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* CAD & Renders Upload */}
+              <div className="p-4 rounded-[10px]" style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}>
+                <h4 className="text-[13px] font-medium mb-3" style={{ color: 'var(--lj-muted)' }}>CAD & Renders</h4>
+                <input ref={cadInputRef} type="file" accept="image/*" multiple onChange={uploadCAD} className="hidden" />
+                {(detailData.lead.cad_renders || []).length > 0 && (
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    {detailData.lead.cad_renders.map((r, ri) => (
+                      <div key={ri} className="aspect-square rounded-[6px] overflow-hidden" style={{ border: '1px solid var(--lj-border)' }}>
+                        <img src={`${process.env.REACT_APP_BACKEND_URL}${r.url}`} alt={r.original_name} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <button onClick={() => cadInputRef.current?.click()} className="w-full px-3 h-9 rounded-[8px] flex items-center justify-center gap-2 text-[13px] font-medium" style={{ background: 'var(--lj-bg)', border: '1px dashed var(--lj-border)', color: 'var(--lj-muted)' }}>
+                  <Upload size={14} /> Upload CAD / Render Images
+                </button>
+              </div>
+
+              {/* Customer Comments */}
+              <div className="p-4 rounded-[10px]" style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}>
+                <h4 className="text-[13px] font-medium mb-3" style={{ color: 'var(--lj-muted)' }}>Customer Comments</h4>
+                <div className="space-y-2 mb-3 max-h-[200px] overflow-y-auto">
+                  {(detailData.lead.comments || []).map((c, ci) => (
+                    <div key={ci} className={`px-3 py-2 rounded-[8px] ${c.role === 'admin' ? '' : ''}`} style={{ background: c.role === 'admin' ? 'rgba(15,94,76,0.05)' : 'var(--lj-bg)' }}>
+                      <p className="text-[13px]" style={{ color: 'var(--lj-text)' }}>{c.text}</p>
+                      <p className="text-[11px] mt-1" style={{ color: 'var(--lj-muted)' }}>{c.author} ({c.role}) · {formatDate(c.created_at)}</p>
+                    </div>
+                  ))}
+                  {(!detailData.lead.comments || detailData.lead.comments.length === 0) && <p className="text-[12px]" style={{ color: 'var(--lj-muted)' }}>No comments yet</p>}
+                </div>
+                <div className="flex gap-2">
+                  <input value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Reply to customer..." onKeyDown={e => e.key === 'Enter' && addComment()} className="flex-1 min-h-[36px] px-3 rounded-[8px] text-[14px]" style={{ background: 'var(--lj-bg)', border: '1px solid var(--lj-border)', color: 'var(--lj-text)' }} />
+                  <button onClick={addComment} className="w-9 h-9 rounded-[8px] flex items-center justify-center" style={{ background: 'var(--lj-accent)', color: '#FFFFFF' }}><Send size={14} /></button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
