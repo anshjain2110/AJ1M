@@ -5,7 +5,7 @@ import { useWizard } from '../../context/WizardContext';
 import { getCurrentStepNumber } from '../../utils/wizardConfig';
 
 export default function WizardShell({ children, showBack = true, showProgress = true }) {
-  const { state, goBack } = useWizard();
+  const { state, goBack, dispatch } = useWizard();
   const navigate = useNavigate();
   const { currentScreen, answers, frozenStepTotal } = state;
   const currentStep = getCurrentStepNumber(currentScreen, answers);
