@@ -5,7 +5,7 @@ import { trackEvent } from '../../../utils/analytics';
 import CountUp from 'react-countup';
 
 export default function ValueRevealScreen() {
-  const { goNext, state } = useWizard();
+  const { goNext, goBack, state } = useWizard();
   const [revealed, setRevealed] = useState(false);
   const [showContent, setShowContent] = useState(false);
   const hasTracked = useRef(false);
