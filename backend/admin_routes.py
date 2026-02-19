@@ -286,6 +286,47 @@ async def add_lead_note(lead_id: str, req: NoteCreate, admin=Depends(require_adm
     if result.matched_count == 0: raise HTTPException(404, "Lead not found")
     return {"status": "added", "note": serialize_doc(note)}
 
+@router.post("/leads/{lead_id}/comments")
+async def add_admin_comment(lead_id: str, req: NoteCreate, admin=Depends(require_admin)):
+    comment = {"text": req.text, "author": "The Local Jewel", "role": "admin", "created_at": datetime.now(timezone.utc)}
+    result = await db.leads.update_one({"lead_id": lead_id}, {"$push": {"comments": comment}})
+    if result.matched_count == 0: raise HTTPException(404, "Lead not found")
+    return {"status": "added", "comment": serialize_doc(comment)}
+
+from fastapi import UploadFile, File
+import aiofiles as aiofiles_admin
+
+UPLOAD_DIR_ADMIN = "/app/backend/uploads"
+
+@router.post("/leads/{lead_id}/renders")
+async def upload_cad_renders(lead_id: str, files: List[UploadFile] = File(...), admin=Depends(require_admin)):
+    lead = await db.leads.find_one({"lead_id": lead_id})
+    if not lead: raise HTTPException(404, "Lead not found")
+    uploaded = []
+    for file in files[:5]:
+        ext = os.path.splitext(file.filename)[1] if file.filename else ".png"
+        filename = f"cad_{uuid.uuid4().hex[:8]}{ext}"
+        filepath = os.path.join(UPLOAD_DIR_ADMIN, filename)
+        async with aiofiles_admin.open(filepath, "wb") as f:
+            content = await file.read()
+            await f.write(content)
+        uploaded.append({"filename": filename, "original_name": file.filename, "url": f"/api/uploads/files/{filename}", "uploaded_at": datetime.now(timezone.utc).isoformat()})
+    await db.leads.update_one({"lead_id": lead_id}, {"$push": {"cad_renders": {"$each": uploaded}}})
+    return {"status": "uploaded", "files": uploaded}
+
+@router.patch("/leads/{lead_id}/stage")
+async def update_lead_stage(lead_id: str, req: dict, admin=Depends(require_admin)):
+    stage = req.get("stage")
+    valid_stages = ["design_quotation", "in_production", "shipped", "delivered"]
+    if stage not in valid_stages: raise HTTPException(400, f"Stage must be one of: {valid_stages}")
+    update = {"order_stage": stage, "updated_at": datetime.now(timezone.utc)}
+    if stage == "shipped":
+        if req.get("tracking_number"): update["tracking_number"] = req["tracking_number"]
+        if req.get("shipping_provider"): update["shipping_provider"] = req["shipping_provider"]
+    result = await db.leads.update_one({"lead_id": lead_id}, {"$set": update})
+    if result.matched_count == 0: raise HTTPException(404, "Lead not found")
+    return {"status": "updated"}
+
 # ── Quotation Management ─────────────────────────────────────
 
 @router.post("/leads/{lead_id}/quotes")
