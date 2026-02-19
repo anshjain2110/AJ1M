@@ -24,6 +24,16 @@ export default function LeadsCRM() {
   const [noteText, setNoteText] = useState('');
   const [quoteTotal, setQuoteTotal] = useState('');
   const [quoteNotes, setQuoteNotes] = useState('');
+  const [commentText, setCommentText] = useState('');
+  const [trackingNum, setTrackingNum] = useState('');
+  const cadInputRef = useRef(null);
+
+  const ADMIN_STAGES = [
+    { key: 'design_quotation', label: 'Design & Quotation', icon: PenTool },
+    { key: 'in_production', label: 'In Production', icon: Factory },
+    { key: 'shipped', label: 'Shipped', icon: Truck },
+    { key: 'delivered', label: 'Delivered', icon: CheckCircle },
+  ];
 
   const fetchLeads = useCallback(async () => {
     setLoading(true);
