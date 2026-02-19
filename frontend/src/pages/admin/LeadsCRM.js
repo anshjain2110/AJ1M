@@ -81,6 +81,34 @@ export default function LeadsCRM() {
     fetchLeads();
   };
 
+  const addComment = async () => {
+    if (!commentText.trim() || !selectedLead) return;
+    await api('post', `/api/admin/leads/${selectedLead.lead_id}/comments`, { text: commentText });
+    setCommentText('');
+    const res = await api('get', `/api/admin/leads/${selectedLead.lead_id}`);
+    setDetailData(res.data);
+  };
+
+  const updateStage = async (stage) => {
+    if (!selectedLead) return;
+    const data = { stage };
+    if (stage === 'shipped' && trackingNum) data.tracking_number = trackingNum;
+    await api('patch', `/api/admin/leads/${selectedLead.lead_id}/stage`, data);
+    const res = await api('get', `/api/admin/leads/${selectedLead.lead_id}`);
+    setDetailData(res.data);
+    fetchLeads();
+  };
+
+  const uploadCAD = async (e) => {
+    const files = e.target.files;
+    if (!files || !selectedLead) return;
+    const fd = new FormData();
+    Array.from(files).forEach(f => fd.append('files', f));
+    await api('post', `/api/admin/leads/${selectedLead.lead_id}/renders`, fd);
+    const res = await api('get', `/api/admin/leads/${selectedLead.lead_id}`);
+    setDetailData(res.data);
+  };
+
   const exportCSV = () => { window.open(`${process.env.REACT_APP_BACKEND_URL}/api/admin/leads/export.csv?status=${statusFilter}`, '_blank'); };
 
   return (
