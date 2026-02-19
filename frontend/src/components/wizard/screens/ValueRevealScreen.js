@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useWizard } from '../../../context/WizardContext';
-import { ArrowRight, Shield, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Shield, Sparkles } from 'lucide-react';
 import { trackEvent } from '../../../utils/analytics';
 import CountUp from 'react-countup';
 
