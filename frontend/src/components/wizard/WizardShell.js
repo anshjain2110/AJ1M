@@ -13,14 +13,22 @@ export default function WizardShell({ children, showBack = true, showProgress = 
   const progress = totalSteps > 0 ? (currentStep / totalSteps) * 100 : 0;
   const isWizardScreen = currentScreen !== 'landing' && currentScreen !== 'thank_you';
   const isLoggedIn = !!localStorage.getItem('tlj_token');
+  const canGoBack = isWizardScreen && currentScreen !== 'product_type';
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--lj-bg)' }}>
       <header className="sticky top-0 z-40 px-4 py-3 flex items-center justify-between" style={{ background: 'var(--lj-bg)', borderBottom: '1px solid var(--lj-border)' }}>
         <div className="flex items-center gap-3">
-          {showBack && isWizardScreen && currentScreen !== 'product_type' && (
-            <button onClick={goBack} data-testid="wizard-back-button" className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[#F0F0EE] transition-colors duration-300" aria-label="Go back">
-              <ArrowLeft size={20} style={{ color: 'var(--lj-text)' }} />
+          {showBack && canGoBack && (
+            <button
+              onClick={goBack}
+              data-testid="wizard-back-button"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-full text-[14px] font-medium transition-colors duration-300 hover:bg-[#F0F0EE]"
+              style={{ color: 'var(--lj-accent)' }}
+              aria-label="Go back"
+            >
+              <ArrowLeft size={18} />
+              <span>Back</span>
             </button>
           )}
           <img src="/logo-main.png" alt="The Local Jewel" className="h-8 object-contain" />
@@ -29,7 +37,6 @@ export default function WizardShell({ children, showBack = true, showProgress = 
           <a href="tel:+1234567890" data-testid="landing-click-to-call-button" className="flex items-center gap-2 px-3 py-2 rounded-full text-sm transition-colors duration-300 hover:bg-[#F0F0EE]" style={{ color: 'var(--lj-accent)' }}>
             <Phone size={16} /><span className="hidden sm:inline">Call Us</span>
           </a>
-          {/* Customer Login / Dashboard button */}
           <button
             onClick={() => navigate(isLoggedIn ? '/dashboard' : '/login')}
             data-testid="header-login-button"
@@ -41,7 +48,9 @@ export default function WizardShell({ children, showBack = true, showProgress = 
           </button>
         </div>
       </header>
-      {showProgress && isWizardScreen && currentScreen !== 'value_reveal' && currentScreen !== 'contact' && currentScreen !== 'thank_you' && (
+
+      {/* Progress bar - shown on all wizard steps */}
+      {showProgress && isWizardScreen && currentScreen !== 'thank_you' && (
         <div className="px-4 pt-2 pb-1">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[13px] leading-[18px]" style={{ color: 'var(--lj-muted)' }} data-testid="wizard-progress">Step {currentStep} of {totalSteps}</span>
@@ -51,6 +60,7 @@ export default function WizardShell({ children, showBack = true, showProgress = 
           </div>
         </div>
       )}
+
       <div className="flex-1 flex flex-col">{children}</div>
     </div>
   );
