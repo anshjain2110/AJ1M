@@ -27,6 +27,7 @@ export default function ValueRevealScreen() {
       </div>
       <button onClick={() => goNext('value_reveal')} data-testid="value-reveal-continue-button" className="w-full max-w-sm min-h-[52px] px-6 rounded-[14px] font-medium text-[16px] flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.99]" style={{ background: 'var(--lj-accent)', color: '#FFFFFF', boxShadow: '0 4px 20px rgba(15,94,76,0.2)', opacity: showContent ? 1 : 0, transition: 'opacity 400ms var(--lj-ease) 600ms', pointerEvents: showContent ? 'auto' : 'none' }}>Get My Personalized Quote <ArrowRight size={18} /></button>
       <p className="mt-4 text-[13px]" style={{ color: 'var(--lj-muted)', opacity: showContent ? 1 : 0, transition: 'opacity 400ms var(--lj-ease) 800ms' }}>No obligation. Private consultation.</p>
+      <button onClick={goBack} className="mt-4 flex items-center gap-1.5 text-[14px] font-medium transition-colors duration-300 hover:underline" style={{ color: 'var(--lj-muted)', opacity: showContent ? 1 : 0, transition: 'opacity 400ms var(--lj-ease) 900ms' }}><ArrowLeft size={15} /> Go back and edit</button>
     </div>
   );
 }
