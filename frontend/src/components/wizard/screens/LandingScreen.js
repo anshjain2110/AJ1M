@@ -63,7 +63,7 @@ export default function LandingScreen() {
 
         {/* Savings Proof — inline above badges */}
         <p className="text-[18px] leading-[26px] mb-2 max-w-sm" style={{ color: 'var(--lj-text)' }}>
-          On average, our clients save <span className="font-semibold" style={{ color: 'var(--lj-accent)' }}>{COMPARISON.savingsAmount}</span> per piece.
+          On average, our clients save <span className="font-semibold" style={{ color: 'var(--lj-accent)' }}>{COMPARISON.savingsAmount}</span>/piece.
         </p>
         <p className="text-[14px] leading-[20px] mb-5" style={{ color: 'var(--lj-muted)' }}>
           Compared to traditional retail jewelry pricing.
