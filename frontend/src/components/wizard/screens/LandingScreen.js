@@ -163,25 +163,72 @@ export default function LandingScreen() {
         <div className="flex items-center gap-2 flex-shrink-0"><Shield size={16} style={{ color: 'var(--lj-accent)' }} /><span className="text-[13px] whitespace-nowrap" style={{ color: 'var(--lj-muted)' }}>Avg. <strong style={{ color: 'var(--lj-text)' }}>$5,000</strong> saved</span></div>
       </div>
 
-      {/* Testimonials */}
+      {/* Etsy Reviews Section */}
       <div className="px-4 py-10" style={{ borderTop: '1px solid var(--lj-border)' }}>
-        <h2 className="text-[22px] leading-[28px] font-medium mb-6 text-center" style={{ color: 'var(--lj-text)' }}>What Our Clients Say</h2>
-        <div className="space-y-4 max-w-md mx-auto">
-          {[
-            { name: 'Sarah M.', text: 'AJ found me the perfect engagement ring at nearly half the price of what I was quoted at a retail jeweler. The quality is incredible.', rating: 5 },
-            { name: 'Mike T.', text: "Saved over $6,000 on my wife's anniversary ring. Same GIA certified diamond, better price. Highly recommend.", rating: 5 },
-            { name: 'Jessica L.', text: 'The personalized service was outstanding. AJ took the time to understand exactly what I wanted and delivered beyond expectations.', rating: 5 },
-          ].map((review, i) => (
-            <div key={i} className="p-5 rounded-[14px]" style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}>
-              <div className="flex items-center gap-1 mb-3">
-                {Array.from({ length: review.rating }).map((_, j) => (
-                  <Star key={j} size={14} fill="var(--lj-accent)" style={{ color: 'var(--lj-accent)' }} />
-                ))}
+        <div className="max-w-2xl mx-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-[22px] leading-[28px] font-medium mb-1" style={{ color: 'var(--lj-text)' }}>Verified Etsy Reviews</h2>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-0.5">
+                  {Array.from({ length: 5 }).map((_, i) => <Star key={i} size={14} fill={i < 4 ? 'var(--lj-accent)' : 'none'} style={{ color: 'var(--lj-accent)' }} />)}
+                </div>
+                <span className="text-[14px] font-medium" style={{ color: 'var(--lj-text)' }}>4.6</span>
+                <span className="text-[13px]" style={{ color: 'var(--lj-muted)' }}>(15 reviews)</span>
               </div>
-              <p className="text-[16px] leading-[24px] mb-3" style={{ color: 'var(--lj-text)' }}>"{review.text}"</p>
-              <span className="text-[13px] leading-[18px]" style={{ color: 'var(--lj-muted)' }}>— {review.name}</span>
             </div>
-          ))}
+            <a href="https://www.etsy.com/shop/thelocaljewel#reviews" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors hover:bg-[#F0F0EE]" style={{ color: 'var(--lj-accent)', border: '1px solid var(--lj-border)' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--lj-accent)"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm4.95 16.95l-2.55-4.41-2.55 4.41-4.95-.72 3.6-3.51-.84-4.95L12 9.18l2.34-1.41-.84 4.95 3.6 3.51-4.95.72z"/></svg>
+              View on Etsy <ExternalLink size={12} />
+            </a>
+          </div>
+
+          {/* Reviews carousel */}
+          <div className="space-y-4">
+            {ETSY_REVIEWS.slice(0, 5).map((review, i) => (
+              <div key={i} className="p-5 rounded-[14px]" style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}>
+                {/* Review header */}
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-[14px] font-semibold" style={{ background: 'rgba(15,94,76,0.08)', color: 'var(--lj-accent)' }}>
+                    {review.name.charAt(0)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[14px] font-medium" style={{ color: 'var(--lj-text)' }}>{review.name}</span>
+                      <span className="text-[12px]" style={{ color: 'var(--lj-muted)' }}>{review.date}</span>
+                    </div>
+                    <div className="flex items-center gap-0.5 mt-0.5">
+                      {Array.from({ length: review.rating }).map((_, j) => <Star key={j} size={12} fill="var(--lj-accent)" style={{ color: 'var(--lj-accent)' }} />)}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Review text */}
+                <p className="text-[15px] leading-[22px] mb-3" style={{ color: 'var(--lj-text)' }}>"{review.text}"</p>
+
+                {/* Product + customer photos */}
+                <div className="flex items-center gap-3">
+                  {review.productImg && (
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <img src={review.productImg} alt={review.product} className="w-11 h-11 rounded-[8px] object-cover flex-shrink-0" style={{ border: '1px solid var(--lj-border)' }} />
+                      <span className="text-[12px] leading-[16px] truncate" style={{ color: 'var(--lj-muted)' }}>{review.product}</span>
+                    </div>
+                  )}
+                  {review.customerImg && (
+                    <img src={review.customerImg} alt="Customer photo" className="w-14 h-14 rounded-[8px] object-cover flex-shrink-0" style={{ border: '1px solid var(--lj-border)' }} />
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* View all link */}
+          <div className="mt-5 text-center">
+            <a href="https://www.etsy.com/shop/thelocaljewel#reviews" target="_blank" rel="noopener noreferrer" className="text-[14px] font-medium inline-flex items-center gap-1.5 transition-colors hover:opacity-80" style={{ color: 'var(--lj-accent)' }}>
+              See all 15 reviews on Etsy <ExternalLink size={14} />
+            </a>
+          </div>
         </div>
       </div>
 
