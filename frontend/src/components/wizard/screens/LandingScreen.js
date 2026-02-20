@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Star, Shield, Users, ArrowRight, ChevronRight, ChevronDown } from 'lucide-react';
+import { Star, Shield, Users, ArrowRight, ChevronRight, ChevronDown, ChevronLeft, ExternalLink } from 'lucide-react';
 import { useWizard } from '../../../context/WizardContext';
 import { trackEvent } from '../../../utils/analytics';
 
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1605089315716-64d4e9696796?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85&w=800';
 
-// Configurable comparison data (easy to update / admin-configurable later)
 const COMPARISON = {
   savingsAmount: '$4,200',
   example: {
@@ -19,6 +18,18 @@ const COMPARISON = {
     savings: '$4,200',
   },
 };
+
+// Real Etsy reviews scraped from thelocaljewel shop
+const ETSY_REVIEWS = [
+  { name: 'Narindra', date: 'Feb 13, 2026', rating: 5, text: "The store's communication is prompt, responsive, and respectful. Great quality. Would recommend.", product: '4.4ct Radiant Diamond Ring – Hidden Halo – 14K White Gold', productImg: 'https://i.etsystatic.com/6823344673/r/il/e5be99/6823344673/il_170x135.6823344673_akr1.jpg', customerImg: 'https://i.etsystatic.com/iap/bf7cda/7755045309/iap_300x300.7755045309_guh7483e.jpg' },
+  { name: 'Eesa', date: 'Jun 20, 2025', rating: 5, text: "Absolutely blown away. The ring is stunning, sparkles like crazy, beautifully made, and exactly as described. It even comes in a sleek box with a light at the top. Shipping was fast, seller was great.", product: '3.32ct Oval IGI Certified Ring – Hidden Halo – White Gold', productImg: 'https://i.etsystatic.com/6625116803/r/il/acc787/6625116803/il_170x135.6625116803_8utf.jpg', customerImg: 'https://i.etsystatic.com/iap/54d3bc/6957003366/iap_300x300.6957003366_j5hy4cnq.jpg' },
+  { name: 'Pam', date: 'Nov 26, 2025', rating: 5, text: "This ring is absolutely beautiful! High quality, brilliant shine and sparkles. The owner communicates exceptionally, letting me know where in the process everything is. I highly recommend. I'll certainly be a repeat customer.", product: '3.30ct Pear Shaped Ring – Hidden Halo – 14K White Gold', productImg: 'https://i.etsystatic.com/6794562112/r/il/516b8f/6794562112/il_170x135.6794562112_a19b.jpg' },
+  { name: 'ULT', date: 'Jul 23, 2025', rating: 5, text: "Came super fast! Ansh the owner was very helpful during the buying process, quality of the item was superb for the price. Will be a returning customer, such an awesome experience.", product: '4.4ct Radiant Diamond Ring – Hidden Halo – 14K White Gold', productImg: 'https://i.etsystatic.com/6823344673/r/il/e5be99/6823344673/il_170x135.6823344673_akr1.jpg', customerImg: 'https://i.etsystatic.com/iap/5fa4c6/7093470467/iap_300x300.7093470467_owf00rzy.jpg' },
+  { name: 'Russell Stacy', date: 'Jan 19, 2026', rating: 5, text: "Very beautiful craftsmanship. Ring met more than our expectations.", product: '4.12ct Radiant Ring – 14K Yellow Gold Hidden Halo', productImg: 'https://i.etsystatic.com/6557149529/r/il/c58bdd/6557149529/il_170x135.6557149529_j2mm.jpg' },
+  { name: 'Gina Schroeder', date: 'Jun 21, 2025', rating: 5, text: "This ring is beautiful! And I couldn't believe how fast the seller got it to me. I would highly recommend them. Will be ordering from them again.", product: '3.32ct Oval IGI Certified Ring – Hidden Halo – White Gold', productImg: 'https://i.etsystatic.com/6625116803/r/il/acc787/6625116803/il_170x135.6625116803_8utf.jpg' },
+  { name: 'Jamie Pung', date: 'May 21, 2025', rating: 5, text: "Even more beautiful in person. We couldn't be happier with this ring!", product: '2.03ct Oval IGI Certified Ring – Solitaire – 14K White Gold', productImg: 'https://i.etsystatic.com/6665834265/r/il/9c1489/6665834265/il_170x135.6665834265_ee2y.jpg' },
+  { name: 'Gina Osmer', date: 'Apr 17, 2025', rating: 5, text: "Beautiful ring and courteous customer service! Responded to my questions immediately!", product: '4.4ct Radiant Diamond Ring – Hidden Halo – 14K White Gold', productImg: 'https://i.etsystatic.com/6823344673/r/il/e5be99/6823344673/il_170x135.6823344673_akr1.jpg' },
+];
 
 export default function LandingScreen() {
   const { startWizard, state } = useWizard();
