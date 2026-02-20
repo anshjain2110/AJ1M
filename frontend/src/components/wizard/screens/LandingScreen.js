@@ -174,7 +174,7 @@ export default function LandingScreen() {
                 <div className="flex items-center gap-0.5">
                   {Array.from({ length: 5 }).map((_, i) => <Star key={i} size={14} fill={i < 4 ? 'var(--lj-accent)' : 'none'} style={{ color: 'var(--lj-accent)' }} />)}
                 </div>
-                <span className="text-[14px] font-medium" style={{ color: 'var(--lj-text)' }}>4.6</span>
+                <span className="text-[14px] font-medium" style={{ color: 'var(--lj-text)' }}>4.93</span>
                 <span className="text-[13px]" style={{ color: 'var(--lj-muted)' }}>(15 reviews)</span>
               </div>
             </div>
