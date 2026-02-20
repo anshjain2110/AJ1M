@@ -60,9 +60,76 @@ export default function LandingScreen() {
         <h1 className="text-[28px] leading-[34px] font-semibold tracking-[-0.01em] mb-4 max-w-md" style={{ color: 'var(--lj-text)' }}>
           Get Your Dream Ring Without the Markup
         </h1>
-        <p className="text-[16px] leading-[24px] mb-8 max-w-sm" style={{ color: 'var(--lj-muted)' }}>
-          Same GIA & IGI Certified diamonds. Same quality settings. Fraction of the price.
+
+        {/* Savings Proof — inline above badges */}
+        <p className="text-[16px] leading-[24px] mb-2 max-w-sm" style={{ color: 'var(--lj-text)' }}>
+          On average, our clients save <span className="font-semibold" style={{ color: 'var(--lj-accent)' }}>{COMPARISON.savingsAmount}</span> per piece.
         </p>
+        <p className="text-[14px] leading-[20px] mb-4" style={{ color: 'var(--lj-muted)' }}>
+          Compared to traditional retail jewelry pricing.
+        </p>
+
+        {/* Expand trigger */}
+        <button
+          onClick={handleCompareOpen}
+          data-testid="savings-compare-trigger"
+          className="flex items-center gap-1.5 mb-5 text-[14px] font-medium transition-colors duration-300 hover:opacity-80"
+          style={{ color: 'var(--lj-accent)' }}
+        >
+          {compareOpen ? 'Hide comparison' : 'See a real comparison'}
+          <ChevronDown size={16} className="transition-transform duration-300" style={{ transform: compareOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+        </button>
+
+        {/* Inline accordion — comparison table */}
+        <div
+          className="w-full max-w-lg overflow-hidden transition-all duration-500 mb-4"
+          style={{ maxHeight: compareOpen ? '800px' : '0px', opacity: compareOpen ? 1 : 0 }}
+        >
+          <div className="grid md:grid-cols-2 gap-3">
+            {/* Traditional Retail */}
+            <div className="p-4 rounded-[14px]" style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}>
+              <h4 className="text-[13px] font-medium mb-3 text-center" style={{ color: 'var(--lj-muted)' }}>Traditional Retail</h4>
+              <div className="space-y-2.5">
+                {[['Ring Type', ex.ringType], ['Center Stone', ex.centerStone], ['Color / Clarity', ex.colorClarity], ['Metal', ex.metal], ['Certification', ex.certification]].map(([label, value]) => (
+                  <div key={label} className="flex justify-between text-[13px]">
+                    <span style={{ color: 'var(--lj-muted)' }}>{label}</span>
+                    <span className="font-medium text-right" style={{ color: 'var(--lj-text)' }}>{value}</span>
+                  </div>
+                ))}
+                <div className="pt-2.5 mt-2.5" style={{ borderTop: '1px solid var(--lj-border)' }}>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[13px]" style={{ color: 'var(--lj-muted)' }}>Price</span>
+                    <span className="text-[18px] font-semibold" style={{ color: 'var(--lj-text)' }}>{ex.retailPrice}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* The Local Jewel */}
+            <div className="p-4 rounded-[14px]" style={{ background: 'var(--lj-surface)', border: '2px solid var(--lj-accent)' }}>
+              <h4 className="text-[13px] font-medium mb-3 text-center" style={{ color: 'var(--lj-accent)' }}>The Local Jewel</h4>
+              <div className="space-y-2.5">
+                {[['Ring Type', ex.ringType], ['Center Stone', ex.centerStone], ['Color / Clarity', ex.colorClarity], ['Metal', ex.metal], ['Certification', ex.certification]].map(([label, value]) => (
+                  <div key={label} className="flex justify-between text-[13px]">
+                    <span style={{ color: 'var(--lj-muted)' }}>{label}</span>
+                    <span className="font-medium text-right" style={{ color: 'var(--lj-text)' }}>{value}</span>
+                  </div>
+                ))}
+                <div className="pt-2.5 mt-2.5" style={{ borderTop: '1px solid rgba(15,94,76,0.2)' }}>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[13px]" style={{ color: 'var(--lj-muted)' }}>Price</span>
+                    <span className="text-[18px] font-semibold" style={{ color: 'var(--lj-accent)' }}>{ex.tljPrice}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 text-center">
+            <p className="text-[14px] mb-3" style={{ color: 'var(--lj-text)' }}>Estimated savings: <span className="font-semibold text-[16px]" style={{ color: 'var(--lj-accent)' }}>{ex.savings}</span></p>
+            <button onClick={handleSavingsCta} data-testid="savings-cta-button" className="min-h-[44px] px-6 rounded-[14px] font-medium text-[14px] inline-flex items-center gap-2 transition-all duration-300 active:scale-[0.99]" style={{ background: 'var(--lj-accent)', color: '#FFFFFF' }}>See my savings <ArrowRight size={16} /></button>
+            <p className="mt-3 text-[11px]" style={{ color: 'var(--lj-muted)', opacity: 0.7 }}>Example based on a recent client purchase and comparable retail pricing.</p>
+          </div>
+        </div>
+
         <div className="flex items-center gap-4 mb-8">
           <div className="px-3 py-1.5 rounded-full text-[13px] font-medium" style={{ background: '#E8F5F1', color: 'var(--lj-accent)', border: '1px solid #C8E6DE' }}>GIA Certified</div>
           <div className="px-3 py-1.5 rounded-full text-[13px] font-medium" style={{ background: '#E8F5F1', color: 'var(--lj-accent)', border: '1px solid #C8E6DE' }}>IGI Certified</div>
