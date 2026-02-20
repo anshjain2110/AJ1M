@@ -57,15 +57,15 @@ export default function LandingScreen() {
         >
           <img src={HERO_IMAGE} alt="Premium diamond ring" className="w-full h-full object-cover" loading="eager" />
         </div>
-        <h1 className="text-[28px] leading-[34px] font-semibold tracking-[-0.01em] mb-4 max-w-md" style={{ color: 'var(--lj-text)' }}>
-          Get Your Dream Ring Without the Markup
+        <h1 className="text-[28px] leading-[34px] font-semibold tracking-[-0.01em] mb-5 max-w-md" style={{ color: 'var(--lj-text)' }}>
+          Join a community that buys diamond jewelry the smarter way.
         </h1>
 
         {/* Savings Proof — inline above badges */}
-        <p className="text-[16px] leading-[24px] mb-2 max-w-sm" style={{ color: 'var(--lj-text)' }}>
+        <p className="text-[18px] leading-[26px] mb-2 max-w-sm" style={{ color: 'var(--lj-text)' }}>
           On average, our clients save <span className="font-semibold" style={{ color: 'var(--lj-accent)' }}>{COMPARISON.savingsAmount}</span> per piece.
         </p>
-        <p className="text-[14px] leading-[20px] mb-4" style={{ color: 'var(--lj-muted)' }}>
+        <p className="text-[14px] leading-[20px] mb-5" style={{ color: 'var(--lj-muted)' }}>
           Compared to traditional retail jewelry pricing.
         </p>
 
