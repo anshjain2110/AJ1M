@@ -3,7 +3,7 @@ import { Star, Shield, Users, ArrowRight, ChevronRight, ChevronDown, ChevronLeft
 import { useWizard } from '../../../context/WizardContext';
 import { trackEvent } from '../../../utils/analytics';
 
-const HERO_IMAGE = 'https://images.unsplash.com/photo-1605089315716-64d4e9696796?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85&w=800';
+const HERO_IMAGE = '/hero-photo.jpeg';
 
 const COMPARISON = {
   savingsAmount: '$4,200',
