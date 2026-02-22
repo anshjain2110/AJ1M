@@ -17,6 +17,9 @@ import aiofiles
 
 # Twilio for SMS OTP
 from twilio.rest import Client as TwilioClient
+# SendGrid for email OTP
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail as SGMail
 
 # Environment
 MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
