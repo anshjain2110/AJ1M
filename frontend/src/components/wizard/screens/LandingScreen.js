@@ -235,13 +235,17 @@ export default function LandingScreen() {
       {/* Instagram Feed Section */}
       <div className="py-10" style={{ borderTop: '1px solid var(--lj-border)' }}>
         <div className="px-4 max-w-2xl mx-auto mb-6 flex items-center justify-between">
-          <div>
-            <h2 className="text-[22px] leading-[28px] font-medium" style={{ color: 'var(--lj-text)' }}>Follow Us on Instagram</h2>
-            <p className="text-[14px] mt-1" style={{ color: 'var(--lj-muted)' }}>@thelocaljewel</p>
+          <div className="flex items-center gap-3">
+            <a href="https://www.instagram.com/thelocaljewel/" target="_blank" rel="noopener noreferrer" className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0" style={{ border: '2px solid var(--lj-border)' }}>
+              <img src="/ig-avatar.png" alt="thelocaljewel" className="w-full h-full object-cover" />
+            </a>
+            <div>
+              <a href="https://www.instagram.com/thelocaljewel/" target="_blank" rel="noopener noreferrer" className="text-[16px] font-medium block hover:underline" style={{ color: 'var(--lj-text)' }}>thelocaljewel</a>
+              <p className="text-[13px]" style={{ color: 'var(--lj-muted)' }}>Follow us on Instagram</p>
+            </div>
           </div>
-          <a href="https://www.instagram.com/thelocaljewel" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors hover:bg-[#F0F0EE]" style={{ color: 'var(--lj-accent)', border: '1px solid var(--lj-border)' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-            Follow <ExternalLink size={12} />
+          <a href="https://www.instagram.com/thelocaljewel/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium transition-colors hover:opacity-90" style={{ background: 'var(--lj-accent)', color: '#FFFFFF' }}>
+            Follow
           </a>
         </div>
         <div className="overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
