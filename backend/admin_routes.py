@@ -5,6 +5,8 @@ import io
 import hashlib
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List
+from dotenv import load_dotenv
+load_dotenv("/app/backend/.env")
 from fastapi import APIRouter, HTTPException, Depends, Header, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
