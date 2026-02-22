@@ -66,7 +66,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=os.environ.get("CORS_ORIGINS", "https://thelocaljewel.com,https://prod-priority.preview.emergentagent.com").split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
