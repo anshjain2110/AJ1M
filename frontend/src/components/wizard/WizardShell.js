@@ -34,7 +34,7 @@ export default function WizardShell({ children, showBack = true, showProgress = 
           <button onClick={() => { dispatch({ type: 'RESET' }); navigate('/'); }} className="cursor-pointer"><img src="/logo-main.png" alt="The Local Jewel" className="h-8 object-contain" /></button>
         </div>
         <div className="flex items-center gap-2">
-          <a href="tel:+1234567890" data-testid="landing-click-to-call-button" className="flex items-center gap-2 px-3 py-2 rounded-full text-sm transition-colors duration-300 hover:bg-[#F0F0EE]" style={{ color: 'var(--lj-accent)' }}>
+          <a href="tel:+15857108292" data-testid="landing-click-to-call-button" className="flex items-center gap-2 px-3 py-2 rounded-full text-sm transition-colors duration-300 hover:bg-[#F0F0EE]" style={{ color: 'var(--lj-accent)' }}>
             <Phone size={16} /><span className="hidden sm:inline">Call Us</span>
           </a>
           <button

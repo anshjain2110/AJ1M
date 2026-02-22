@@ -23,7 +23,7 @@ export default function ThankYouScreen() {
         <a href="https://instagram.com/thelocaljewel" target="_blank" rel="noopener noreferrer" className="w-full min-h-[48px] px-6 rounded-[14px] font-medium text-[16px] flex items-center justify-center gap-2 transition-all duration-300" style={{ background: 'var(--lj-surface)', color: 'var(--lj-text)', border: '1px solid var(--lj-border)' }}><Instagram size={18} /> Follow us on Instagram</a>
         <button onClick={() => navigate('/dashboard')} className="w-full min-h-[48px] px-6 rounded-[14px] font-medium text-[16px] flex items-center justify-center gap-2 transition-all duration-300" style={{ background: 'transparent', color: 'var(--lj-accent)', border: '1px solid var(--lj-border)' }}>Go to Dashboard <ArrowRight size={16} /></button>
       </div>
-      <div className="mt-8 flex items-center gap-2"><Phone size={14} style={{ color: 'var(--lj-muted)' }} /><a href="tel:+1234567890" className="text-[13px]" style={{ color: 'var(--lj-muted)' }}>Questions? Call or text us</a></div>
+      <div className="mt-8 flex items-center gap-2"><Phone size={14} style={{ color: 'var(--lj-muted)' }} /><a href="tel:+15857108292" className="text-[13px]" style={{ color: 'var(--lj-muted)' }}>Questions? Call or text us</a></div>
     </div>
   );
 }
