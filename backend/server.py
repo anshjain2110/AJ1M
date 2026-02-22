@@ -289,8 +289,30 @@ async def request_otp(req: OTPRequest):
     otp = f"{secrets.randbelow(1000000):06d}"
     otp_hash = hashlib.sha256(otp.encode()).hexdigest()
     await db.otp_codes.insert_one({"identifier": identifier, "otp_hash": otp_hash, "user_id": user["user_id"], "created_at": datetime.now(timezone.utc), "expires_at": datetime.now(timezone.utc) + timedelta(minutes=10), "used": False})
-    print(f"[OTP] Code for {identifier}: {otp}")
-    return {"status": "sent", "message": "OTP sent", "otp_dev": otp}
+    
+    # Send OTP via Twilio SMS
+    phone_to_send = user.get("phone") or identifier
+    sms_sent = False
+    if twilio_client and phone_to_send:
+        try:
+            # Normalize phone for Twilio (needs +1 prefix)
+            phone_normalized = phone_to_send.strip()
+            if not phone_normalized.startswith("+"):
+                phone_normalized = "+1" + phone_normalized.replace("-", "").replace(" ", "").replace("(", "").replace(")", "")
+            twilio_client.messages.create(
+                body=f"Your Local Jewel verification code is: {otp}",
+                from_=TWILIO_PHONE,
+                to=phone_normalized,
+            )
+            sms_sent = True
+            print(f"[OTP] SMS sent to {phone_normalized}")
+        except Exception as e:
+            print(f"[OTP] SMS failed: {e}")
+    
+    if not sms_sent:
+        print(f"[OTP] Code for {identifier}: {otp} (SMS not sent)")
+    
+    return {"status": "sent", "message": "Verification code sent to your phone"}
 
 @app.post("/api/auth/verify-otp")
 async def verify_otp(req: OTPVerify):
