@@ -34,6 +34,11 @@ TWILIO_AUTH = os.environ.get("TWILIO_AUTH_TOKEN", "")
 TWILIO_PHONE = os.environ.get("TWILIO_PHONE_NUMBER", "")
 twilio_client = TwilioClient(TWILIO_SID, TWILIO_AUTH) if TWILIO_SID and TWILIO_AUTH else None
 
+# SendGrid config
+SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY", "")
+SENDGRID_FROM_EMAIL = os.environ.get("SENDGRID_FROM_EMAIL", "ansh@thelocaljewel.com")
+sg_client = SendGridAPIClient(SENDGRID_API_KEY) if SENDGRID_API_KEY else None
+
 # Database
 client = AsyncIOMotorClient(MONGO_URL)
 db = client[DB_NAME]
