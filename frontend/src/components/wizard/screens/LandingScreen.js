@@ -244,18 +244,21 @@ export default function LandingScreen() {
             Follow <ExternalLink size={12} />
           </a>
         </div>
-        <div className="overflow-x-auto scrollbar-hide">
-          <div className="flex gap-1 px-4" style={{ width: 'max-content' }}>
+        <div className="overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <div className="flex gap-1.5 px-4" style={{ width: 'max-content' }}>
             {[
-              { img: 'https://scontent.cdninstagram.com/v/t51.82787-15/554685583_17896498668302708_5017119465267370785_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=111&ccb=7-5&_nc_sid=18de74&_nc_ohc=xfZaZdKkajQQ7kNvwH64gdP&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&oh=00_AfsQW-JlWIr1y3ZBezBrZY_aztjGt3OP7BrPqxLdGNS8hg&oe=699E5942', caption: 'Red flags when buying diamonds' },
-              { img: 'https://scontent.cdninstagram.com/v/t51.82787-15/551387339_17896213902302708_1785570489136753055_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=105&ccb=7-5&_nc_sid=18de74&_nc_ohc=sBzehxTF58kQ7kNvwEvb2kJ&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&oh=00_Afuw3P6YAUyBG1JKxNMQLQKC2yyr1ebtM1ae9A0_vunwfg&oe=699E5AEF', caption: 'Crafted with love' },
-              { img: 'https://scontent.cdninstagram.com/v/t51.82787-15/543596898_17894743872302708_6425509269160822061_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=106&ccb=7-5&_nc_sid=18de74&_nc_ohc=js4bkX6pEd4Q7kNvwFVpyd_&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&oh=00_Afv5PtpEWacHcF9QXllNdK9QlXOvkLLbQmCqUR5AftjvoQ&oe=699E7016', caption: '3.55ct Oval Diamond Ring' },
-              { img: 'https://scontent.cdninstagram.com/v/t51.75761-15/467406358_17856821388302708_6860073839234662996_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=103&ccb=7-5&_nc_sid=18de74&_nc_ohc=5nqhWkfoTRkQ7kNvwFl1ZAI&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&oh=00_Afuh7tqJB1qA_AG3kr4r_V1albpGKdjkdMfMCMEJO_8n1g&oe=699E5767', caption: 'Simplicity in Luxury' },
+              { img: 'https://i.etsystatic.com/56104482/r/il/e5be99/6823344673/il_340x270.6823344673_akr1.jpg', caption: '4.4ct Radiant Hidden Halo Ring' },
+              { img: 'https://i.etsystatic.com/56104482/r/il/c58bdd/6557149529/il_340x270.6557149529_j2mm.jpg', caption: '4.12ct Radiant Yellow Gold Ring' },
+              { img: 'https://i.etsystatic.com/56104482/r/il/acc787/6625116803/il_340x270.6625116803_8utf.jpg', caption: '3.32ct Oval Diamond Ring' },
+              { img: 'https://i.etsystatic.com/56104482/r/il/9c1489/6665834265/il_340x270.6665834265_ee2y.jpg', caption: '2.03ct Oval Solitaire Ring' },
+              { img: 'https://i.etsystatic.com/56104482/r/il/55d3fa/6640478330/il_340x270.6640478330_jzty.jpg', caption: '4.13ct Oval Ring Set' },
+              { img: 'https://i.etsystatic.com/56104482/r/il/2e9925/7063688688/il_340x270.7063688688_9xro.jpg', caption: '3.74ct Emerald Cut Ring' },
             ].map((post, i) => (
-              <a key={i} href="https://www.instagram.com/thelocaljewel" target="_blank" rel="noopener noreferrer" className="relative flex-shrink-0 w-[160px] h-[160px] md:w-[200px] md:h-[200px] rounded-[10px] overflow-hidden group">
+              <a key={i} href="https://www.instagram.com/thelocaljewel" target="_blank" rel="noopener noreferrer" className="relative flex-shrink-0 w-[150px] h-[150px] md:w-[185px] md:h-[185px] rounded-[10px] overflow-hidden group">
                 <img src={post.img} alt={post.caption} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="white" className="opacity-0 group-hover:opacity-100 transition-opacity duration-300"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" strokeWidth="2"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" fill="none" stroke="white" strokeWidth="2"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" stroke="white" strokeWidth="2"/></svg>
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex flex-col items-center justify-center p-2">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 mb-1"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="white" strokeWidth="2"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" stroke="white" strokeWidth="2"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" stroke="white" strokeWidth="2"/></svg>
+                  <span className="text-[11px] text-white text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 leading-tight">{post.caption}</span>
                 </div>
               </a>
             ))}
