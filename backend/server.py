@@ -330,7 +330,7 @@ async def request_otp(req: OTPRequest):
             delivery_method = "email"
             print(f"[OTP] Email sent to {identifier}")
         except Exception as e:
-            print(f"[OTP] Email failed: {e}")
+            print(f"[OTP] Email failed: {type(e).__name__}: {e}")
     
     # Try SMS delivery via Twilio (for phone numbers, or as fallback if email has a phone on file)
     if not delivered:
