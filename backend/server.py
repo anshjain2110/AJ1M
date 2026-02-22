@@ -15,12 +15,21 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import jwt
 import aiofiles
 
+# Twilio for SMS OTP
+from twilio.rest import Client as TwilioClient
+
 # Environment
 MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
 DB_NAME = os.environ.get("DB_NAME", "thelocaljewel")
-JWT_SECRET = os.environ.get("JWT_SECRET", "tlj-secret-key-change-in-production-2024")
+JWT_SECRET = os.environ.get("JWT_SECRET", "rG9oG5Eul803YO57JCGom4lFp99xXaLvRtbDdQpozd5VDkIWVKnb9quulv4LjawP")
 UPLOAD_DIR = "/app/backend/uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+# Twilio config
+TWILIO_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
+TWILIO_AUTH = os.environ.get("TWILIO_AUTH_TOKEN", "")
+TWILIO_PHONE = os.environ.get("TWILIO_PHONE_NUMBER", "")
+twilio_client = TwilioClient(TWILIO_SID, TWILIO_AUTH) if TWILIO_SID and TWILIO_AUTH else None
 
 # Database
 client = AsyncIOMotorClient(MONGO_URL)
