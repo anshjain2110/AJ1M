@@ -232,6 +232,37 @@ export default function LandingScreen() {
         </div>
       </div>
 
+      {/* Instagram Feed Section */}
+      <div className="py-10" style={{ borderTop: '1px solid var(--lj-border)' }}>
+        <div className="px-4 max-w-2xl mx-auto mb-6 flex items-center justify-between">
+          <div>
+            <h2 className="text-[22px] leading-[28px] font-medium" style={{ color: 'var(--lj-text)' }}>Follow Us on Instagram</h2>
+            <p className="text-[14px] mt-1" style={{ color: 'var(--lj-muted)' }}>@thelocaljewel</p>
+          </div>
+          <a href="https://www.instagram.com/thelocaljewel" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors hover:bg-[#F0F0EE]" style={{ color: 'var(--lj-accent)', border: '1px solid var(--lj-border)' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+            Follow <ExternalLink size={12} />
+          </a>
+        </div>
+        <div className="overflow-x-auto scrollbar-hide">
+          <div className="flex gap-1 px-4" style={{ width: 'max-content' }}>
+            {[
+              { img: 'https://scontent.cdninstagram.com/v/t51.82787-15/554685583_17896498668302708_5017119465267370785_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=111&ccb=7-5&_nc_sid=18de74&_nc_ohc=xfZaZdKkajQQ7kNvwH64gdP&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&oh=00_AfsQW-JlWIr1y3ZBezBrZY_aztjGt3OP7BrPqxLdGNS8hg&oe=699E5942', caption: 'Red flags when buying diamonds' },
+              { img: 'https://scontent.cdninstagram.com/v/t51.82787-15/551387339_17896213902302708_1785570489136753055_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=105&ccb=7-5&_nc_sid=18de74&_nc_ohc=sBzehxTF58kQ7kNvwEvb2kJ&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&oh=00_Afuw3P6YAUyBG1JKxNMQLQKC2yyr1ebtM1ae9A0_vunwfg&oe=699E5AEF', caption: 'Crafted with love' },
+              { img: 'https://scontent.cdninstagram.com/v/t51.82787-15/543596898_17894743872302708_6425509269160822061_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=106&ccb=7-5&_nc_sid=18de74&_nc_ohc=js4bkX6pEd4Q7kNvwFVpyd_&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&oh=00_Afv5PtpEWacHcF9QXllNdK9QlXOvkLLbQmCqUR5AftjvoQ&oe=699E7016', caption: '3.55ct Oval Diamond Ring' },
+              { img: 'https://scontent.cdninstagram.com/v/t51.75761-15/467406358_17856821388302708_6860073839234662996_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=103&ccb=7-5&_nc_sid=18de74&_nc_ohc=5nqhWkfoTRkQ7kNvwFl1ZAI&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&oh=00_Afuh7tqJB1qA_AG3kr4r_V1albpGKdjkdMfMCMEJO_8n1g&oe=699E5767', caption: 'Simplicity in Luxury' },
+            ].map((post, i) => (
+              <a key={i} href="https://www.instagram.com/thelocaljewel" target="_blank" rel="noopener noreferrer" className="relative flex-shrink-0 w-[160px] h-[160px] md:w-[200px] md:h-[200px] rounded-[10px] overflow-hidden group">
+                <img src={post.img} alt={post.caption} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="white" className="opacity-0 group-hover:opacity-100 transition-opacity duration-300"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" strokeWidth="2"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" fill="none" stroke="white" strokeWidth="2"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" stroke="white" strokeWidth="2"/></svg>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Bottom CTA */}
       <div className="px-4 pb-10 flex justify-center">
         <button onClick={handleStartWizard} data-testid="landing-bottom-cta"
