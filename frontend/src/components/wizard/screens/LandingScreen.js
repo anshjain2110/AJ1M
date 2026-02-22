@@ -236,7 +236,7 @@ export default function LandingScreen() {
       <div className="py-10" style={{ borderTop: '1px solid var(--lj-border)' }}>
         <div className="px-4 max-w-2xl mx-auto mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <a href="https://www.instagram.com/thelocaljewel/" target="_blank" rel="noopener noreferrer" className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0" style={{ border: '2px solid var(--lj-border)' }}>
+            <a href="https://www.instagram.com/thelocaljewel/" target="_blank" rel="noopener noreferrer" className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0" style={{ border: '2px solid var(--lj-border)', background: '#000000' }}>
               <img src="/ig-avatar.png" alt="thelocaljewel" className="w-full h-full object-cover" />
             </a>
             <div>
