@@ -248,8 +248,8 @@ export default function LandingScreen() {
             Follow
           </a>
         </div>
-        <div className="overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-          <div className="flex gap-1.5 px-4" style={{ width: 'max-content' }}>
+        <div className="overflow-x-auto flex justify-center" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <div className="flex gap-1.5 px-4"  style={{ maxWidth: '100%' }}>
             {[
               { img: 'https://i.etsystatic.com/56104482/r/il/e5be99/6823344673/il_340x270.6823344673_akr1.jpg', caption: '4.4ct Radiant Hidden Halo Ring', url: 'https://www.etsy.com/listing/1899846111/44-carat-radiant-shaped-certified' },
               { img: 'https://i.etsystatic.com/56104482/r/il/c58bdd/6557149529/il_340x270.6557149529_j2mm.jpg', caption: '4.12ct Radiant Yellow Gold Ring', url: 'https://www.etsy.com/listing/1844478237/412-carat-radiant-diamond-ring-14k' },
