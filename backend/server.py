@@ -298,29 +298,67 @@ async def request_otp(req: OTPRequest):
     otp_hash = hashlib.sha256(otp.encode()).hexdigest()
     await db.otp_codes.insert_one({"identifier": identifier, "otp_hash": otp_hash, "user_id": user["user_id"], "created_at": datetime.now(timezone.utc), "expires_at": datetime.now(timezone.utc) + timedelta(minutes=10), "used": False})
     
-    # Send OTP via Twilio SMS
-    phone_to_send = user.get("phone") or identifier
-    sms_sent = False
-    if twilio_client and phone_to_send:
+    # Determine if identifier is email or phone
+    is_email = "@" in identifier
+    delivered = False
+    delivery_method = ""
+    
+    # Try email delivery via SendGrid
+    if is_email and sg_client:
         try:
-            # Normalize phone for Twilio (needs +1 prefix)
-            phone_normalized = phone_to_send.strip()
-            if not phone_normalized.startswith("+"):
-                phone_normalized = "+1" + phone_normalized.replace("-", "").replace(" ", "").replace("(", "").replace(")", "")
-            twilio_client.messages.create(
-                body=f"Your Local Jewel verification code is: {otp}",
-                from_=TWILIO_PHONE,
-                to=phone_normalized,
+            message = SGMail(
+                from_email=SENDGRID_FROM_EMAIL,
+                to_emails=identifier,
+                subject="Your Local Jewel Verification Code",
+                html_content=f"""
+                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h2 style="color: #1A1A1C; font-size: 22px; margin: 0;">The Local Jewel</h2>
+                    </div>
+                    <p style="color: #6B7280; font-size: 16px; line-height: 24px;">Your verification code is:</p>
+                    <div style="background: #F5F5F3; border: 1px solid #E5E5E3; border-radius: 12px; padding: 24px; text-align: center; margin: 20px 0;">
+                        <span style="font-size: 36px; font-weight: 700; letter-spacing: 0.3em; color: #0F5E4C;">{otp}</span>
+                    </div>
+                    <p style="color: #6B7280; font-size: 14px; line-height: 20px;">This code expires in 10 minutes. If you didn't request this, you can safely ignore this email.</p>
+                    <hr style="border: none; border-top: 1px solid #E5E5E3; margin: 30px 0;" />
+                    <p style="color: #9CA3AF; font-size: 12px; text-align: center;">The Local Jewel — Diamond Jewelry, Direct to You</p>
+                </div>
+                """,
             )
-            sms_sent = True
-            print(f"[OTP] SMS sent to {phone_normalized}")
+            sg_client.send(message)
+            delivered = True
+            delivery_method = "email"
+            print(f"[OTP] Email sent to {identifier}")
         except Exception as e:
-            print(f"[OTP] SMS failed: {e}")
+            print(f"[OTP] Email failed: {e}")
     
-    if not sms_sent:
-        print(f"[OTP] Code for {identifier}: {otp} (SMS not sent)")
+    # Try SMS delivery via Twilio (for phone numbers, or as fallback if email has a phone on file)
+    if not delivered:
+        phone_to_send = user.get("phone") if not is_email else user.get("phone")
+        if not phone_to_send and not is_email:
+            phone_to_send = identifier
+        
+        if twilio_client and phone_to_send:
+            try:
+                phone_normalized = phone_to_send.strip()
+                if not phone_normalized.startswith("+"):
+                    phone_normalized = "+1" + phone_normalized.replace("-", "").replace(" ", "").replace("(", "").replace(")", "")
+                twilio_client.messages.create(
+                    body=f"Your Local Jewel verification code is: {otp}",
+                    from_=TWILIO_PHONE,
+                    to=phone_normalized,
+                )
+                delivered = True
+                delivery_method = "sms"
+                print(f"[OTP] SMS sent to {phone_normalized}")
+            except Exception as e:
+                print(f"[OTP] SMS failed: {e}")
     
-    return {"status": "sent", "message": "Verification code sent to your phone"}
+    if not delivered:
+        print(f"[OTP] Code for {identifier}: {otp} (delivery failed)")
+    
+    msg = "Verification code sent to your email" if delivery_method == "email" else "Verification code sent to your phone" if delivery_method == "sms" else "Verification code generated"
+    return {"status": "sent", "message": msg}
 
 @app.post("/api/auth/verify-otp")
 async def verify_otp(req: OTPVerify):
