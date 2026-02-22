@@ -404,7 +404,7 @@ async def update_order(order_id: str, req: OrderUpdate, admin=Depends(require_ad
 async def get_settings_doc():
     doc = await db.settings.find_one({"_type": "site_settings"})
     if not doc:
-        doc = {"_type": "site_settings", "phone_number": "+1234567890", "whatsapp_link": "https://wa.me/1234567890", "live_chat_enabled": False, "gia_logo_visible": True, "igi_logo_visible": True, "reviews_count": "70+", "customers_count": "100+", "avg_savings": "$5,000", "email_notify_new_lead": True, "email_notify_quote": True}
+        doc = {"_type": "site_settings", "phone_number": "+15857108292", "whatsapp_link": "https://wa.me/15857108292", "live_chat_enabled": False, "gia_logo_visible": True, "igi_logo_visible": True, "reviews_count": "70+", "customers_count": "100+", "avg_savings": "$5,000", "email_notify_new_lead": True, "email_notify_quote": True}
         await db.settings.insert_one(doc)
     return doc
 
