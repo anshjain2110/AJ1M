@@ -6,6 +6,8 @@ import time
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List
 from contextlib import asynccontextmanager
+from dotenv import load_dotenv
+load_dotenv("/app/backend/.env")
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
