@@ -15,9 +15,9 @@ from passlib.hash import bcrypt
 # Env
 MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
 DB_NAME = os.environ.get("DB_NAME", "thelocaljewel")
-JWT_SECRET = os.environ.get("JWT_SECRET", "tlj-secret-key-change-in-production-2024")
-ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@thelocaljewel.com")
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "TLJadmin2024!")
+JWT_SECRET = os.environ.get("JWT_SECRET", "rG9oG5Eul803YO57JCGom4lFp99xXaLvRtbDdQpozd5VDkIWVKnb9quulv4LjawP")
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "ansh@thelocaljewel.com")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "Rakesh@2709")
 
 client = AsyncIOMotorClient(MONGO_URL)
 db = client[DB_NAME]
