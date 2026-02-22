@@ -251,18 +251,17 @@ export default function LandingScreen() {
         <div className="overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           <div className="flex gap-1.5 px-4" style={{ width: 'max-content' }}>
             {[
-              { img: 'https://i.etsystatic.com/56104482/r/il/e5be99/6823344673/il_340x270.6823344673_akr1.jpg', caption: '4.4ct Radiant Hidden Halo Ring' },
-              { img: 'https://i.etsystatic.com/56104482/r/il/c58bdd/6557149529/il_340x270.6557149529_j2mm.jpg', caption: '4.12ct Radiant Yellow Gold Ring' },
-              { img: 'https://i.etsystatic.com/56104482/r/il/acc787/6625116803/il_340x270.6625116803_8utf.jpg', caption: '3.32ct Oval Diamond Ring' },
-              { img: 'https://i.etsystatic.com/56104482/r/il/9c1489/6665834265/il_340x270.6665834265_ee2y.jpg', caption: '2.03ct Oval Solitaire Ring' },
-              { img: 'https://i.etsystatic.com/56104482/r/il/55d3fa/6640478330/il_340x270.6640478330_jzty.jpg', caption: '4.13ct Oval Ring Set' },
-              { img: 'https://i.etsystatic.com/56104482/r/il/2e9925/7063688688/il_340x270.7063688688_9xro.jpg', caption: '3.74ct Emerald Cut Ring' },
+              { img: 'https://i.etsystatic.com/56104482/r/il/e5be99/6823344673/il_340x270.6823344673_akr1.jpg', caption: '4.4ct Radiant Hidden Halo Ring', url: 'https://www.etsy.com/listing/1899846111/44-carat-radiant-shaped-certified' },
+              { img: 'https://i.etsystatic.com/56104482/r/il/c58bdd/6557149529/il_340x270.6557149529_j2mm.jpg', caption: '4.12ct Radiant Yellow Gold Ring', url: 'https://www.etsy.com/listing/1844478237/412-carat-radiant-diamond-ring-14k' },
+              { img: 'https://i.etsystatic.com/56104482/r/il/acc787/6625116803/il_340x270.6625116803_8utf.jpg', caption: '3.32ct Oval Diamond Ring', url: 'https://www.etsy.com/listing/1846334388/332-carat-oval-igi-certified-diamond' },
+              { img: 'https://i.etsystatic.com/56104482/r/il/9c1489/6665834265/il_340x270.6665834265_ee2y.jpg', caption: '2.03ct Oval Solitaire Ring', url: 'https://www.etsy.com/listing/1854673466/203-carat-f-vvs2-oval-solitaire-diamond' },
+              { img: 'https://i.etsystatic.com/56104482/r/il/55d3fa/6640478330/il_340x270.6640478330_jzty.jpg', caption: '4.13ct Oval Ring Set', url: 'https://www.etsy.com/listing/1873477215/413-carat-oval-diamond-ring-set-igi' },
+              { img: 'https://i.etsystatic.com/56104482/r/il/2e9925/7063688688/il_340x270.7063688688_9xro.jpg', caption: '3.74ct Emerald Cut Ring', url: 'https://www.etsy.com/listing/4343394593/374-carat-emerald-cut-diamond-ring-14k' },
             ].map((post, i) => (
-              <a key={i} href="https://www.instagram.com/thelocaljewel" target="_blank" rel="noopener noreferrer" className="relative flex-shrink-0 w-[150px] h-[150px] md:w-[185px] md:h-[185px] rounded-[10px] overflow-hidden group">
+              <a key={i} href={post.url} target="_blank" rel="noopener noreferrer" className="relative flex-shrink-0 w-[150px] h-[150px] md:w-[185px] md:h-[185px] rounded-[10px] overflow-hidden group">
                 <img src={post.img} alt={post.caption} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex flex-col items-center justify-center p-2">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 mb-1"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="white" strokeWidth="2"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" stroke="white" strokeWidth="2"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" stroke="white" strokeWidth="2"/></svg>
-                  <span className="text-[11px] text-white text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 leading-tight">{post.caption}</span>
+                  <span className="text-[12px] text-white text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 leading-tight font-medium">{post.caption}</span>
                 </div>
               </a>
             ))}
