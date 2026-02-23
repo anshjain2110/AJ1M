@@ -48,7 +48,7 @@ export const DIAMOND_SHAPES = [
   { id: 'asscher', label: 'Asscher', icon: 'Square' },
   { id: 'marquise', label: 'Marquise', icon: 'MoveHorizontal' },
   { id: 'heart', label: 'Heart', icon: 'Heart' },
-  { id: 'not_sure', label: 'Not sure', icon: 'HelpCircle' },
+  { id: 'not_sure', label: 'Other', icon: 'HelpCircle' },
 ];
 
 export const CARAT_RANGES = [
