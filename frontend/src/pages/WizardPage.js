@@ -79,15 +79,7 @@ export default function WizardPage() {
         return <BraceletScreen />;
       
       case 'diamond_shape':
-        return (
-          <SingleSelectScreen
-            screenId="diamond_shape"
-            title="Preferred diamond shape?"
-            subtitle="Each shape has its own unique character"
-            options={DIAMOND_SHAPES}
-            field="diamond_shape"
-          />
-        );
+        return <DiamondShapeScreen />;
       
       case 'carat_range':
         return (
