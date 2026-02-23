@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Star, Shield, Users, ArrowRight, ChevronRight, ChevronDown, ChevronLeft, ExternalLink } from 'lucide-react';
+import { Star, Shield, Users, ArrowRight, ChevronRight, ChevronDown, ChevronLeft, ExternalLink, Sparkles } from 'lucide-react';
 import { useWizard } from '../../../context/WizardContext';
 import { trackEvent } from '../../../utils/analytics';
 
