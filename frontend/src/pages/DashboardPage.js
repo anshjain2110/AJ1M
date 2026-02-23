@@ -165,6 +165,58 @@ export default function DashboardPage() {
                           </div>
                         </div>
 
+                        {/* Working on it status — shows when no quotes yet */}
+                        {(!detail.quotes || detail.quotes.length === 0) && stage === 'design_quotation' && (
+                          <div className="mb-4 p-5 rounded-[14px] text-center" style={{ background: 'rgba(15,94,76,0.03)', border: '1px solid rgba(15,94,76,0.1)' }}>
+                            <div className="flex justify-center mb-3">
+                              <div className="relative">
+                                <div className="w-14 h-14 rounded-full flex items-center justify-center text-[22px] font-bold" style={{ background: 'rgba(15,94,76,0.1)', color: 'var(--lj-accent)' }}>AJ</div>
+                                <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'var(--lj-accent)' }}>
+                                  <PenTool size={10} style={{ color: '#FFFFFF' }} />
+                                </div>
+                              </div>
+                            </div>
+                            <p className="text-[16px] font-medium mb-1" style={{ color: 'var(--lj-text)' }}>Ansh is working on your design & quotation</p>
+                            <p className="text-[13px] mb-4" style={{ color: 'var(--lj-muted)' }}>We're crafting something special for you. You'll be notified once it's ready.</p>
+                            <div className="flex justify-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full" style={{ background: 'var(--lj-accent)', animation: 'bounce 1.4s infinite 0s' }} />
+                              <span className="w-2 h-2 rounded-full" style={{ background: 'var(--lj-accent)', animation: 'bounce 1.4s infinite 0.2s' }} />
+                              <span className="w-2 h-2 rounded-full" style={{ background: 'var(--lj-accent)', animation: 'bounce 1.4s infinite 0.4s' }} />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Stage update messages */}
+                        {stage === 'in_production' && (
+                          <div className="mb-4 p-4 rounded-[10px] flex items-center gap-3" style={{ background: 'rgba(37,99,235,0.04)', border: '1px solid rgba(37,99,235,0.12)' }}>
+                            <Factory size={20} style={{ color: '#2563EB' }} />
+                            <div>
+                              <p className="text-[14px] font-medium" style={{ color: 'var(--lj-text)' }}>Your piece is in production</p>
+                              <p className="text-[13px]" style={{ color: 'var(--lj-muted)' }}>Our master craftsmen are bringing your design to life.</p>
+                            </div>
+                          </div>
+                        )}
+
+                        {stage === 'shipped' && (
+                          <div className="mb-4 p-4 rounded-[10px] flex items-center gap-3" style={{ background: 'rgba(124,58,237,0.04)', border: '1px solid rgba(124,58,237,0.12)' }}>
+                            <Truck size={20} style={{ color: '#7C3AED' }} />
+                            <div>
+                              <p className="text-[14px] font-medium" style={{ color: 'var(--lj-text)' }}>Your piece has been shipped!</p>
+                              <p className="text-[13px]" style={{ color: 'var(--lj-muted)' }}>It's on its way to you. Check tracking details below.</p>
+                            </div>
+                          </div>
+                        )}
+
+                        {stage === 'delivered' && (
+                          <div className="mb-4 p-4 rounded-[10px] flex items-center gap-3" style={{ background: 'rgba(22,163,74,0.04)', border: '1px solid rgba(22,163,74,0.12)' }}>
+                            <CheckCircle size={20} style={{ color: '#16A34A' }} />
+                            <div>
+                              <p className="text-[14px] font-medium" style={{ color: 'var(--lj-text)' }}>Delivered — Enjoy your piece!</p>
+                              <p className="text-[13px]" style={{ color: 'var(--lj-muted)' }}>We hope you love it. Feel free to leave us a review.</p>
+                            </div>
+                          </div>
+                        )}
+
                         {/* Quotation section */}
                         {detail.quotes && detail.quotes.length > 0 && (
                           <div className="mb-4 p-4 rounded-[10px]" style={{ background: 'var(--lj-bg)', border: '1px solid var(--lj-border)' }}>
