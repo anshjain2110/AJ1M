@@ -77,6 +77,46 @@ export default function TrackingPage() {
           ))}
         </div>
       </div>
+
+      {/* A/B Test Section */}
+      {abtest && (
+        <div className="p-5 rounded-[14px] mt-6" style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}>
+          <h3 className="text-[16px] font-medium mb-4 flex items-center gap-2" style={{ color: 'var(--lj-text)' }}>
+            <FlaskConical size={18} style={{ color: 'var(--lj-accent)' }} /> A/B Test: Lead Capture
+          </h3>
+          <div className="mb-4">
+            <label className="text-[13px] block mb-2" style={{ color: 'var(--lj-muted)' }}>Mode</label>
+            <div className="flex gap-2">
+              {[{ val: 'auto', label: 'Auto (50/50)' }, { val: 'variant_a', label: 'Force A (Button)' }, { val: 'variant_b', label: 'Force B (Popup)' }].map(m => (
+                <button key={m.val} onClick={async () => { await api('patch', '/api/admin/abtest', { lead_capture_mode: m.val }); const r = await api('get', '/api/admin/abtest'); setAbtest(r.data); }}
+                  className="flex-1 px-3 py-2 rounded-[10px] text-[13px] font-medium transition-all"
+                  style={{ background: abtest.lead_capture_mode === m.val ? 'rgba(15,94,76,0.08)' : 'var(--lj-bg)', border: `1.5px solid ${abtest.lead_capture_mode === m.val ? 'var(--lj-accent)' : 'var(--lj-border)'}`, color: abtest.lead_capture_mode === m.val ? 'var(--lj-accent)' : 'var(--lj-muted)' }}>
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          {abResults && (
+            <div className="space-y-3">
+              <p className="text-[13px] font-medium" style={{ color: 'var(--lj-muted)' }}>Conversion Results</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-[10px]" style={{ background: 'var(--lj-bg)', border: '1px solid var(--lj-border)' }}>
+                  <p className="text-[12px] font-medium mb-1" style={{ color: 'var(--lj-muted)' }}>Variant A (Button)</p>
+                  <p className="text-[22px] font-bold" style={{ color: 'var(--lj-text)' }}>{abResults.variant_a.conversion_rate}%</p>
+                  <p className="text-[11px]" style={{ color: 'var(--lj-muted)' }}>{abResults.variant_a.completed}/{abResults.variant_a.shown} completed</p>
+                  {abResults.variant_a.avg_time_to_submit_sec > 0 && <p className="text-[11px]" style={{ color: 'var(--lj-muted)' }}>Avg: {abResults.variant_a.avg_time_to_submit_sec}s</p>}
+                </div>
+                <div className="p-3 rounded-[10px]" style={{ background: 'var(--lj-bg)', border: '1px solid var(--lj-border)' }}>
+                  <p className="text-[12px] font-medium mb-1" style={{ color: 'var(--lj-muted)' }}>Variant B (Popup)</p>
+                  <p className="text-[22px] font-bold" style={{ color: 'var(--lj-text)' }}>{abResults.variant_b.conversion_rate}%</p>
+                  <p className="text-[11px]" style={{ color: 'var(--lj-muted)' }}>{abResults.variant_b.completed}/{abResults.variant_b.shown} completed</p>
+                  {abResults.variant_b.avg_time_to_submit_sec > 0 && <p className="text-[11px]" style={{ color: 'var(--lj-muted)' }}>Avg: {abResults.variant_b.avg_time_to_submit_sec}s</p>}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
