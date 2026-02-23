@@ -4,6 +4,7 @@ import WizardShell from '../components/wizard/WizardShell';
 import FloatingWidget from '../components/wizard/FloatingWidget';
 import LandingScreen from '../components/wizard/screens/LandingScreen';
 import SingleSelectScreen from '../components/wizard/SingleSelectScreen';
+import DiamondShapeScreen from '../components/wizard/DiamondShapeScreen';
 import BraceletScreen from '../components/wizard/screens/BraceletScreen';
 import RingSizeScreen from '../components/wizard/screens/RingSizeScreen';
 import InspirationScreen from '../components/wizard/screens/InspirationScreen';
