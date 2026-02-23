@@ -38,6 +38,7 @@ export default function ValueRevealScreen() {
   const [form, setForm] = useState({ first_name: '', phone: '', email: '', notes: '' });
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
+  const [popupDismissed, setPopupDismissed] = useState(false);
   const hasTracked = useRef(false);
   const popupTimer = useRef(null);
   const revealTimestamp = useRef(null);
