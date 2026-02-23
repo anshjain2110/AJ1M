@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAdmin } from '../../context/AdminContext';
-import { Activity, Save, Loader2, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { Activity, Save, Loader2, CheckCircle, AlertCircle, Clock, FlaskConical } from 'lucide-react';
 
 export default function TrackingPage() {
   const { api } = useAdmin();
   const [tracking, setTracking] = useState(null);
   const [events, setEvents] = useState([]);
+  const [abtest, setAbtest] = useState(null);
+  const [abResults, setAbResults] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -14,8 +16,10 @@ export default function TrackingPage() {
     Promise.all([
       api('get', '/api/admin/tracking'),
       api('get', '/api/admin/tracking/verify'),
-    ]).then(([tr, ev]) => {
-      setTracking(tr.data); setEvents(ev.data.events);
+      api('get', '/api/admin/abtest'),
+      api('get', '/api/admin/abtest/results'),
+    ]).then(([tr, ev, ab, abr]) => {
+      setTracking(tr.data); setEvents(ev.data.events); setAbtest(ab.data); setAbResults(abr.data);
     }).catch(console.error).finally(() => setLoading(false));
   }, [api]);
 
