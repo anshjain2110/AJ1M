@@ -460,3 +460,52 @@ async def verify_tracking(admin=Depends(require_admin)):
         count = await db.events.count_documents({"event_name": name})
         verification.append({"event": name, "total_count": count, "last_seen": last["server_timestamp"].isoformat() if last and "server_timestamp" in last and isinstance(last["server_timestamp"], datetime) else (str(last.get("server_timestamp", "never")) if last else "never")})
     return {"events": verification}
+
+
+# ── A/B Test Management ─────────────────────────────────────────
+
+async def get_abtest_doc():
+    doc = await db.settings.find_one({"_type": "abtest_settings"})
+    if not doc:
+        doc = {"_type": "abtest_settings", "lead_capture_mode": "auto", "variant_a_weight": 50}
+        await db.settings.insert_one(doc)
+    return doc
+
+@router.get("/abtest")
+async def get_abtest(admin=Depends(require_admin)):
+    doc = await get_abtest_doc()
+    return serialize_doc(doc)
+
+@router.patch("/abtest")
+async def update_abtest(req: dict, admin=Depends(require_admin)):
+    await get_abtest_doc()
+    update = {}
+    if "lead_capture_mode" in req and req["lead_capture_mode"] in ["auto", "variant_a", "variant_b"]:
+        update["lead_capture_mode"] = req["lead_capture_mode"]
+    if "variant_a_weight" in req:
+        update["variant_a_weight"] = max(0, min(100, int(req["variant_a_weight"])))
+    if update:
+        await db.settings.update_one({"_type": "abtest_settings"}, {"$set": update})
+    return serialize_doc(await get_abtest_doc())
+
+@router.get("/abtest/results")
+async def get_abtest_results(admin=Depends(require_admin)):
+    # Count variant assignments
+    variant_a_shown = await db.events.count_documents({"event_name": "tlj_ab_variant_shown", "event_data.variant": "A"})
+    variant_b_shown = await db.events.count_documents({"event_name": "tlj_ab_variant_shown", "event_data.variant": "B"})
+    # Count completions
+    variant_a_completed = await db.events.count_documents({"event_name": "tlj_ab_form_completed", "event_data.variant": "A"})
+    variant_b_completed = await db.events.count_documents({"event_name": "tlj_ab_form_completed", "event_data.variant": "B"})
+    # Avg time to submit
+    pipeline_a = [{"$match": {"event_name": "tlj_ab_form_completed", "event_data.variant": "A", "event_data.time_to_submit_ms": {"$exists": True}}}, {"$group": {"_id": None, "avg_ms": {"$avg": "$event_data.time_to_submit_ms"}}}]
+    pipeline_b = [{"$match": {"event_name": "tlj_ab_form_completed", "event_data.variant": "B", "event_data.time_to_submit_ms": {"$exists": True}}}, {"$group": {"_id": None, "avg_ms": {"$avg": "$event_data.time_to_submit_ms"}}}]
+    avg_a = await db.events.aggregate(pipeline_a).to_list(1)
+    avg_b = await db.events.aggregate(pipeline_b).to_list(1)
+    
+    rate_a = round((variant_a_completed / variant_a_shown) * 100, 1) if variant_a_shown > 0 else 0
+    rate_b = round((variant_b_completed / variant_b_shown) * 100, 1) if variant_b_shown > 0 else 0
+    
+    return {
+        "variant_a": {"shown": variant_a_shown, "completed": variant_a_completed, "conversion_rate": rate_a, "avg_time_to_submit_sec": round(avg_a[0]["avg_ms"] / 1000, 1) if avg_a and avg_a[0].get("avg_ms") else 0},
+        "variant_b": {"shown": variant_b_shown, "completed": variant_b_completed, "conversion_rate": rate_b, "avg_time_to_submit_sec": round(avg_b[0]["avg_ms"] / 1000, 1) if avg_b and avg_b[0].get("avg_ms") else 0},
+    }
