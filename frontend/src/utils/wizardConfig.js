@@ -70,10 +70,13 @@ export const PRIORITIES = [
 
 export const METALS = [
   { id: 'platinum', label: 'Platinum' },
-  { id: '14k_white_gold', label: '14k White Gold' },
-  { id: '14k_yellow_gold', label: '14k Yellow Gold' },
-  { id: '14k_rose_gold', label: '14k Rose Gold' },
-  { id: '18k_gold', label: '18k Gold' },
+  { id: '14k_white_gold', label: '14K White Gold' },
+  { id: '14k_yellow_gold', label: '14K Yellow Gold' },
+  { id: '14k_rose_gold', label: '14K Rose Gold' },
+  { id: '18k_white_gold', label: '18K White Gold' },
+  { id: '18k_yellow_gold', label: '18K Yellow Gold' },
+  { id: '18k_rose_gold', label: '18K Rose Gold' },
+  { id: 'silver', label: 'Silver' },
   { id: 'not_sure', label: 'Not sure' },
 ];
 
