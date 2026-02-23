@@ -4,20 +4,51 @@ import { ArrowLeft, ArrowRight, Shield, Sparkles } from 'lucide-react';
 import { trackEvent } from '../../../utils/analytics';
 import CountUp from 'react-countup';
 
+const SAVINGS_BY_CARAT = {
+  '0.5_0.9': [1000, 1500],
+  '1.0_1.4': [2000, 2500],
+  '1.5_1.9': [3000, 3500],
+  '2.0_2.9': [4000, 4500],
+  '3.0_plus': [5000, 5500],
+  'not_sure': [3000, 5000],
+};
+
 export default function ValueRevealScreen() {
   const { goNext, goBack, state } = useWizard();
   const [revealed, setRevealed] = useState(false);
   const [showContent, setShowContent] = useState(false);
   const hasTracked = useRef(false);
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  useEffect(() => { if (!hasTracked.current) { trackEvent('tlj_value_reveal_view', { savings_variant: '$4,000-$8,000' }, { lead_id: state.leadId }); hasTracked.current = true; } if (prefersReducedMotion) { setRevealed(true); setShowContent(true); } else { const t1 = setTimeout(() => setRevealed(true), 800); const t2 = setTimeout(() => setShowContent(true), 1200); return () => { clearTimeout(t1); clearTimeout(t2); }; } }, [prefersReducedMotion, state.leadId]);
+
+  const caratRange = state.answers.carat_range || 'not_sure';
+  const [savingsLow, savingsHigh] = SAVINGS_BY_CARAT[caratRange] || SAVINGS_BY_CARAT['not_sure'];
+
+  useEffect(() => {
+    if (!hasTracked.current) {
+      trackEvent('tlj_value_reveal_view', { savings_variant: `$${savingsLow.toLocaleString()}-$${savingsHigh.toLocaleString()}`, carat_range: caratRange }, { lead_id: state.leadId });
+      hasTracked.current = true;
+    }
+    if (prefersReducedMotion) { setRevealed(true); setShowContent(true); }
+    else {
+      const t1 = setTimeout(() => setRevealed(true), 800);
+      const t2 = setTimeout(() => setShowContent(true), 1200);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
+    }
+  }, [prefersReducedMotion, state.leadId, savingsLow, savingsHigh, caratRange]);
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-4 py-10 max-w-[520px] mx-auto w-full text-center">
       <div className="w-16 h-16 rounded-full flex items-center justify-center mb-8" style={{ background: 'rgba(15,94,76,0.08)', border: '1px solid rgba(15,94,76,0.15)', opacity: revealed ? 1 : 0, transition: 'opacity 600ms var(--lj-ease)' }}><Sparkles size={28} style={{ color: 'var(--lj-accent)' }} /></div>
       <p className="text-[16px] leading-[24px] mb-4" style={{ color: 'var(--lj-muted)', opacity: revealed ? 1 : 0, transition: 'opacity 400ms var(--lj-ease)' }}>Based on what you're looking for...</p>
       <h2 className="text-[13px] leading-[18px] uppercase tracking-widest mb-3 font-medium" style={{ color: 'var(--lj-accent)', opacity: revealed ? 1 : 0, transition: 'opacity 400ms var(--lj-ease) 200ms' }}>Customers like you typically save</h2>
       <div className="mb-6" data-testid="value-reveal-savings-amount" style={{ opacity: revealed ? 1 : 0, transform: revealed ? 'translateY(0)' : 'translateY(8px)', transition: 'all 600ms var(--lj-ease) 400ms' }}>
-        <span className="text-[48px] leading-[56px] font-bold" style={{ color: 'var(--lj-accent)' }}>{revealed ? (prefersReducedMotion ? '$4,000 – $8,000' : <><span>$</span><CountUp end={4000} duration={1.2} separator="," /><span> – $</span><CountUp end={8000} duration={1.5} separator="," /></>) : '$0'}</span>
+        <span className="text-[48px] leading-[56px] font-bold" style={{ color: 'var(--lj-accent)' }}>
+          {revealed ? (
+            prefersReducedMotion
+              ? `$${savingsLow.toLocaleString()} – $${savingsHigh.toLocaleString()}`
+              : <><span>$</span><CountUp end={savingsLow} duration={1.2} separator="," /><span> – $</span><CountUp end={savingsHigh} duration={1.5} separator="," /></>
+          ) : '$0'}
+        </span>
       </div>
       <p className="text-[16px] leading-[24px] mb-8 max-w-sm" style={{ color: 'var(--lj-muted)', opacity: showContent ? 1 : 0, transition: 'opacity 400ms var(--lj-ease)' }}>compared to Brilliant Earth, Grown Brilliance, and retail jewelers.</p>
       <p className="text-[16px] leading-[24px] mb-8 max-w-sm italic" style={{ color: 'var(--lj-text)', opacity: showContent ? 1 : 0, transition: 'opacity 400ms var(--lj-ease) 200ms' }}>"Same GIA & IGI Certified diamonds. Same quality. You're just not paying for their marketing budget."</p>
