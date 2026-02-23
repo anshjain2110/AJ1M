@@ -8,14 +8,23 @@ const HERO_IMAGE = '/hero-photo.jpeg';
 const COMPARISON = {
   savingsAmount: '$4,200',
   example: {
-    ringType: '1.5ct Oval Solitaire Engagement Ring',
-    centerStone: '1.52ct Oval',
+    ring: '4.5ct Radiant Hidden Halo',
+    type: 'Engagement Ring',
+    centerStone: '3ct Radiant',
     colorClarity: 'F / VS1',
-    metal: '14k White Gold',
-    certification: 'GIA Certified',
+    metal: '14K White Gold',
+    retailCert: 'IGI Certified',
+    tljCert: 'IGI - LG687583822',
+    tljCertLink: 'https://api.igi.org/viewpdf.php?r=LG687583822&json=[{%22REPORT%20NUMBER%22:%22LG687583822%22,%22REPORT%20DATE%22:%22March%208,%202025%22,%22DESCRIPTION%22:%22LABORATORY%20GROWN%20DIAMOND%22,%22SHAPE%20AND%20CUT%22:%22CUT%20CORNERED%20RECTANGULAR%20MODIFIED%20BRILLIANT%22,%22CARAT%20WEIGHT%22:%223.01%20Carats%22,%22COLOR%20GRADE%22:%22F%22,%22CLARITY%20GRADE%22:%22VS%201%22,%22CUT%20GRADE%22:%22%22,%22POLISH%22:%22EXCELLENT%22,%22SYMMETRY%22:%22EXCELLENT%22,%22Measurements%22:%2210.48%20x%207.11%20x%204.68%20mm%22,%22Table%20Size%22:%2262%%22,%22Crown%20Height%22:%2213.5%%20-%2042%C2%B0%22,%22Pavilion%20Depth%22:%2248%%20-%2033.3%C2%B0%22,%22Girdle%20Thickness%22:%22SLIGHTLY%20THICK%22,%22Culet%22:%22POINTED%22,%22Total%20Depth%22:%2265.8%%22,%22FLUORESCENCE%22:%22NONE%22,%22COMMENTS%22:%22This%20Laboratory%20Grown%20Diamond%20was%20created%20by%20Chemical%20Vapor%20Deposition%20(CVD)%20growth%20process%22,%22Inscription(s)%22:%22IGI%20LG687583822%22,%22.%22:%22%22,%22REPORT_SUF%22:%22LEGAL%22,%22PDF_FLAG%22:%22Y%22,%22REPORT1_PDF%22:%22FDR687583822.pdf%22,%22REPORT2_PDF%22:%22%22,%22GOODS_FLAG%22:%22L%22,%22HNA_FLAG%22:%22N%22,%22REC_DIA_DTL_ID%22:0,%22LOCATION_MST_ID%22:2,%22REPORT_TYPE%22:87,%22REPORT_FORMAT%22:280,%22REPORT_VIDEO%22:%22%22,%22REPORT_IMAGE%22:%22%22,%22ECERT_FLAG%22:%22N%22}]',
+    tljProductLink: 'https://www.etsy.com/listing/1899846111/44-carat-radiant-shaped-certified',
     retailPrice: '$12,800',
     tljPrice: '$8,600',
     savings: '$4,200',
+    competitors: [
+      { name: 'Brilliant Earth', url: 'https://www.brilliantearth.com/lab-diamonds-search/?shapes=Radiant&carats_min=4&carats_max=5' },
+      { name: 'Grown Brilliance', url: 'https://www.grownbrilliance.com/collections/radiant-lab-grown-diamond-engagement-rings' },
+      { name: 'Blue Nile', url: 'https://www.bluenile.com/diamond-search?shape=RA&minCarat=4&maxCarat=5&labGrown=true' },
+    ],
   },
 };
 
