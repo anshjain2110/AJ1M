@@ -158,7 +158,7 @@ export default function ValueRevealScreen() {
 
       {/* Variant B: Popup form */}
       {variant === 'B' && showPopup && (
-        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center" onClick={() => setShowPopup(false)}>
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center" onClick={dismissPopup}>
           <div className="absolute inset-0 bg-black/30" style={{ animation: 'fadeIn 300ms var(--lj-ease)' }} />
           <div
             className="relative w-full max-w-[440px] max-h-[90vh] overflow-y-auto rounded-t-[20px] sm:rounded-[20px] p-5"
@@ -166,7 +166,7 @@ export default function ValueRevealScreen() {
             onClick={e => e.stopPropagation()}
           >
             {/* Close */}
-            <button onClick={() => setShowPopup(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center hover:bg-[#F0F0EE] transition-colors">
+            <button onClick={dismissPopup} className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center hover:bg-[#F0F0EE] transition-colors">
               <X size={18} style={{ color: 'var(--lj-muted)' }} />
             </button>
 
