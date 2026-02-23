@@ -283,6 +283,39 @@ async def submit_lead(req: LeadSubmitRequest, request: Request):
     await db.leads.update_one({"lead_id": req.lead_id}, {"$set": {"user_id": user_id}})
     token = create_jwt(user_id, email_val or phone)
 
+    # Send new lead notification email to admin
+    if sg_client:
+        try:
+            product = req.answers.get("product_type", "").replace("_", " ").title()
+            budget = req.answers.get("budget", "").replace("_", " ")
+            diamond = req.answers.get("diamond_shape", "").replace("_", " ").title()
+            carat = req.answers.get("carat_range", "").replace("_", " ")
+            notif = SGMail(
+                from_email=SENDGRID_FROM_EMAIL,
+                to_emails=SENDGRID_FROM_EMAIL,
+                subject=f"New Lead: {req.first_name} — {product}",
+                html_content=f"""
+                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 30px 20px;">
+                    <h2 style="color: #0F5E4C; font-size: 20px; margin: 0 0 20px;">New Lead Submitted</h2>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                        <tr><td style="padding: 8px 0; color: #6B7280; border-bottom: 1px solid #E5E5E3;">Name</td><td style="padding: 8px 0; color: #1A1A1C; font-weight: 600; border-bottom: 1px solid #E5E5E3; text-align: right;">{req.first_name}</td></tr>
+                        <tr><td style="padding: 8px 0; color: #6B7280; border-bottom: 1px solid #E5E5E3;">Phone</td><td style="padding: 8px 0; color: #1A1A1C; font-weight: 600; border-bottom: 1px solid #E5E5E3; text-align: right;">{phone or '—'}</td></tr>
+                        <tr><td style="padding: 8px 0; color: #6B7280; border-bottom: 1px solid #E5E5E3;">Email</td><td style="padding: 8px 0; color: #1A1A1C; font-weight: 600; border-bottom: 1px solid #E5E5E3; text-align: right;">{email_val or '—'}</td></tr>
+                        <tr><td style="padding: 8px 0; color: #6B7280; border-bottom: 1px solid #E5E5E3;">Product</td><td style="padding: 8px 0; color: #1A1A1C; font-weight: 600; border-bottom: 1px solid #E5E5E3; text-align: right;">{product}</td></tr>
+                        <tr><td style="padding: 8px 0; color: #6B7280; border-bottom: 1px solid #E5E5E3;">Diamond</td><td style="padding: 8px 0; color: #1A1A1C; font-weight: 600; border-bottom: 1px solid #E5E5E3; text-align: right;">{diamond} {carat}</td></tr>
+                        <tr><td style="padding: 8px 0; color: #6B7280;">Budget</td><td style="padding: 8px 0; color: #1A1A1C; font-weight: 600; text-align: right;">{budget}</td></tr>
+                    </table>
+                    {f'<p style="margin: 16px 0 0; padding: 12px; background: #F5F5F3; border-radius: 8px; font-size: 13px; color: #6B7280;">Note: {req.notes}</p>' if req.notes else ''}
+                    <hr style="border: none; border-top: 1px solid #E5E5E3; margin: 20px 0;" />
+                    <p style="font-size: 12px; color: #9CA3AF;">Lead ID: {req.lead_id} • The Local Jewel</p>
+                </div>
+                """,
+            )
+            sg_client.send(notif)
+            print(f"[NOTIF] New lead email sent for {req.first_name}")
+        except Exception as e:
+            print(f"[NOTIF] Email failed: {e}")
+
     return {"status": "submitted", "lead_id": req.lead_id, "user_id": user_id, "token": token, "first_name": req.first_name}
 
 # ── API: Auth (OTP) ──────────────────────────────────────────
