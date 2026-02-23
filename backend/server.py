@@ -430,6 +430,13 @@ async def public_settings():
         return {"phone_number": "+15857108292", "whatsapp_link": "https://wa.me/15857108292", "live_chat_enabled": False, "gia_logo_visible": True, "igi_logo_visible": True, "reviews_count": "70+", "customers_count": "100+", "avg_savings": "$5,000"}
     return {"phone_number": doc.get("phone_number", ""), "whatsapp_link": doc.get("whatsapp_link", ""), "live_chat_enabled": doc.get("live_chat_enabled", False), "gia_logo_visible": doc.get("gia_logo_visible", True), "igi_logo_visible": doc.get("igi_logo_visible", True), "reviews_count": doc.get("reviews_count", "70+"), "customers_count": doc.get("customers_count", "100+"), "avg_savings": doc.get("avg_savings", "$5,000")}
 
+@app.get("/api/abtest/config")
+async def get_abtest_config():
+    doc = await db.settings.find_one({"_type": "abtest_settings"})
+    if not doc:
+        return {"lead_capture_mode": "auto", "variant_a_weight": 50}
+    return {"lead_capture_mode": doc.get("lead_capture_mode", "auto"), "variant_a_weight": doc.get("variant_a_weight", 50)}
+
 # ── Health ───────────────────────────────────────────────────
 
 @app.get("/api/health")
