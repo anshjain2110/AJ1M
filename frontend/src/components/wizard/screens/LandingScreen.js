@@ -262,6 +262,48 @@ export default function LandingScreen() {
         </div>
       </div>
 
+      {/* Custom Cut Diamonds Section */}
+      <div className="px-4 py-12" style={{ borderTop: '1px solid var(--lj-border)' }}>
+        <div className="max-w-2xl mx-auto">
+          <div className="flex items-center gap-2 justify-center mb-2">
+            <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: 'rgba(15,94,76,0.08)' }}>
+              <Sparkles size={14} style={{ color: 'var(--lj-accent)' }} />
+            </div>
+            <span className="text-[12px] font-medium uppercase tracking-wider" style={{ color: 'var(--lj-accent)' }}>Exclusive</span>
+          </div>
+          <h2 className="text-[22px] leading-[28px] font-medium text-center mb-2" style={{ color: 'var(--lj-text)' }}>
+            We Custom Cut Diamonds
+          </h2>
+          <p className="text-[15px] leading-[22px] text-center mb-6" style={{ color: 'var(--lj-muted)' }}>
+            Shapes never seen before — letters, symbols, initials, anything you dream of.
+          </p>
+
+          {/* Image showcase */}
+          <div className="grid grid-cols-5 gap-2 mb-5">
+            <div className="col-span-2 space-y-2">
+              <div className="rounded-[12px] overflow-hidden" style={{ border: '1px solid var(--lj-border)' }}>
+                <img src="/custom-cut-1.jpeg" alt="Custom cut diamond alphabet" className="w-full h-auto" loading="lazy" />
+              </div>
+              <div className="rounded-[12px] overflow-hidden" style={{ border: '1px solid var(--lj-border)' }}>
+                <img src="/custom-cut-2.jpeg" alt="Custom cut diamond trees" className="w-full h-auto" loading="lazy" />
+              </div>
+            </div>
+            <div className="col-span-3 rounded-[12px] overflow-hidden" style={{ border: '1px solid var(--lj-border)' }}>
+              <img src="/custom-cut-ring.jpg" alt="Custom letter diamond rings" className="w-full h-full object-cover" loading="lazy" />
+            </div>
+          </div>
+
+          <p className="text-[13px] text-center mb-5" style={{ color: 'var(--lj-muted)' }}>
+            From A–Z alphabet diamonds to custom shapes — set in 14K gold rings, pendants, and more.
+          </p>
+          <div className="flex justify-center">
+            <button onClick={handleStartWizard} className="min-h-[44px] px-6 rounded-[14px] font-medium text-[14px] inline-flex items-center gap-2 transition-all duration-300 active:scale-[0.99]" style={{ background: 'var(--lj-accent)', color: '#FFFFFF' }}>
+              Request a Custom Cut <ArrowRight size={16} />
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Instagram Feed Section */}
       <div className="py-10" style={{ borderTop: '1px solid var(--lj-border)' }}>
         <div className="px-4 max-w-2xl mx-auto mb-6 flex items-center justify-between">
