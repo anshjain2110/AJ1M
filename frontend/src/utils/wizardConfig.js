@@ -131,8 +131,8 @@ export function getScreenFlow(answers) {
   // Screen 6: Priority
   flow.push('priority');
   
-  // Screen 7: Metal Preference (skip for Loose Diamond)
-  if (product !== 'loose_diamond') {
+  // Screen 7: Metal Preference (skip for Loose Diamond AND Tennis Bracelet — already asked in bracelet specifics)
+  if (product !== 'loose_diamond' && product !== 'tennis_bracelet') {
     flow.push('metal');
   }
   
