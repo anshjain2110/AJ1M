@@ -113,6 +113,8 @@ export default function ValueRevealScreen() {
     goNext('value_reveal');
   };
 
+  const dismissPopup = () => { setShowPopup(false); setPopupDismissed(true); trackEvent('tlj_ab_popup_dismissed', { variant: 'B' }, { lead_id: state.leadId }); };
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-4 py-10 max-w-[520px] mx-auto w-full text-center">
       <div className="w-16 h-16 rounded-full flex items-center justify-center mb-8" style={{ background: 'rgba(15,94,76,0.08)', border: '1px solid rgba(15,94,76,0.15)', opacity: revealed ? 1 : 0, transition: 'opacity 600ms var(--lj-ease)' }}><Sparkles size={28} style={{ color: 'var(--lj-accent)' }} /></div>
