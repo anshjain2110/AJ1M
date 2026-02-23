@@ -108,7 +108,15 @@ export default function LandingScreen() {
           <div className="grid md:grid-cols-2 gap-3">
             {/* Traditional Retail */}
             <div className="p-4 rounded-[14px]" style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}>
-              <h4 className="text-[13px] font-medium mb-3 text-center" style={{ color: 'var(--lj-muted)' }}>Traditional Retail</h4>
+              <h4 className="text-[13px] font-medium mb-2 text-center" style={{ color: 'var(--lj-muted)' }}>Traditional Retail</h4>
+              {/* Competitor links right under title */}
+              <div className="flex flex-wrap justify-center gap-1.5 mb-3">
+                {ex.competitors.map((c, ci) => (
+                  <a key={ci} href={c.url} target="_blank" rel="noopener noreferrer" className="text-[11px] px-2 py-1 rounded-full transition-colors hover:bg-[#EDEDEB]" style={{ color: 'var(--lj-muted)', border: '1px solid var(--lj-border)' }}>
+                    {c.name} ↗
+                  </a>
+                ))}
+              </div>
               <div className="space-y-2.5">
                 {[['Ring', ex.ring], ['Type', ex.type], ['Center Stone', ex.centerStone], ['Color / Clarity', ex.colorClarity], ['Metal', ex.metal], ['Certification', ex.retailCert]].map(([label, value]) => (
                   <div key={label} className="flex justify-between text-[13px]">
@@ -123,21 +131,16 @@ export default function LandingScreen() {
                   </div>
                 </div>
               </div>
-              {/* Competitor links */}
-              <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--lj-border)' }}>
-                <p className="text-[11px] mb-2" style={{ color: 'var(--lj-muted)' }}>Compare prices at:</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {ex.competitors.map((c, ci) => (
-                    <a key={ci} href={c.url} target="_blank" rel="noopener noreferrer" className="text-[11px] px-2 py-1 rounded-full transition-colors hover:bg-[#EDEDEB]" style={{ color: 'var(--lj-muted)', border: '1px solid var(--lj-border)' }}>
-                      {c.name} ↗
-                    </a>
-                  ))}
-                </div>
-              </div>
             </div>
             {/* The Local Jewel */}
             <div className="p-4 rounded-[14px]" style={{ background: 'var(--lj-surface)', border: '2px solid var(--lj-accent)' }}>
-              <h4 className="text-[13px] font-medium mb-3 text-center" style={{ color: 'var(--lj-accent)' }}>The Local Jewel</h4>
+              <h4 className="text-[13px] font-medium mb-2 text-center" style={{ color: 'var(--lj-accent)' }}>The Local Jewel</h4>
+              {/* Store link right under title */}
+              <div className="flex justify-center mb-3">
+                <a href={ex.tljProductLink} target="_blank" rel="noopener noreferrer" className="text-[11px] px-2 py-1 rounded-full transition-colors hover:opacity-80" style={{ color: 'var(--lj-accent)', border: '1px solid rgba(15,94,76,0.2)' }}>
+                  View this piece ↗
+                </a>
+              </div>
               <div className="space-y-2.5">
                 {[['Ring', ex.ring], ['Type', ex.type], ['Center Stone', ex.centerStone], ['Color / Clarity', ex.colorClarity], ['Metal', ex.metal]].map(([label, value]) => (
                   <div key={label} className="flex justify-between text-[13px]">
@@ -158,12 +161,6 @@ export default function LandingScreen() {
                     <span className="text-[18px] font-semibold" style={{ color: 'var(--lj-accent)' }}>{ex.tljPrice}</span>
                   </div>
                 </div>
-              </div>
-              {/* View listing link */}
-              <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(15,94,76,0.15)' }}>
-                <a href={ex.tljProductLink} target="_blank" rel="noopener noreferrer" className="text-[12px] font-medium flex items-center justify-center gap-1 transition-opacity hover:opacity-80" style={{ color: 'var(--lj-accent)' }}>
-                  View this piece on our store ↗
-                </a>
               </div>
             </div>
           </div>
