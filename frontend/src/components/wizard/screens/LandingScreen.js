@@ -15,7 +15,7 @@ const COMPARISON = {
     metal: '14K White Gold',
     retailCert: 'IGI Certified',
     tljCert: 'IGI - LG687583822',
-    tljCertLink: 'https://customer-assets.emergentagent.com/job_prod-priority/artifacts/1bft03cd_thelocaljewel%20igi.pdf',
+    tljCertLink: '/igi-certificate.pdf',
     tljProductLink: 'https://www.etsy.com/listing/1899846111/44-carat-radiant-shaped-certified',
     retailPrice: '$5,800',
     tljPrice: '$1,800',
