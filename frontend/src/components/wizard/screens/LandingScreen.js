@@ -6,7 +6,7 @@ import { trackEvent } from '../../../utils/analytics';
 const HERO_IMAGE = '/hero-photo.jpeg';
 
 const COMPARISON = {
-  savingsAmount: '$4,000',
+  savingsAmount: '$4,200',
   example: {
     ring: '4.5ct Radiant Hidden Halo',
     type: 'Engagement Ring',
