@@ -74,7 +74,7 @@ export default function ValueRevealScreen() {
     trackEvent('tlj_ab_variant_shown', { variant }, { lead_id: state.leadId });
 
     if (variant === 'B') {
-      popupTimer.current = setTimeout(() => setShowPopup(true), 3000);
+      popupTimer.current = setTimeout(() => setShowPopup(true), 4000);
     }
     return () => { if (popupTimer.current) clearTimeout(popupTimer.current); };
   }, [variant, savingsLow, savingsHigh, caratRange, state.leadId]);
