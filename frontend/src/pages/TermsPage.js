@@ -32,7 +32,7 @@ export default function TermsPage() {
 
           <Section title="Production and Delivery">
             <ul className="list-disc pl-5 space-y-1" style={{ color: 'var(--lj-muted)' }}>
-              <li>Standard production: 2-4 weeks for most custom pieces</li><li>Rush orders may be available for an additional fee</li><li>Delivery times vary based on shipping method and location</li><li>We are not responsible for delays caused by carriers or customs</li>
+              <li>Standard production: 3-7 days for most custom pieces</li><li>Rush orders may be available for an additional fee</li><li>Delivery times vary based on shipping method and location</li><li>We are not responsible for delays caused by carriers or customs</li>
             </ul>
           </Section>
 
