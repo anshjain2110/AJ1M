@@ -14,6 +14,7 @@ import SettingsPage from './pages/admin/SettingsPage';
 import TrackingPage from './pages/admin/TrackingPage';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
+import CutsPage from './pages/CutsPage';
 
 function App() {
   return (
