@@ -12,6 +12,8 @@ import LeadsCRM from './pages/admin/LeadsCRM';
 import OrdersPage from './pages/admin/OrdersPage';
 import SettingsPage from './pages/admin/SettingsPage';
 import TrackingPage from './pages/admin/TrackingPage';
+import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
 
 function App() {
   return (
