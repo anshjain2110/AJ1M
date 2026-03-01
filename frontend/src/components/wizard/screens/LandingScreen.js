@@ -350,6 +350,36 @@ export default function LandingScreen() {
         </button>
       </div>
 
+      {/* Contact & Shipping Info */}
+      <div className="px-4 py-10" style={{ borderTop: '1px solid var(--lj-border)' }}>
+        <div className="max-w-2xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="p-4 rounded-[14px] flex flex-col items-center text-center" style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center mb-3" style={{ background: 'rgba(15,94,76,0.08)' }}>
+                <Globe size={18} style={{ color: 'var(--lj-accent)' }} />
+              </div>
+              <p className="text-[14px] font-medium mb-1" style={{ color: 'var(--lj-text)' }}>Worldwide Shipping</p>
+              <p className="text-[12px]" style={{ color: 'var(--lj-muted)' }}>Free insured shipping across the United States & international orders welcome</p>
+            </div>
+            <div className="p-4 rounded-[14px] flex flex-col items-center text-center" style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center mb-3" style={{ background: 'rgba(15,94,76,0.08)' }}>
+                <MapPin size={18} style={{ color: 'var(--lj-accent)' }} />
+              </div>
+              <p className="text-[14px] font-medium mb-1" style={{ color: 'var(--lj-text)' }}>Our Location</p>
+              <p className="text-[12px]" style={{ color: 'var(--lj-muted)' }}>480N Orlando Ave<br />Winter Park, FL 32789</p>
+            </div>
+            <div className="p-4 rounded-[14px] flex flex-col items-center text-center" style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center mb-3" style={{ background: 'rgba(15,94,76,0.08)' }}>
+                <Phone size={18} style={{ color: 'var(--lj-accent)' }} />
+              </div>
+              <p className="text-[14px] font-medium mb-1" style={{ color: 'var(--lj-text)' }}>Get in Touch</p>
+              <a href="tel:+15857108292" className="text-[12px] hover:underline" style={{ color: 'var(--lj-accent)' }}>585-710-8292</a>
+              <p className="text-[12px] mt-0.5" style={{ color: 'var(--lj-muted)' }}>ansh@thelocaljewel.com</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Footer */}
       <div className="px-4 py-8 text-center" style={{ borderTop: '1px solid var(--lj-border)' }}>
         <p className="text-[13px] mb-3" style={{ color: 'var(--lj-muted)' }}>
