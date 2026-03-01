@@ -25,7 +25,7 @@ export default function TermsPage() {
           <Section title="Custom Orders">
             <p style={{ color: 'var(--lj-muted)' }}>Custom jewelry is made specifically for you. By placing a custom order:</p>
             <ul className="list-disc pl-5 space-y-1 mt-2" style={{ color: 'var(--lj-muted)' }}>
-              <li>You agree to a non-refundable deposit (typically 50%) to begin production</li><li>Production begins only after design approval</li><li>Changes after production starts may incur additional fees</li><li>Custom items are non-returnable unless defective</li>
+              <li>Production begins only after design approval</li><li>Changes after production starts may incur additional fees</li><li>Custom items are non-returnable unless defective</li>
             </ul>
             <p className="mt-2" style={{ color: 'var(--lj-muted)' }}>We provide detailed renders and specifications before production. Please review carefully before approving.</p>
           </Section>
