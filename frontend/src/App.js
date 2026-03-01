@@ -27,6 +27,8 @@ function App() {
         } />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
 
         {/* Admin routes — all share same AdminProvider */}
         <Route path="/admin/*" element={
