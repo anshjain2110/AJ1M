@@ -30,6 +30,7 @@ function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/terms" element={<TermsPage />} />
+        <Route path="/cuts" element={<CutsPage />} />
 
         {/* Admin routes — all share same AdminProvider */}
         <Route path="/admin/*" element={
