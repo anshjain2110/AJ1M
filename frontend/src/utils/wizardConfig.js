@@ -145,9 +145,6 @@ export function getScreenFlow(answers) {
     }
   }
   
-  // Screen 9: Budget
-  flow.push('budget');
-  
   // Screen 10: Inspiration
   flow.push('has_inspiration');
   if (answers.has_inspiration === 'yes') {

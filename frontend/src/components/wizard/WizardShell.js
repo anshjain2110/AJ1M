@@ -52,9 +52,6 @@ export default function WizardShell({ children, showBack = true, showProgress = 
       {/* Progress bar - shown on all wizard steps */}
       {showProgress && isWizardScreen && currentScreen !== 'thank_you' && (
         <div className="px-4 pt-2 pb-1">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[13px] leading-[18px]" style={{ color: 'var(--lj-muted)' }} data-testid="wizard-progress">Step {currentStep} of {totalSteps}</span>
-          </div>
           <div className="h-1 rounded-full overflow-hidden" style={{ background: '#EDEDEB' }}>
             <div className="h-full rounded-full" style={{ width: `${Math.min(progress, 100)}%`, background: 'var(--lj-accent)', transition: 'width 500ms var(--lj-ease)' }} />
           </div>
