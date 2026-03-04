@@ -188,7 +188,7 @@ export default function LandingScreen() {
 
       {/* Social Proof Bar */}
       <div className="px-4 py-5 flex items-center justify-center gap-6 md:gap-10 overflow-x-auto" style={{ borderTop: '1px solid var(--lj-border)', borderBottom: '1px solid var(--lj-border)' }}>
-        <div className="flex items-center gap-2 flex-shrink-0"><Star size={16} style={{ color: 'var(--lj-accent)' }} fill="var(--lj-accent)" /><span className="text-[13px] whitespace-nowrap" style={{ color: 'var(--lj-muted)' }}><strong style={{ color: 'var(--lj-text)' }}>4.7</strong> stars (250+ reviews)</span></div>
+        <div className="flex items-center gap-2 flex-shrink-0"><Star size={16} style={{ color: 'var(--lj-accent)' }} fill="var(--lj-accent)" /><span className="text-[13px] whitespace-nowrap" style={{ color: 'var(--lj-muted)' }}><strong style={{ color: 'var(--lj-text)' }}>4.93</strong> stars (250+ reviews)</span></div>
         <div className="flex items-center gap-2 flex-shrink-0"><Users size={16} style={{ color: 'var(--lj-accent)' }} /><span className="text-[13px] whitespace-nowrap" style={{ color: 'var(--lj-muted)' }}><strong style={{ color: 'var(--lj-text)' }}>300+</strong> happy customers</span></div>
         <div className="flex items-center gap-2 flex-shrink-0"><Globe size={16} style={{ color: 'var(--lj-accent)' }} /><span className="text-[13px] whitespace-nowrap" style={{ color: 'var(--lj-muted)' }}>Free Insured <strong style={{ color: 'var(--lj-text)' }}>Global Shipping</strong></span></div>
       </div>
@@ -205,7 +205,6 @@ export default function LandingScreen() {
                   {Array.from({ length: 5 }).map((_, i) => <Star key={i} size={14} fill={i < 4 ? 'var(--lj-accent)' : 'none'} style={{ color: 'var(--lj-accent)' }} />)}
                 </div>
                 <span className="text-[14px] font-medium" style={{ color: 'var(--lj-text)' }}>4.93</span>
-                <span className="text-[13px]" style={{ color: 'var(--lj-muted)' }}>(15 reviews)</span>
               </div>
             </div>
             <a href="https://www.etsy.com/shop/thelocaljewel#reviews" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors hover:bg-[#F0F0EE]" style={{ color: 'var(--lj-accent)', border: '1px solid var(--lj-border)' }}>
@@ -256,7 +255,7 @@ export default function LandingScreen() {
           {/* View all link */}
           <div className="mt-5 text-center">
             <a href="https://www.etsy.com/shop/thelocaljewel#reviews" target="_blank" rel="noopener noreferrer" className="text-[14px] font-medium inline-flex items-center gap-1.5 transition-colors hover:opacity-80" style={{ color: 'var(--lj-accent)' }}>
-              See all 15 reviews on Etsy <ExternalLink size={14} />
+              See all reviews on Etsy <ExternalLink size={14} />
             </a>
           </div>
         </div>
