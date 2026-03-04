@@ -105,16 +105,8 @@ export function getScreenFlow(answers) {
   
   const product = answers.product_type;
   
-  // Screen 2: Occasion (Engagement Ring or Wedding Bands only)
+  // Screen 2: Setting Style (Engagement Ring or Wedding Bands only)
   if (product === 'engagement_ring' || product === 'wedding_bands') {
-    flow.push('occasion');
-    
-    // Screen 2A: Deadline (only if Proposal)
-    if (answers.occasion === 'proposal') {
-      flow.push('deadline');
-    }
-    
-    // Screen 3: Setting Style
     flow.push('setting_style');
   } else if (product === 'tennis_bracelet') {
     // Screen 3B: Bracelet Specifics
