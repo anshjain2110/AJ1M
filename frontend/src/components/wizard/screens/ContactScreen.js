@@ -5,7 +5,7 @@ import { trackEvent } from '../../../utils/analytics';
 
 export default function ContactScreen() {
   const { state, submitLead, goBack } = useWizard();
-  const [form, setForm] = useState({ first_name: '', phone: '', email: '', notes: '' });
+  const [form, setForm] = useState({ first_name: '', phone: '', email: '', notes: '', sms_opt_in: false });
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
   const validate = () => { const e = {}; if (!form.first_name.trim()) e.first_name = 'Please enter your name'; if (!form.phone.trim()) e.phone = 'Please enter your phone number'; if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Please enter a valid email'; return e; };
@@ -20,6 +20,27 @@ export default function ContactScreen() {
         <div><label className="text-[13px] leading-[18px] mb-1.5 block font-medium" style={{ color: 'var(--lj-muted)' }}>Phone *</label><div className="relative"><PhoneIcon size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--lj-muted)' }} /><input type="tel" value={form.phone} onChange={(e) => handleChange('phone', e.target.value)} placeholder="Your phone number" data-testid="contact-form-phone-input" className="w-full min-h-[48px] pl-11 pr-4 py-3 rounded-[10px] text-[16px] transition-colors duration-300" style={{ background: 'var(--lj-surface)', border: `1.5px solid ${errors.phone ? 'var(--lj-danger)' : 'var(--lj-border)'}`, color: 'var(--lj-text)' }} /></div>{errors.phone && <p className="mt-1 text-[13px]" style={{ color: 'var(--lj-danger)' }} data-testid="contact-form-error-text">{errors.phone}</p>}<p className="mt-1 text-[13px]" style={{ color: 'var(--lj-muted)' }}>For faster responses via call or text</p></div>
         <div><label className="text-[13px] leading-[18px] mb-1.5 block font-medium" style={{ color: 'var(--lj-muted)' }}>Email <span style={{ opacity: 0.6 }}>(optional)</span></label><div className="relative"><Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--lj-muted)' }} /><input type="email" value={form.email} onChange={(e) => handleChange('email', e.target.value)} placeholder="your@email.com" data-testid="contact-form-email-input" className="w-full min-h-[48px] pl-11 pr-4 py-3 rounded-[10px] text-[16px] transition-colors duration-300" style={{ background: 'var(--lj-surface)', border: `1.5px solid ${errors.email ? 'var(--lj-danger)' : 'var(--lj-border)'}`, color: 'var(--lj-text)' }} /></div>{errors.email && <p className="mt-1 text-[13px]" style={{ color: 'var(--lj-danger)' }}>{errors.email}</p>}</div>
         <div><label className="text-[13px] leading-[18px] mb-1.5 block font-medium" style={{ color: 'var(--lj-muted)' }}>Anything else we should know?</label><div className="relative"><MessageSquare size={18} className="absolute left-4 top-4" style={{ color: 'var(--lj-muted)' }} /><textarea value={form.notes} onChange={(e) => handleChange('notes', e.target.value)} placeholder="Timeline, specific requests, questions..." rows={3} data-testid="contact-form-notes-input" className="w-full min-h-[80px] pl-11 pr-4 py-3 rounded-[10px] text-[16px] resize-none transition-colors duration-300" style={{ background: 'var(--lj-surface)', border: '1.5px solid var(--lj-border)', color: 'var(--lj-text)' }} /></div></div>
+
+        {/* SMS Opt-In Checkbox - Fully Optional, Not Pre-Checked */}
+        <div className="flex items-start gap-3 pt-1">
+          <input
+            type="checkbox"
+            id="sms-opt-in"
+            checked={form.sms_opt_in}
+            onChange={(e) => handleChange('sms_opt_in', e.target.checked)}
+            data-testid="contact-form-sms-optin-checkbox"
+            className="mt-[3px] h-4 w-4 rounded shrink-0 cursor-pointer accent-[var(--lj-accent)]"
+            style={{ accentColor: 'var(--lj-accent)' }}
+          />
+          <label
+            htmlFor="sms-opt-in"
+            className="text-[11px] leading-[15px] cursor-pointer select-none"
+            style={{ color: 'var(--lj-muted)' }}
+            data-testid="contact-form-sms-optin-label"
+          >
+            By checking this box, I agree to receive SMS messages from The Local Jewel regarding quote updates and order status. Message frequency varies. Msg & data rates may apply. Text HELP for help, STOP to cancel.
+          </label>
+        </div>
       </div>
       <div className="sticky bottom-0 pt-4 pb-6 mt-6" style={{ background: 'var(--lj-bg)' }}>
         {submitError && <p className="mb-3 text-[13px] text-center" style={{ color: 'var(--lj-danger)' }}>{submitError}</p>}

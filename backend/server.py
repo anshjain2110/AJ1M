@@ -76,7 +76,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.environ.get("CORS_ORIGINS", "https://thelocaljewel.com,https://prod-priority.preview.emergentagent.com").split(","),
+    allow_origins=os.environ.get("CORS_ORIGINS", "https://thelocaljewel.com,https://custom-cuts-hub.preview.emergentagent.com").split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -147,6 +147,7 @@ class LeadSubmitRequest(BaseModel):
     email: Optional[str] = None
     phone: str
     notes: Optional[str] = None
+    sms_opt_in: Optional[bool] = False
     answers: dict = {}
     attribution: dict = {}
 
@@ -243,6 +244,7 @@ async def submit_lead(req: LeadSubmitRequest, request: Request):
         "budget": req.answers.get("budget"), "has_inspiration": req.answers.get("has_inspiration"),
         "inspiration_links": req.answers.get("inspiration_links", []),
         "inspiration_files": req.answers.get("inspiration_files", []),
+        "sms_opt_in": req.sms_opt_in or False,
         "attribution": {**req.attribution, "ip_address": client_ip},
         "status": "new",
         "internal_notes": [],

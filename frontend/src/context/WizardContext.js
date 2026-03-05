@@ -258,6 +258,7 @@ export function WizardProvider({ children }) {
         phone: contactData.phone,
         email: contactData.email || '',
         notes: contactData.notes || '',
+        sms_opt_in: contactData.sms_opt_in || false,
         answers: allAnswers,
         attribution: s.attribution,
       });
