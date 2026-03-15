@@ -4,7 +4,7 @@ export default function PrivacyPage() {
   return (
     <div className="min-h-screen" style={{ background: 'var(--lj-bg)' }}>
       <header className="px-4 py-3 flex items-center" style={{ borderBottom: '1px solid var(--lj-border)' }}>
-        <a href="/"><img src="/logo-main.png" alt="The Local Jewel" className="h-8 object-contain" /></a>
+        <a href="/"><img src="/logo-main.png" alt="The Local Jewel" className="h-10 object-contain" /></a>
       </header>
       <div className="max-w-2xl mx-auto px-4 py-10">
         <h1 className="text-[28px] font-semibold mb-2" style={{ color: 'var(--lj-text)' }}>Privacy Policy</h1>

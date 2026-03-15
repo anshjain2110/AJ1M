@@ -20,7 +20,7 @@ export default function CutsPage() {
     <div className="min-h-screen" style={{ background: 'var(--lj-bg)' }}>
       {/* Minimal header — just logo, no nav */}
       <div className="px-4 py-4 flex justify-center" style={{ borderBottom: '1px solid var(--lj-border)' }}>
-        <a href="/"><img src="/logo-main.png" alt="The Local Jewel" className="h-7 object-contain" /></a>
+        <a href="/"><img src="/logo-main.png" alt="The Local Jewel" className="h-10 object-contain" /></a>
       </div>
 
       {/* Hero */}
