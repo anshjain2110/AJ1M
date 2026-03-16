@@ -233,12 +233,17 @@ export default function LeadsCRM() {
                   {detailData.lead.inspiration_files && detailData.lead.inspiration_files.length > 0 && (
                     <div className="space-y-3 mb-3">
                       {detailData.lead.inspiration_files.map((file, fi) => {
+                        const storagePath = typeof file === 'object' ? file.storage_path : '';
                         const fileUrl = typeof file === 'string' ? file : (file.url || '');
-                        const storedFilename = typeof file === 'string' ? file.split('/').pop() : (file.filename || fileUrl.split('/').pop() || '');
                         const displayName = typeof file === 'string' ? file.split('/').pop() : (file.original_name || file.filename || `File ${fi + 1}`);
                         const baseUrl = process.env.REACT_APP_BACKEND_URL || '';
-                        const imageUrl = fileUrl.startsWith('http') ? fileUrl : `${baseUrl}${fileUrl}`;
-                        const downloadUrl = `${baseUrl}/api/uploads/download/${storedFilename}`;
+                        // Cloud files use /api/uploads/cloud/{storage_path}, local files use their url directly
+                        const imageUrl = storagePath
+                          ? `${baseUrl}/api/uploads/cloud/${storagePath}`
+                          : (fileUrl.startsWith('http') ? fileUrl : `${baseUrl}${fileUrl}`);
+                        const downloadUrl = storagePath
+                          ? `${baseUrl}/api/uploads/download/${storagePath}`
+                          : `${baseUrl}/api/uploads/download/${typeof file === 'string' ? file.split('/').pop() : (file.filename || '')}`;
                         return (
                           <div key={fi} className="rounded-[8px] overflow-hidden" style={{ border: '1px solid var(--lj-border)' }} data-testid={`inspiration-image-${fi}`}>
                             <div className="relative" style={{ background: '#f8f8f6', minHeight: '80px' }}>

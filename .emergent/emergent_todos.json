@@ -1,18 +1,26 @@
 [
   {
-    "content": "Add sms_opt_in field to backend LeadSubmitRequest model and lead document",
+    "content": "Add cloud storage utility module (storage.py) with upload/download functions",
     "status": "completed"
   },
   {
-    "content": "Pass sms_opt_in through WizardContext submitLead function",
+    "content": "Update file upload endpoint to store files in cloud storage instead of local disk",
     "status": "completed"
   },
   {
-    "content": "Add optional SMS opt-in checkbox to ContactScreen.js with compliant language",
+    "content": "Add cloud file serving endpoint for admin to view/download images",
     "status": "completed"
   },
   {
-    "content": "Test the full flow - verify checkbox appears, is unchecked, and value is saved",
+    "content": "Migrate existing local file (Diamond-expert.jpeg) to cloud storage",
+    "status": "completed"
+  },
+  {
+    "content": "Update frontend admin panel to load images from cloud storage",
+    "status": "completed"
+  },
+  {
+    "content": "Test the full flow - upload via wizard, view in admin, download",
     "status": "completed"
   }
 ]

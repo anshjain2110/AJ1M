@@ -1,5 +1,8 @@
 import os
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 import hashlib
 import secrets
 import time
@@ -12,7 +15,7 @@ load_dotenv("/app/backend/.env")
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, Field
 from motor.motor_asyncio import AsyncIOMotorClient
 import jwt
@@ -48,6 +51,13 @@ db = client[DB_NAME]
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Initialize cloud storage
+    try:
+        from storage import init_storage
+        init_storage()
+        logger.info("Cloud storage initialized")
+    except Exception as e:
+        logger.error(f"Cloud storage init failed: {e}")
     # Drop problematic phone index
     try:
         await db.users.drop_index("phone_1")
@@ -207,26 +217,77 @@ async def wizard_restore(lead_id: str):
 
 @app.post("/api/uploads")
 async def upload_files(files: List[UploadFile] = File(...)):
+    from storage import upload_file as cloud_upload
     uploaded = []
     for file in files[:3]:
-        ext = os.path.splitext(file.filename)[1] if file.filename else ".png"
-        filename = f"{uuid.uuid4().hex}{ext}"
-        filepath = os.path.join(UPLOAD_DIR, filename)
-        async with aiofiles.open(filepath, "wb") as f:
-            content = await file.read()
-            if len(content) > 10 * 1024 * 1024:
-                continue
-            await f.write(content)
-        uploaded.append({"filename": filename, "original_name": file.filename, "url": f"/api/uploads/files/{filename}"})
+        content = await file.read()
+        if len(content) > 10 * 1024 * 1024:
+            continue
+        try:
+            result = cloud_upload(
+                data=content,
+                original_filename=file.filename or "file.png",
+                content_type=file.content_type,
+                subfolder="uploads",
+            )
+            uploaded.append({
+                "filename": result["filename"],
+                "original_name": result["original_name"],
+                "storage_path": result["storage_path"],
+                "content_type": result["content_type"],
+                "url": f"/api/uploads/cloud/{result['storage_path']}",
+            })
+        except Exception as e:
+            logger.error(f"Cloud upload failed for {file.filename}: {e}")
+            # Fallback to local storage
+            ext = os.path.splitext(file.filename)[1] if file.filename else ".png"
+            filename = f"{uuid.uuid4().hex}{ext}"
+            filepath = os.path.join(UPLOAD_DIR, filename)
+            async with aiofiles.open(filepath, "wb") as f:
+                await f.write(content)
+            uploaded.append({"filename": filename, "original_name": file.filename, "url": f"/api/uploads/files/{filename}"})
     return {"files": uploaded}
 
-@app.get("/api/uploads/download/{filename}")
-async def download_file(filename: str):
-    """Force-download an uploaded file with proper headers"""
+@app.get("/api/uploads/cloud/{path:path}")
+async def serve_cloud_file(path: str):
+    """Serve a file from cloud storage"""
+    from storage import download_file as cloud_download
+    try:
+        data, content_type = cloud_download(path)
+        return Response(content=data, media_type=content_type)
+    except Exception as e:
+        logger.error(f"Cloud download failed for {path}: {e}")
+        raise HTTPException(404, "File not found in cloud storage")
+
+@app.get("/api/uploads/download/{path:path}")
+async def download_file(path: str):
+    """Force-download a file — tries cloud first, then local disk"""
+    from storage import download_file as cloud_download
+
+    # Try cloud storage first
+    try:
+        data, content_type = cloud_download(path)
+        # Look up original name from DB
+        lead = await db.leads.find_one(
+            {"inspiration_files.storage_path": path},
+            {"inspiration_files.$": 1}
+        )
+        original_name = path.split("/")[-1]
+        if lead and lead.get("inspiration_files"):
+            original_name = lead["inspiration_files"][0].get("original_name", original_name)
+        return Response(
+            content=data,
+            media_type="application/octet-stream",
+            headers={"Content-Disposition": f'attachment; filename="{original_name}"'}
+        )
+    except Exception:
+        pass
+
+    # Fallback to local file (for old uploads)
+    filename = path.split("/")[-1] if "/" in path else path
     filepath = os.path.join(UPLOAD_DIR, filename)
     if not os.path.exists(filepath):
         raise HTTPException(404, "File not found")
-    # Look up original name from DB if possible
     lead = await db.leads.find_one(
         {"inspiration_files.filename": filename},
         {"inspiration_files.$": 1}
