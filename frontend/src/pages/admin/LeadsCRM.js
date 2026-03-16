@@ -234,28 +234,40 @@ export default function LeadsCRM() {
                     <div className="space-y-3 mb-3">
                       {detailData.lead.inspiration_files.map((file, fi) => {
                         const fileUrl = typeof file === 'string' ? file : (file.url || '');
-                        const storedFilename = typeof file === 'string' ? file.split('/').pop() : (file.filename || '');
+                        const storedFilename = typeof file === 'string' ? file.split('/').pop() : (file.filename || fileUrl.split('/').pop() || '');
                         const displayName = typeof file === 'string' ? file.split('/').pop() : (file.original_name || file.filename || `File ${fi + 1}`);
-                        const imageUrl = fileUrl.startsWith('http') ? fileUrl : `${process.env.REACT_APP_BACKEND_URL || ''}${fileUrl}`;
-                        const downloadUrl = `${process.env.REACT_APP_BACKEND_URL || ''}/api/uploads/download/${storedFilename}`;
+                        const baseUrl = process.env.REACT_APP_BACKEND_URL || '';
+                        const imageUrl = fileUrl.startsWith('http') ? fileUrl : `${baseUrl}${fileUrl}`;
+                        const downloadUrl = `${baseUrl}/api/uploads/download/${storedFilename}`;
                         return (
                           <div key={fi} className="rounded-[8px] overflow-hidden" style={{ border: '1px solid var(--lj-border)' }} data-testid={`inspiration-image-${fi}`}>
-                            <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="block" style={{ background: 'var(--lj-bg)' }}>
+                            <div className="relative" style={{ background: '#f8f8f6', minHeight: '80px' }}>
                               <img
                                 src={imageUrl}
                                 alt={displayName}
-                                className="w-full max-h-[240px] object-contain"
-                                style={{ background: 'var(--lj-bg)', display: 'block' }}
-                                onError={(e) => { e.target.style.display = 'none'; if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; }}
+                                className="w-full max-h-[280px] object-contain block"
+                                onError={(e) => {
+                                  if (!e.target.dataset.retried) {
+                                    e.target.dataset.retried = 'true';
+                                    e.target.src = downloadUrl;
+                                  } else {
+                                    e.target.style.display = 'none';
+                                    if (e.target.parentElement) {
+                                      const fallback = e.target.parentElement.querySelector('.img-fallback');
+                                      if (fallback) fallback.style.display = 'flex';
+                                    }
+                                  }
+                                }}
                               />
-                              <div style={{ display: 'none', background: 'var(--lj-bg)', color: 'var(--lj-muted)' }} className="items-center justify-center h-[100px]">
-                                <span className="text-[13px]">Image could not load</span>
+                              <div className="img-fallback items-center justify-center flex-col gap-2 py-6" style={{ display: 'none', color: 'var(--lj-muted)' }}>
+                                <Upload size={20} style={{ opacity: 0.4 }} />
+                                <span className="text-[12px]">Preview not available — use Download</span>
                               </div>
-                            </a>
-                            <div className="flex items-center justify-between px-3 py-2" style={{ background: 'var(--lj-bg)', borderTop: '1px solid var(--lj-border)' }}>
-                              <span className="text-[12px] truncate mr-2" style={{ color: 'var(--lj-muted)' }}>{displayName}</span>
+                            </div>
+                            <div className="flex items-center justify-between px-3 py-2.5" style={{ background: 'var(--lj-bg)', borderTop: '1px solid var(--lj-border)' }}>
+                              <span className="text-[12px] truncate mr-3" style={{ color: 'var(--lj-muted)' }}>{displayName}</span>
                               <a href={downloadUrl} download={displayName}
-                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] text-[12px] font-medium shrink-0 transition-colors hover:opacity-80"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-[12px] font-medium shrink-0 transition-colors hover:opacity-80"
                                 style={{ background: 'var(--lj-accent)', color: '#FFFFFF' }}
                                 data-testid={`inspiration-download-${fi}`}>
                                 <Download size={12} /> Download
