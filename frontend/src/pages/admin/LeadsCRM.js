@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAdmin } from '../../context/AdminContext';
-import { Search, Filter, Download, ChevronLeft, ChevronRight, Eye, Loader2, X, Send, MessageSquare, Plus, Upload, PenTool, Factory, Truck, CheckCircle } from 'lucide-react';
+import { Search, Filter, Download, ChevronLeft, ChevronRight, Eye, Loader2, X, Send, MessageSquare, Plus, Upload, PenTool, Factory, Truck, CheckCircle, ExternalLink } from 'lucide-react';
 
 const STATUS_COLORS = { new: { bg: 'rgba(15,94,76,0.1)', color: 'var(--lj-accent)' }, contacted: { bg: 'rgba(96,165,250,0.1)', color: '#60A5FA' }, quoted: { bg: 'rgba(167,139,250,0.1)', color: '#A78BFA' }, won: { bg: 'rgba(86,194,113,0.1)', color: 'var(--lj-success)' }, lost: { bg: 'rgba(226,92,92,0.1)', color: 'var(--lj-danger)' } };
 const STATUSES = ['new', 'contacted', 'quoted', 'won', 'lost'];
@@ -225,6 +225,36 @@ export default function LeadsCRM() {
                 </div>
                 {detailData.lead.notes && <p className="mt-2 text-[13px]" style={{ color: 'var(--lj-muted)' }}>Notes: {detailData.lead.notes}</p>}
               </div>
+
+              {/* Inspiration & References */}
+              {((detailData.lead.inspiration_files && detailData.lead.inspiration_files.length > 0) || (detailData.lead.inspiration_links && detailData.lead.inspiration_links.length > 0)) && (
+                <div className="p-4 rounded-[10px]" style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}>
+                  <h4 className="text-[13px] font-medium mb-3" style={{ color: 'var(--lj-muted)' }}>Inspiration & References</h4>
+                  {detailData.lead.inspiration_files && detailData.lead.inspiration_files.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2 mb-3">
+                      {detailData.lead.inspiration_files.map((file, fi) => (
+                        <a key={fi} href={`${process.env.REACT_APP_BACKEND_URL}${file.url}`} target="_blank" rel="noopener noreferrer"
+                          className="aspect-square rounded-[8px] overflow-hidden block transition-opacity hover:opacity-80" style={{ border: '1px solid var(--lj-border)' }}
+                          data-testid={`inspiration-image-${fi}`}>
+                          <img src={`${process.env.REACT_APP_BACKEND_URL}${file.url}`} alt={file.original_name || `Inspiration ${fi + 1}`} className="w-full h-full object-cover" />
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                  {detailData.lead.inspiration_links && detailData.lead.inspiration_links.length > 0 && (
+                    <div className="space-y-1.5">
+                      {detailData.lead.inspiration_links.map((link, li) => (
+                        <a key={li} href={link} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-[13px] break-all transition-opacity hover:opacity-70"
+                          style={{ color: 'var(--lj-accent)' }}
+                          data-testid={`inspiration-link-${li}`}>
+                          <ExternalLink size={13} className="shrink-0" /> {link}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Attribution */}
               {detailData.lead.attribution && Object.keys(detailData.lead.attribution).length > 0 && (
