@@ -12,6 +12,7 @@ load_dotenv("/app/backend/.env")
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from motor.motor_asyncio import AsyncIOMotorClient
 import jwt
@@ -218,6 +219,26 @@ async def upload_files(files: List[UploadFile] = File(...)):
             await f.write(content)
         uploaded.append({"filename": filename, "original_name": file.filename, "url": f"/api/uploads/files/{filename}"})
     return {"files": uploaded}
+
+@app.get("/api/uploads/download/{filename}")
+async def download_file(filename: str):
+    """Force-download an uploaded file with proper headers"""
+    filepath = os.path.join(UPLOAD_DIR, filename)
+    if not os.path.exists(filepath):
+        raise HTTPException(404, "File not found")
+    # Look up original name from DB if possible
+    lead = await db.leads.find_one(
+        {"inspiration_files.filename": filename},
+        {"inspiration_files.$": 1}
+    )
+    original_name = filename
+    if lead and lead.get("inspiration_files"):
+        original_name = lead["inspiration_files"][0].get("original_name", filename)
+    return FileResponse(
+        path=filepath,
+        filename=original_name,
+        media_type="application/octet-stream",
+    )
 
 # ── API: Lead Submission ─────────────────────────────────────
 

@@ -231,14 +231,39 @@ export default function LeadsCRM() {
                 <div className="p-4 rounded-[10px]" style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}>
                   <h4 className="text-[13px] font-medium mb-3" style={{ color: 'var(--lj-muted)' }}>Inspiration & References</h4>
                   {detailData.lead.inspiration_files && detailData.lead.inspiration_files.length > 0 && (
-                    <div className="grid grid-cols-3 gap-2 mb-3">
-                      {detailData.lead.inspiration_files.map((file, fi) => (
-                        <a key={fi} href={`${process.env.REACT_APP_BACKEND_URL}${file.url}`} target="_blank" rel="noopener noreferrer"
-                          className="aspect-square rounded-[8px] overflow-hidden block transition-opacity hover:opacity-80" style={{ border: '1px solid var(--lj-border)' }}
-                          data-testid={`inspiration-image-${fi}`}>
-                          <img src={`${process.env.REACT_APP_BACKEND_URL}${file.url}`} alt={file.original_name || `Inspiration ${fi + 1}`} className="w-full h-full object-cover" />
-                        </a>
-                      ))}
+                    <div className="space-y-3 mb-3">
+                      {detailData.lead.inspiration_files.map((file, fi) => {
+                        const fileUrl = typeof file === 'string' ? file : (file.url || '');
+                        const storedFilename = typeof file === 'string' ? file.split('/').pop() : (file.filename || '');
+                        const displayName = typeof file === 'string' ? file.split('/').pop() : (file.original_name || file.filename || `File ${fi + 1}`);
+                        const imageUrl = fileUrl.startsWith('http') ? fileUrl : `${process.env.REACT_APP_BACKEND_URL || ''}${fileUrl}`;
+                        const downloadUrl = `${process.env.REACT_APP_BACKEND_URL || ''}/api/uploads/download/${storedFilename}`;
+                        return (
+                          <div key={fi} className="rounded-[8px] overflow-hidden" style={{ border: '1px solid var(--lj-border)' }} data-testid={`inspiration-image-${fi}`}>
+                            <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="block" style={{ background: 'var(--lj-bg)' }}>
+                              <img
+                                src={imageUrl}
+                                alt={displayName}
+                                className="w-full max-h-[240px] object-contain"
+                                style={{ background: 'var(--lj-bg)', display: 'block' }}
+                                onError={(e) => { e.target.style.display = 'none'; if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; }}
+                              />
+                              <div style={{ display: 'none', background: 'var(--lj-bg)', color: 'var(--lj-muted)' }} className="items-center justify-center h-[100px]">
+                                <span className="text-[13px]">Image could not load</span>
+                              </div>
+                            </a>
+                            <div className="flex items-center justify-between px-3 py-2" style={{ background: 'var(--lj-bg)', borderTop: '1px solid var(--lj-border)' }}>
+                              <span className="text-[12px] truncate mr-2" style={{ color: 'var(--lj-muted)' }}>{displayName}</span>
+                              <a href={downloadUrl} download={displayName}
+                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] text-[12px] font-medium shrink-0 transition-colors hover:opacity-80"
+                                style={{ background: 'var(--lj-accent)', color: '#FFFFFF' }}
+                                data-testid={`inspiration-download-${fi}`}>
+                                <Download size={12} /> Download
+                              </a>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                   {detailData.lead.inspiration_links && detailData.lead.inspiration_links.length > 0 && (
