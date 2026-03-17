@@ -1,22 +1,27 @@
 """
-Cloud Object Storage utility for The Local Jewel.
-Uses Emergent Object Storage API (S3-compatible) for persistent file storage.
-Files survive server restarts and redeployments.
+Cloudflare R2 Object Storage for The Local Jewel.
+Uses boto3 (S3-compatible) to store files persistently in Cloudflare R2.
+Files are stored in YOUR bucket — you own the data.
 """
 import os
 import uuid
 import logging
-import requests
+import boto3
+from botocore.config import Config
 
 logger = logging.getLogger(__name__)
 
-STORAGE_URL = "https://integrations.emergentagent.com/objstore/api/v1/storage"
-EMERGENT_KEY = os.environ.get("EMERGENT_LLM_KEY")
-APP_NAME = "thelocaljewel"
+# R2 configuration from environment
+R2_ACCOUNT_ID = os.environ.get("R2_ACCOUNT_ID", "")
+R2_ACCESS_KEY_ID = os.environ.get("R2_ACCESS_KEY_ID", "")
+R2_SECRET_ACCESS_KEY = os.environ.get("R2_SECRET_ACCESS_KEY", "")
+R2_BUCKET_NAME = os.environ.get("R2_BUCKET_NAME", "")
+R2_ENDPOINT = f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
 
-# Module-level storage key — initialized once, reused globally
-_storage_key = None
+APP_PREFIX = "thelocaljewel"
 
+# Module-level S3 client — initialized once
+_s3_client = None
 
 MIME_TYPES = {
     "jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png",
@@ -26,60 +31,93 @@ MIME_TYPES = {
 }
 
 
-def init_storage():
-    """Initialize storage session. Call ONCE at startup. Returns reusable storage_key."""
-    global _storage_key
-    if _storage_key:
-        return _storage_key
-    if not EMERGENT_KEY:
-        raise RuntimeError("EMERGENT_LLM_KEY not set in environment")
-    resp = requests.post(
-        f"{STORAGE_URL}/init",
-        json={"emergent_key": EMERGENT_KEY},
-        timeout=30,
+def get_s3_client():
+    """Get or create the S3 client for R2."""
+    global _s3_client
+    if _s3_client:
+        return _s3_client
+
+    if not all([R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME]):
+        raise RuntimeError("Cloudflare R2 credentials not fully configured in environment")
+
+    _s3_client = boto3.client(
+        "s3",
+        endpoint_url=R2_ENDPOINT,
+        aws_access_key_id=R2_ACCESS_KEY_ID,
+        aws_secret_access_key=R2_SECRET_ACCESS_KEY,
+        config=Config(
+            signature_version="s3v4",
+            retries={"max_attempts": 3, "mode": "standard"},
+        ),
+        region_name="auto",
     )
-    resp.raise_for_status()
-    _storage_key = resp.json()["storage_key"]
-    logger.info("Cloud storage initialized successfully")
-    return _storage_key
+    logger.info(f"Cloudflare R2 client initialized (bucket: {R2_BUCKET_NAME})")
+    return _s3_client
+
+
+def init_storage():
+    """Initialize R2 connection. Call at startup to verify credentials."""
+    client = get_s3_client()
+    # Verify bucket access with a simple head_bucket call
+    try:
+        client.head_bucket(Bucket=R2_BUCKET_NAME)
+        logger.info(f"R2 bucket '{R2_BUCKET_NAME}' verified and accessible")
+    except Exception as e:
+        logger.error(f"R2 bucket verification failed: {e}")
+        raise
+    return True
 
 
 def put_object(path: str, data: bytes, content_type: str) -> dict:
-    """Upload file to cloud storage. Returns {"path": "...", "size": 123, "etag": "..."}"""
-    key = init_storage()
-    resp = requests.put(
-        f"{STORAGE_URL}/objects/{path}",
-        headers={"X-Storage-Key": key, "Content-Type": content_type},
-        data=data,
-        timeout=120,
+    """Upload file to R2. Returns metadata dict."""
+    client = get_s3_client()
+    response = client.put_object(
+        Bucket=R2_BUCKET_NAME,
+        Key=path,
+        Body=data,
+        ContentType=content_type,
     )
-    resp.raise_for_status()
-    return resp.json()
+    return {
+        "path": path,
+        "size": len(data),
+        "etag": response.get("ETag", ""),
+    }
 
 
 def get_object(path: str) -> tuple:
-    """Download file from cloud storage. Returns (content_bytes, content_type)."""
-    key = init_storage()
-    resp = requests.get(
-        f"{STORAGE_URL}/objects/{path}",
-        headers={"X-Storage-Key": key},
-        timeout=60,
+    """Download file from R2. Returns (content_bytes, content_type)."""
+    client = get_s3_client()
+    response = client.get_object(
+        Bucket=R2_BUCKET_NAME,
+        Key=path,
     )
-    resp.raise_for_status()
-    return resp.content, resp.headers.get("Content-Type", "application/octet-stream")
+    content_type = response.get("ContentType", "application/octet-stream")
+    data = response["Body"].read()
+    return data, content_type
+
+
+def delete_object(path: str) -> bool:
+    """Delete file from R2. Returns True on success."""
+    client = get_s3_client()
+    try:
+        client.delete_object(Bucket=R2_BUCKET_NAME, Key=path)
+        return True
+    except Exception as e:
+        logger.error(f"R2 delete failed for {path}: {e}")
+        return False
 
 
 def upload_file(data: bytes, original_filename: str, content_type: str = None, subfolder: str = "uploads") -> dict:
     """
     High-level upload helper.
-    Returns dict with: storage_path, original_name, content_type, size
+    Returns dict with: storage_path, original_name, content_type, size, filename
     """
     ext = original_filename.rsplit(".", 1)[-1].lower() if "." in original_filename else "bin"
     if not content_type:
         content_type = MIME_TYPES.get(ext, "application/octet-stream")
 
     unique_filename = f"{uuid.uuid4().hex}.{ext}"
-    storage_path = f"{APP_NAME}/{subfolder}/{unique_filename}"
+    storage_path = f"{APP_PREFIX}/{subfolder}/{unique_filename}"
 
     result = put_object(storage_path, data, content_type)
 

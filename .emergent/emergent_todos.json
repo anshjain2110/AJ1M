@@ -1,26 +1,18 @@
 [
   {
-    "content": "Add cloud storage utility module (storage.py) with upload/download functions",
+    "content": "Add R2 credentials to backend/.env and install boto3",
     "status": "completed"
   },
   {
-    "content": "Update file upload endpoint to store files in cloud storage instead of local disk",
-    "status": "completed"
+    "content": "Rewrite storage.py to use Cloudflare R2 via boto3",
+    "status": "in_progress"
   },
   {
-    "content": "Add cloud file serving endpoint for admin to view/download images",
-    "status": "completed"
+    "content": "Migrate existing file from Emergent storage to R2",
+    "status": "pending"
   },
   {
-    "content": "Migrate existing local file (Diamond-expert.jpeg) to cloud storage",
-    "status": "completed"
-  },
-  {
-    "content": "Update frontend admin panel to load images from cloud storage",
-    "status": "completed"
-  },
-  {
-    "content": "Test the full flow - upload via wizard, view in admin, download",
-    "status": "completed"
+    "content": "Test upload, serve, and download via R2",
+    "status": "pending"
   }
 ]
