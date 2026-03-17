@@ -5,14 +5,14 @@
   },
   {
     "content": "Rewrite storage.py to use Cloudflare R2 via boto3",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "Migrate existing file from Emergent storage to R2",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Test upload, serve, and download via R2",
-    "status": "pending"
+    "status": "completed"
   }
 ]
