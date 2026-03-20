@@ -156,7 +156,7 @@ class LeadSubmitRequest(BaseModel):
     lead_id: str
     first_name: str
     email: Optional[str] = None
-    phone: str
+    phone: Optional[str] = None
     notes: Optional[str] = None
     sms_opt_in: Optional[bool] = False
     answers: dict = {}
