@@ -18,8 +18,10 @@ from passlib.hash import bcrypt
 MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
 DB_NAME = os.environ.get("DB_NAME", "thelocaljewel")
 JWT_SECRET = os.environ.get("JWT_SECRET", "rG9oG5Eul803YO57JCGom4lFp99xXaLvRtbDdQpozd5VDkIWVKnb9quulv4LjawP")
-ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "ansh@thelocaljewel.com")
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "Rakesh@2709")
+ADMIN_CREDENTIALS = [
+    {"email": os.environ.get("ADMIN_EMAIL", "ansh@thelocaljewel.com"), "password": os.environ.get("ADMIN_PASSWORD", "Rakesh@2709")},
+    {"email": "nayan@thelocaljewel.com", "password": "Nayan@123"},
+]
 
 client = AsyncIOMotorClient(MONGO_URL)
 db = client[DB_NAME]
@@ -115,7 +117,11 @@ async def admin_login(req: AdminLogin):
             raise HTTPException(401, "Invalid credentials")
     else:
         # Fallback to env-based admin
-        if req.email.lower() != ADMIN_EMAIL.lower() or req.password != ADMIN_PASSWORD:
+        matched = any(
+            req.email.lower() == cred["email"].lower() and req.password == cred["password"]
+            for cred in ADMIN_CREDENTIALS
+        )
+        if not matched:
             raise HTTPException(401, "Invalid credentials")
     token = create_admin_jwt(req.email.lower())
     return {"token": token, "email": req.email.lower()}
