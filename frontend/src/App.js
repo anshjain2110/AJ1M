@@ -12,6 +12,7 @@ import LeadsCRM from './pages/admin/LeadsCRM';
 import OrdersPage from './pages/admin/OrdersPage';
 import SettingsPage from './pages/admin/SettingsPage';
 import TrackingPage from './pages/admin/TrackingPage';
+import ShowcasePage from './pages/admin/ShowcasePage';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
 import CutsPage from './pages/CutsPage';
@@ -43,6 +44,7 @@ function App() {
                 <Route path="orders" element={<OrdersPage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="tracking" element={<TrackingPage />} />
+                <Route path="showcase" element={<ShowcasePage />} />
               </Route>
             </Routes>
           </AdminProvider>

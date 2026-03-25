@@ -1,18 +1,22 @@
 [
   {
-    "content": "Add R2 credentials to backend/.env and install boto3",
+    "content": "Add backend API for showcase pairs (CRUD + public endpoint)",
     "status": "completed"
   },
   {
-    "content": "Rewrite storage.py to use Cloudflare R2 via boto3",
+    "content": "Add admin UI to upload render/product image pairs",
     "status": "completed"
   },
   {
-    "content": "Migrate existing file from Emergent storage to R2",
+    "content": "Build the auto-scrolling render-to-product slideshow component",
     "status": "completed"
   },
   {
-    "content": "Test upload, serve, and download via R2",
+    "content": "Add slideshow to landing page below 'browse our collection'",
+    "status": "completed"
+  },
+  {
+    "content": "Test full flow - admin upload pairs, landing page displays slideshow",
     "status": "completed"
   }
 ]

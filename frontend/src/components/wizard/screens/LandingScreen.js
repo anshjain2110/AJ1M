@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Star, Shield, Users, ArrowRight, ChevronRight, ChevronDown, ChevronLeft, ExternalLink, Sparkles, MapPin, Phone, Globe } from 'lucide-react';
 import { useWizard } from '../../../context/WizardContext';
 import { trackEvent } from '../../../utils/analytics';
+import { RenderShowcase } from '../../RenderShowcase';
 
 const HERO_IMAGE = '/hero-photo.jpeg';
 
@@ -185,6 +186,9 @@ export default function LandingScreen() {
           or browse our collection <ChevronRight size={14} />
         </a>
       </div>
+
+      {/* Render → Product Showcase Slideshow */}
+      <RenderShowcase />
 
       {/* Social Proof Bar */}
       <div className="px-4 py-5 flex items-center justify-center gap-6 md:gap-10 overflow-x-auto" style={{ borderTop: '1px solid var(--lj-border)', borderBottom: '1px solid var(--lj-border)' }}>

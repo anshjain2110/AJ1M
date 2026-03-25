@@ -509,3 +509,57 @@ async def get_abtest_results(admin=Depends(require_admin)):
         "variant_a": {"shown": variant_a_shown, "completed": variant_a_completed, "conversion_rate": rate_a, "avg_time_to_submit_sec": round(avg_a[0]["avg_ms"] / 1000, 1) if avg_a and avg_a[0].get("avg_ms") else 0},
         "variant_b": {"shown": variant_b_shown, "completed": variant_b_completed, "conversion_rate": rate_b, "avg_time_to_submit_sec": round(avg_b[0]["avg_ms"] / 1000, 1) if avg_b and avg_b[0].get("avg_ms") else 0},
     }
+
+
+# ── Showcase Pairs (Render → Product) ────────────────────────
+
+@router.get("/showcase-pairs")
+async def get_showcase_pairs(admin=Depends(require_admin)):
+    """Get all showcase pairs for admin management."""
+    pairs = await db.showcase_pairs.find().sort("order", 1).to_list(100)
+    for p in pairs:
+        p["_id"] = str(p["_id"])
+    return {"pairs": pairs}
+
+@router.post("/showcase-pairs")
+async def create_showcase_pair(
+    admin=Depends(require_admin),
+    title: str = "",
+    render_storage_path: str = "",
+    render_original_name: str = "",
+    render_content_type: str = "image/jpeg",
+    product_storage_path: str = "",
+    product_original_name: str = "",
+    product_content_type: str = "image/jpeg",
+):
+    """Create a new showcase pair from already-uploaded images."""
+    pair_id = f"pair_{uuid.uuid4().hex[:12]}"
+    count = await db.showcase_pairs.count_documents({})
+    doc = {
+        "pair_id": pair_id,
+        "title": title,
+        "order": count,
+        "render_image": {
+            "storage_path": render_storage_path,
+            "original_name": render_original_name,
+            "content_type": render_content_type,
+            "url": f"/api/uploads/cloud/{render_storage_path}",
+        },
+        "product_image": {
+            "storage_path": product_storage_path,
+            "original_name": product_original_name,
+            "content_type": product_content_type,
+            "url": f"/api/uploads/cloud/{product_storage_path}",
+        },
+        "created_at": datetime.now(timezone.utc),
+    }
+    await db.showcase_pairs.insert_one(doc)
+    doc["_id"] = str(doc["_id"])
+    return doc
+
+@router.delete("/showcase-pairs/{pair_id}")
+async def delete_showcase_pair(pair_id: str, admin=Depends(require_admin)):
+    result = await db.showcase_pairs.delete_one({"pair_id": pair_id})
+    if result.deleted_count == 0:
+        raise HTTPException(404, "Pair not found")
+    return {"status": "deleted"}

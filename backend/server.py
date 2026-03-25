@@ -301,6 +301,24 @@ async def download_file(path: str):
         media_type="application/octet-stream",
     )
 
+
+# ── API: Public Showcase Pairs ───────────────────────────────
+
+@app.get("/api/showcase-pairs")
+async def get_public_showcase_pairs():
+    """Public endpoint — returns active showcase pairs for the landing page."""
+    pairs = await db.showcase_pairs.find().sort("order", 1).to_list(50)
+    result = []
+    for p in pairs:
+        result.append({
+            "pair_id": p.get("pair_id"),
+            "title": p.get("title", ""),
+            "render_image": p.get("render_image", {}),
+            "product_image": p.get("product_image", {}),
+        })
+    return {"pairs": result}
+
+
 # ── API: Lead Submission ─────────────────────────────────────
 
 @app.post("/api/leads/submit")
