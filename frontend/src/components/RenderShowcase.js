@@ -23,10 +23,10 @@ export const RenderShowcase = () => {
     let pos = 0;
 
     const animate = () => {
-      pos += speedRef.current;
+      pos -= speedRef.current;
       const singleSetWidth = stripRef.current.scrollWidth / 3;
-      if (pos >= singleSetWidth) pos -= singleSetWidth;
-      stripRef.current.style.transform = `translateX(-${pos}px)`;
+      if (pos <= -singleSetWidth) pos += singleSetWidth;
+      stripRef.current.style.transform = `translateX(${pos}px)`;
       animRef.current = requestAnimationFrame(animate);
     };
 
