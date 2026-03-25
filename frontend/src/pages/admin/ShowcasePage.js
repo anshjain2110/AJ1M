@@ -16,7 +16,7 @@ export default function ShowcasePage() {
 
   const fetchPairs = useCallback(async () => {
     try {
-      const res = await api.get('/api/admin/showcase-pairs');
+      const res = await api('get', '/api/admin/showcase-pairs');
       setPairs(res.data.pairs || []);
     } catch (err) { console.error(err); }
     setLoading(false);
@@ -41,13 +41,13 @@ export default function ShowcasePage() {
       // Upload render image
       const renderData = new FormData();
       renderData.append('files', form.renderFile);
-      const renderRes = await api.post('/api/uploads', renderData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const renderRes = await api('post', '/api/uploads', renderData);
       const renderFile = renderRes.data.files[0];
 
       // Upload product image
       const productData = new FormData();
       productData.append('files', form.productFile);
-      const productRes = await api.post('/api/uploads', productData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const productRes = await api('post', '/api/uploads', productData);
       const productFile = productRes.data.files[0];
 
       // Create the pair
@@ -61,7 +61,7 @@ export default function ShowcasePage() {
         product_content_type: productFile.content_type || 'image/jpeg',
       });
 
-      await api.post(`/api/admin/showcase-pairs?${params.toString()}`);
+      await api('post', `/api/admin/showcase-pairs?${params.toString()}`);
       setShowForm(false);
       setForm({ title: '', renderFile: null, productFile: null });
       setRenderPreview(null);
@@ -74,7 +74,7 @@ export default function ShowcasePage() {
   const handleDelete = async (pairId) => {
     if (!window.confirm('Delete this showcase pair?')) return;
     try {
-      await api.delete(`/api/admin/showcase-pairs/${pairId}`);
+      await api('delete', `/api/admin/showcase-pairs/${pairId}`);
       fetchPairs();
     } catch (err) { console.error(err); }
   };
