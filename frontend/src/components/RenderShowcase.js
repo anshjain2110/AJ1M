@@ -13,20 +13,21 @@ export const RenderShowcase = () => {
     axios.get(`${BACKEND_URL}/api/showcase-pairs`)
       .then(res => {
         const p = res.data.pairs || [];
-        if (p.length > 0) setPairs([...p, ...p, ...p]);
+        if (p.length > 0) setPairs([...p, ...p, ...p, ...p, ...p]);
       })
       .catch(() => {});
   }, []);
 
   useEffect(() => {
     if (!pairs.length || !stripRef.current) return;
+    const singleSetWidth = stripRef.current.scrollWidth / 5;
     let pos = 0;
 
     const animate = () => {
       pos += speedRef.current;
-      const singleSetWidth = stripRef.current.scrollWidth / 3;
       if (pos >= singleSetWidth) pos -= singleSetWidth;
-      stripRef.current.style.transform = `translateX(${pos}px)`;
+      // Offset by -2 sets so there's always content to the left and right
+      stripRef.current.style.transform = `translateX(${-2 * singleSetWidth + pos}px)`;
       animRef.current = requestAnimationFrame(animate);
     };
 
