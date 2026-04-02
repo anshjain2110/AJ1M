@@ -273,6 +273,10 @@ export function WizardProvider({ children }) {
       trackEvent('tlj_lead_created', { lead_id: s.leadId }, { lead_id: s.leadId });
       
       dispatch({ type: 'SET_SCREEN', screen: 'thank_you' });
+      // Push /thank-you URL for better tracking (Meta Pixel, GTM, etc.)
+      if (window.history && window.location.pathname !== '/thank-you') {
+        window.history.pushState({}, '', '/thank-you');
+      }
     } catch (e) {
       console.error('Failed to submit lead:', e);
       throw e;

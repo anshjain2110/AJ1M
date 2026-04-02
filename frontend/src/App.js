@@ -27,6 +27,11 @@ function App() {
             <WizardPage />
           </WizardProvider>
         } />
+        <Route path="/thank-you" element={
+          <WizardProvider>
+            <WizardPage />
+          </WizardProvider>
+        } />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
