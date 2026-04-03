@@ -181,7 +181,7 @@ export default function LandingScreen() {
           style={{ background: 'var(--lj-accent)', color: '#FFFFFF', boxShadow: '0 4px 20px rgba(15,94,76,0.2)' }}>
           Get My Free Quote <ArrowRight size={18} />
         </button>
-        <a href="https://thelocaljewel.com" target="_blank" rel="noopener noreferrer"
+        <a href="https://shop.thelocaljewel.com/" target="_blank" rel="noopener noreferrer"
           className="mt-4 text-[13px] leading-[18px] flex items-center gap-1 transition-colors duration-300" style={{ color: 'var(--lj-muted)' }}>
           or browse our collection <ChevronRight size={14} />
         </a>
