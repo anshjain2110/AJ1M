@@ -75,6 +75,15 @@ async def lifespan(app: FastAPI):
     await db.otp_codes.create_index("expires_at", expireAfterSeconds=0)
     await db.events.create_index("event_name")
     await db.events.create_index("server_timestamp")
+    await db.events.create_index("session_id")
+    await db.events.create_index("anonymous_id")
+    await db.events.create_index([("event_name", 1), ("server_timestamp", -1)])
+    await db.events.create_index("geo.country")
+    await db.events.create_index("ua_parsed.device")
+    await db.events.create_index("wizard_step")
+    await db.events.create_index("lead_id")
+    await db.leads.create_index("lead_score")
+    await db.leads.create_index("intent_bucket")
     await db.quotes.create_index("quote_id", unique=True)
     await db.quotes.create_index("lead_id")
     await db.orders.create_index("order_id", unique=True)
@@ -351,6 +360,34 @@ async def submit_lead(req: LeadSubmitRequest, request: Request):
         "created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc),
     }
 
+    # Lead scoring v1
+    score = 30  # base score for submitting
+    quality_flags = []
+    if req.answers.get("product_type") in ("engagement_ring", "wedding_bands"):
+        score += 15; quality_flags.append("high_value_product")
+    if req.answers.get("carat_range") in ("2.0_2.9", "3.0_plus"):
+        score += 10; quality_flags.append("large_carat")
+    if req.answers.get("priority") in ("biggest_look", "best_sparkle"):
+        score += 5
+    if req.answers.get("has_inspiration") == "yes":
+        score += 10; quality_flags.append("has_inspiration")
+    if phone:
+        score += 10; quality_flags.append("has_phone")
+    if email_val:
+        score += 5; quality_flags.append("has_email")
+    if req.sms_opt_in:
+        score += 5; quality_flags.append("sms_opt_in")
+    # Check for returning visitor
+    prev_events = await db.events.count_documents({"anonymous_id": req.attribution.get("anonymous_id", ""), "event_name": "tlj_session_start"})
+    if prev_events > 1:
+        score += 10; quality_flags.append("returning_visitor")
+    score = min(score, 100)
+    intent_bucket = "high" if score >= 70 else ("medium" if score >= 45 else "low")
+    
+    lead["lead_score"] = score
+    lead["intent_bucket"] = intent_bucket
+    lead["quality_flags"] = quality_flags
+
     existing = await db.leads.find_one({"lead_id": req.lead_id})
     if existing:
         await db.leads.update_one({"lead_id": req.lead_id}, {"$set": lead})
@@ -548,11 +585,114 @@ async def get_my_orders(user=Depends(get_current_user)):
     orders = [serialize_doc(o) async for o in db.orders.find({"user_id": user["user_id"]}).sort("created_at", -1)]
     return {"orders": orders}
 
-# ── API: Events ──────────────────────────────────────────────
+# ── API: Events (Enhanced with UA + Geo Enrichment) ─────────
+
+from user_agents import parse as ua_parse
+import httpx
+
+# In-memory geo cache: ip -> {data, fetched_date}
+_geo_cache = {}
+
+def parse_user_agent(ua_string):
+    """Parse UA string into device/browser/OS buckets."""
+    if not ua_string:
+        return {"device": "unknown", "browser": "unknown", "os": "unknown", "is_mobile": False, "is_tablet": False, "is_bot": False}
+    try:
+        ua = ua_parse(ua_string)
+        device = "mobile" if ua.is_mobile else ("tablet" if ua.is_tablet else "desktop")
+        return {
+            "device": device,
+            "browser": f"{ua.browser.family}",
+            "browser_version": ua.browser.version_string,
+            "os": f"{ua.os.family}",
+            "os_version": ua.os.version_string,
+            "is_mobile": ua.is_mobile,
+            "is_tablet": ua.is_tablet,
+            "is_bot": ua.is_bot,
+        }
+    except Exception:
+        return {"device": "unknown", "browser": "unknown", "os": "unknown", "is_mobile": False, "is_tablet": False, "is_bot": False}
+
+async def resolve_geo(ip: str):
+    """Resolve IP to geo data using ip-api.com with daily caching."""
+    if not ip or ip in ("127.0.0.1", "::1", "localhost", ""):
+        return {"country": "Unknown", "region": "", "city": "", "timezone": "", "lat": 0, "lon": 0, "isp": ""}
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    cache_key = f"{ip}:{today}"
+    if cache_key in _geo_cache:
+        return _geo_cache[cache_key]
+    try:
+        async with httpx.AsyncClient(timeout=3) as client_http:
+            resp = await client_http.get(f"http://ip-api.com/json/{ip}?fields=status,country,regionName,city,timezone,lat,lon,isp")
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get("status") == "success":
+                    geo = {"country": data.get("country", "Unknown"), "region": data.get("regionName", ""), "city": data.get("city", ""), "timezone": data.get("timezone", ""), "lat": data.get("lat", 0), "lon": data.get("lon", 0), "isp": data.get("isp", "")}
+                    _geo_cache[cache_key] = geo
+                    # Trim cache to 500 entries
+                    if len(_geo_cache) > 500:
+                        keys = list(_geo_cache.keys())
+                        for k in keys[:100]:
+                            _geo_cache.pop(k, None)
+                    return geo
+    except Exception:
+        pass
+    return {"country": "Unknown", "region": "", "city": "", "timezone": "", "lat": 0, "lon": 0, "isp": ""}
+
+class EnhancedEventRequest(BaseModel):
+    event_name: str
+    event_data: dict = {}
+    anonymous_id: Optional[str] = None
+    session_id: Optional[str] = None
+    lead_id: Optional[str] = None
+    timestamp: Optional[str] = None
+    # Enhanced fields
+    client_ts: Optional[str] = None
+    page_url: Optional[str] = None
+    page_path: Optional[str] = None
+    viewport: Optional[str] = None
+    wizard_step: Optional[str] = None
+    field_name: Optional[str] = None
+    error_code: Optional[str] = None
+    step_time_ms: Optional[int] = None
+    visitor_type: Optional[str] = None
+    visit_count: Optional[int] = None
+    attribution: Optional[dict] = None
 
 @app.post("/api/events")
-async def log_event(req: EventRequest):
-    event = {"event_name": req.event_name, "event_data": req.event_data, "anonymous_id": req.anonymous_id, "session_id": req.session_id, "lead_id": req.lead_id, "timestamp": req.timestamp or datetime.now(timezone.utc).isoformat(), "server_timestamp": datetime.now(timezone.utc)}
+async def log_event(req: EnhancedEventRequest, request: Request):
+    # Extract IP + UA from request
+    client_ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "").split(",")[0].strip()
+    ua_string = request.headers.get("user-agent", "")
+    ua_parsed = parse_user_agent(ua_string)
+    
+    # Async geo resolution (non-blocking, fire-and-forget pattern with inline await)
+    geo = await resolve_geo(client_ip)
+    
+    event = {
+        "event_id": f"evt_{uuid.uuid4().hex[:12]}",
+        "event_name": req.event_name,
+        "event_data": req.event_data,
+        "anonymous_id": req.anonymous_id,
+        "session_id": req.session_id,
+        "lead_id": req.lead_id,
+        "client_ts": req.client_ts or req.timestamp or datetime.now(timezone.utc).isoformat(),
+        "server_timestamp": datetime.now(timezone.utc),
+        "page_url": req.page_url or "",
+        "page_path": req.page_path or "",
+        "viewport": req.viewport or "",
+        "wizard_step": req.wizard_step or req.event_data.get("step_id", ""),
+        "field_name": req.field_name or "",
+        "error_code": req.error_code or "",
+        "step_time_ms": req.step_time_ms,
+        "visitor_type": req.visitor_type or "unknown",
+        "visit_count": req.visit_count or 0,
+        "attribution": req.attribution or {},
+        "ip": client_ip,
+        "ua_raw": ua_string,
+        "ua_parsed": ua_parsed,
+        "geo": geo,
+    }
     await db.events.insert_one(event)
     return {"status": "logged"}
 

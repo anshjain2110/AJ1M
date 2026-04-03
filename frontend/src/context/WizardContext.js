@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
 import { getScreenFlow, getWizardStepCount } from '../utils/wizardConfig';
-import { getAnonymousId, getSessionId, captureAttribution, trackEvent } from '../utils/analytics';
+import { getAnonymousId, getSessionId, captureAttribution, trackEvent, initSession, startStepTimer, getStepElapsed, clearStepTimer, setCurrentWizardStep, clearCurrentWizardStep } from '../utils/analytics';
 import axios from 'axios';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
@@ -133,6 +133,9 @@ export function WizardProvider({ children }) {
     // Capture attribution
     const attr = captureAttribution();
     dispatch({ type: 'SET_ATTRIBUTION', attribution: attr });
+    
+    // Initialize session tracking
+    initSession();
   }, []);
 
   // Save to localStorage on meaningful state changes
@@ -153,6 +156,21 @@ export function WizardProvider({ children }) {
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
   }, [state.currentScreen, state.answers, state.leadId, state.frozenStepTotal, state.uploadedFiles, state.inspirationLinks]);
+
+  // Track step views and timing when screen changes
+  useEffect(() => {
+    const screen = state.currentScreen;
+    if (screen && screen !== 'landing' && screen !== 'thank_you') {
+      // Start timer for this step
+      startStepTimer(screen);
+      setCurrentWizardStep(screen);
+      // Fire step_view event
+      trackEvent('tlj_step_view', { step_id: screen, wizard_step: screen }, { lead_id: state.leadId });
+    }
+    if (screen === 'thank_you') {
+      clearCurrentWizardStep();
+    }
+  }, [state.currentScreen, state.leadId]);
 
   // Server autosave (debounced)
   const autosaveToServer = useCallback(async () => {
@@ -202,8 +220,10 @@ export function WizardProvider({ children }) {
 
   // Set answer AND advance (atomic operation)
   const setAnswerAndAdvance = useCallback((field, value, fromScreen) => {
+    const elapsed = getStepElapsed(fromScreen);
+    clearStepTimer(fromScreen);
     dispatch({ type: 'SET_ANSWER_AND_ADVANCE', field, value, fromScreen });
-    trackEvent('tlj_step_complete', { step_id: fromScreen }, { lead_id: stateRef.current.leadId });
+    trackEvent('tlj_step_complete', { step_id: fromScreen, wizard_step: fromScreen, step_time_ms: elapsed }, { lead_id: stateRef.current.leadId });
   }, []);
 
   // Navigate to next screen (for manual advance buttons)
@@ -219,8 +239,11 @@ export function WizardProvider({ children }) {
     
     if (currentIndex >= 0 && currentIndex < flow.length - 1) {
       const nextScreen = flow[currentIndex + 1];
+      const currentScreen = fromScreen || s.currentScreen;
+      const elapsed = getStepElapsed(currentScreen);
+      clearStepTimer(currentScreen);
       dispatch({ type: 'SET_SCREEN', screen: nextScreen });
-      trackEvent('tlj_step_complete', { step_id: fromScreen || s.currentScreen }, { lead_id: s.leadId });
+      trackEvent('tlj_step_complete', { step_id: currentScreen, wizard_step: currentScreen, step_time_ms: elapsed }, { lead_id: s.leadId });
     }
   }, []);
 

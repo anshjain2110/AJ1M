@@ -130,57 +130,762 @@ async def admin_login(req: AdminLogin):
 async def admin_me(admin=Depends(require_admin)):
     return {"email": admin["email"], "role": "admin"}
 
-# ── Analytics ────────────────────────────────────────────────
+# ── Analytics (Advanced Engine) ───────────────────────────────
+
+def build_date_filter(days: int = 30, date_from: str = None, date_to: str = None):
+    """Build a MongoDB date range filter."""
+    if date_from:
+        try:
+            start = datetime.fromisoformat(date_from.replace("Z", "+00:00"))
+        except:
+            start = datetime.now(timezone.utc) - timedelta(days=days)
+    else:
+        start = datetime.now(timezone.utc) - timedelta(days=days)
+    if date_to:
+        try:
+            end = datetime.fromisoformat(date_to.replace("Z", "+00:00"))
+        except:
+            end = datetime.now(timezone.utc)
+    else:
+        end = datetime.now(timezone.utc)
+    return start, end
+
+def build_prev_period(start, end):
+    """Calculate previous period of same length for comparison."""
+    delta = end - start
+    return start - delta, start
+
+@router.get("/analytics/executive")
+async def analytics_executive(
+    admin=Depends(require_admin),
+    days: int = Query(30),
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+):
+    start, end = build_date_filter(days, date_from, date_to)
+    prev_start, prev_end = build_prev_period(start, end)
+    ts_filter = {"server_timestamp": {"$gte": start, "$lte": end}}
+    prev_ts_filter = {"server_timestamp": {"$gte": prev_start, "$lte": prev_end}}
+    lead_filter = {"created_at": {"$gte": start, "$lte": end}}
+    prev_lead_filter = {"created_at": {"$gte": prev_start, "$lte": prev_end}}
+
+    # Current period
+    sessions = await db.events.count_documents({**ts_filter, "event_name": "tlj_session_start"})
+    wizard_starts = await db.events.count_documents({**ts_filter, "event_name": "tlj_wizard_start"})
+    submits = await db.events.count_documents({**ts_filter, "event_name": "tlj_lead_created"})
+    total_leads = await db.leads.count_documents(lead_filter)
+    abandons = await db.events.count_documents({**ts_filter, "event_name": "tlj_step_abandon"})
+
+    # Previous period
+    prev_sessions = await db.events.count_documents({**prev_ts_filter, "event_name": "tlj_session_start"})
+    prev_wizard_starts = await db.events.count_documents({**prev_ts_filter, "event_name": "tlj_wizard_start"})
+    prev_submits = await db.events.count_documents({**prev_ts_filter, "event_name": "tlj_lead_created"})
+    prev_total_leads = await db.leads.count_documents(prev_lead_filter)
+
+    # Completion rate
+    completion_rate = round((submits / wizard_starts * 100), 1) if wizard_starts > 0 else 0
+    prev_completion_rate = round((prev_submits / prev_wizard_starts * 100), 1) if prev_wizard_starts > 0 else 0
+
+    # Avg step time
+    step_time_pipeline = [{"$match": {**ts_filter, "event_name": "tlj_step_complete", "step_time_ms": {"$exists": True, "$gt": 0}}}, {"$group": {"_id": None, "avg_ms": {"$avg": "$step_time_ms"}, "median_ms": {"$avg": "$step_time_ms"}}}]
+    step_time_result = await db.events.aggregate(step_time_pipeline).to_list(1)
+    avg_step_time_sec = round(step_time_result[0]["avg_ms"] / 1000, 1) if step_time_result and step_time_result[0].get("avg_ms") else 0
+
+    # Lead quality breakdown
+    quality_pipeline = [{"$match": lead_filter}, {"$group": {"_id": "$intent_bucket", "count": {"$sum": 1}}}]
+    quality_result = await db.leads.aggregate(quality_pipeline).to_list(10)
+    quality_breakdown = {q["_id"] or "unscored": q["count"] for q in quality_result}
+
+    # Status breakdown
+    status_pipeline = [{"$match": lead_filter}, {"$group": {"_id": "$status", "count": {"$sum": 1}}}]
+    status_result = await db.leads.aggregate(status_pipeline).to_list(20)
+    status_breakdown = {s["_id"] or "new": s["count"] for s in status_result}
+
+    def delta(current, previous):
+        if previous == 0:
+            return 100 if current > 0 else 0
+        return round(((current - previous) / previous) * 100, 1)
+
+    return {
+        "period": {"start": start.isoformat(), "end": end.isoformat(), "days": days},
+        "metrics": {
+            "sessions": {"value": sessions, "prev": prev_sessions, "delta": delta(sessions, prev_sessions)},
+            "wizard_starts": {"value": wizard_starts, "prev": prev_wizard_starts, "delta": delta(wizard_starts, prev_wizard_starts)},
+            "submits": {"value": submits, "prev": prev_submits, "delta": delta(submits, prev_submits)},
+            "total_leads": {"value": total_leads, "prev": prev_total_leads, "delta": delta(total_leads, prev_total_leads)},
+            "completion_rate": {"value": completion_rate, "prev": prev_completion_rate, "delta": round(completion_rate - prev_completion_rate, 1)},
+            "avg_step_time_sec": {"value": avg_step_time_sec},
+            "abandons": {"value": abandons},
+        },
+        "quality_breakdown": quality_breakdown,
+        "status_breakdown": status_breakdown,
+    }
 
 @router.get("/analytics/overview")
 async def analytics_overview(admin=Depends(require_admin)):
+    """Legacy endpoint for backward compat."""
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     week_start = today_start - timedelta(days=today_start.weekday())
     month_start = today_start.replace(day=1)
-
     total = await db.leads.count_documents({})
     today = await db.leads.count_documents({"created_at": {"$gte": today_start}})
     this_week = await db.leads.count_documents({"created_at": {"$gte": week_start}})
     this_month = await db.leads.count_documents({"created_at": {"$gte": month_start}})
-
-    # Avg completion time
     pipeline = [{"$match": {"started_at": {"$exists": True}, "completed_at": {"$exists": True}}}, {"$project": {"duration": {"$subtract": ["$completed_at", "$started_at"]}}}, {"$group": {"_id": None, "avg_ms": {"$avg": "$duration"}}}]
     avg_result = await db.wizard_sessions.aggregate(pipeline).to_list(1)
     avg_time_seconds = round(avg_result[0]["avg_ms"] / 1000, 1) if avg_result and avg_result[0].get("avg_ms") else 0
-
-    # Status breakdown
     status_pipeline = [{"$group": {"_id": "$status", "count": {"$sum": 1}}}]
     status_result = await db.leads.aggregate(status_pipeline).to_list(20)
     status_breakdown = {s["_id"] or "new": s["count"] for s in status_result}
-
     return {"total": total, "today": today, "this_week": this_week, "this_month": this_month, "avg_completion_time_seconds": avg_time_seconds, "status_breakdown": status_breakdown}
 
 @router.get("/analytics/funnel")
-async def analytics_funnel(admin=Depends(require_admin), days: int = Query(30)):
-    since = datetime.now(timezone.utc) - timedelta(days=days)
-    pipeline = [{"$match": {"server_timestamp": {"$gte": since}, "event_name": {"$in": ["tlj_landing_view", "tlj_wizard_start", "tlj_step_view", "tlj_step_complete", "tlj_value_reveal_view", "tlj_contact_submit_attempt", "tlj_lead_created"]}}}, {"$group": {"_id": "$event_name", "count": {"$sum": 1}}}]
+async def analytics_funnel(
+    admin=Depends(require_admin),
+    days: int = Query(30),
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+):
+    start, end = build_date_filter(days, date_from, date_to)
+    ts_filter = {"server_timestamp": {"$gte": start, "$lte": end}}
+
+    # Top-level funnel
+    funnel_events = ["tlj_landing_view", "tlj_session_start", "tlj_wizard_start", "tlj_step_view", "tlj_step_complete", "tlj_value_reveal_view", "tlj_contact_submit_attempt", "tlj_lead_created"]
+    pipeline = [{"$match": {**ts_filter, "event_name": {"$in": funnel_events}}}, {"$group": {"_id": "$event_name", "count": {"$sum": 1}, "unique_sessions": {"$addToSet": "$session_id"}}}]
     result = await db.events.aggregate(pipeline).to_list(20)
-    funnel = {r["_id"]: r["count"] for r in result}
+    funnel = {}
+    for r in result:
+        funnel[r["_id"]] = {"count": r["count"], "unique_sessions": len(r["unique_sessions"])}
 
-    # Step-level breakdown
-    step_pipeline = [{"$match": {"server_timestamp": {"$gte": since}, "event_name": "tlj_step_view"}}, {"$group": {"_id": "$event_data.step_id", "views": {"$sum": 1}}}]
-    step_result = await db.events.aggregate(step_pipeline).to_list(30)
-    step_views = {s["_id"]: s["views"] for s in step_result if s["_id"]}
+    # Step-level breakdown with timing
+    step_view_pipeline = [
+        {"$match": {**ts_filter, "event_name": "tlj_step_view"}},
+        {"$group": {"_id": "$wizard_step", "views": {"$sum": 1}, "unique_sessions": {"$addToSet": "$session_id"}}}
+    ]
+    step_views = await db.events.aggregate(step_view_pipeline).to_list(30)
 
-    step_complete_pipeline = [{"$match": {"server_timestamp": {"$gte": since}, "event_name": "tlj_step_complete"}}, {"$group": {"_id": "$event_data.step_id", "completes": {"$sum": 1}}}]
-    step_complete_result = await db.events.aggregate(step_complete_pipeline).to_list(30)
-    step_completes = {s["_id"]: s["completes"] for s in step_complete_result if s["_id"]}
+    step_complete_pipeline = [
+        {"$match": {**ts_filter, "event_name": "tlj_step_complete"}},
+        {"$group": {"_id": "$wizard_step", "completes": {"$sum": 1}, "avg_time_ms": {"$avg": "$step_time_ms"}, "unique_sessions": {"$addToSet": "$session_id"}}}
+    ]
+    step_completes = await db.events.aggregate(step_complete_pipeline).to_list(30)
 
-    return {"funnel": funnel, "step_views": step_views, "step_completes": step_completes}
+    step_abandon_pipeline = [
+        {"$match": {**ts_filter, "event_name": "tlj_step_abandon"}},
+        {"$group": {"_id": "$wizard_step", "abandons": {"$sum": 1}}}
+    ]
+    step_abandons = await db.events.aggregate(step_abandon_pipeline).to_list(30)
+
+    # Merge step data
+    steps = {}
+    for sv in step_views:
+        sid = sv["_id"] or "unknown"
+        steps[sid] = {"views": sv["views"], "unique_views": len(sv["unique_sessions"]), "completes": 0, "abandons": 0, "avg_time_sec": 0}
+    for sc in step_completes:
+        sid = sc["_id"] or "unknown"
+        if sid not in steps:
+            steps[sid] = {"views": 0, "unique_views": 0, "completes": 0, "abandons": 0, "avg_time_sec": 0}
+        steps[sid]["completes"] = sc["completes"]
+        steps[sid]["avg_time_sec"] = round(sc["avg_time_ms"] / 1000, 1) if sc.get("avg_time_ms") else 0
+        steps[sid]["unique_completes"] = len(sc["unique_sessions"])
+    for sa in step_abandons:
+        sid = sa["_id"] or "unknown"
+        if sid in steps:
+            steps[sid]["abandons"] = sa["abandons"]
+
+    # Calculate drop rates
+    for sid, data in steps.items():
+        if data["views"] > 0:
+            data["drop_rate"] = round((1 - data["completes"] / data["views"]) * 100, 1)
+        else:
+            data["drop_rate"] = 0
+
+    return {"funnel": funnel, "steps": steps}
+
+@router.get("/analytics/trends")
+async def analytics_trends(
+    admin=Depends(require_admin),
+    days: int = Query(30),
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+):
+    start, end = build_date_filter(days, date_from, date_to)
+    ts_filter = {"server_timestamp": {"$gte": start, "$lte": end}}
+
+    # Daily trends
+    daily_pipeline = [
+        {"$match": {**ts_filter, "event_name": {"$in": ["tlj_session_start", "tlj_wizard_start", "tlj_lead_created"]}}},
+        {"$group": {
+            "_id": {"date": {"$dateToString": {"format": "%Y-%m-%d", "date": "$server_timestamp"}}, "event": "$event_name"},
+            "count": {"$sum": 1}
+        }},
+        {"$sort": {"_id.date": 1}}
+    ]
+    daily_result = await db.events.aggregate(daily_pipeline).to_list(500)
+    daily = {}
+    for r in daily_result:
+        d = r["_id"]["date"]
+        if d not in daily:
+            daily[d] = {"date": d, "sessions": 0, "wizard_starts": 0, "leads": 0}
+        if r["_id"]["event"] == "tlj_session_start":
+            daily[d]["sessions"] = r["count"]
+        elif r["_id"]["event"] == "tlj_wizard_start":
+            daily[d]["wizard_starts"] = r["count"]
+        elif r["_id"]["event"] == "tlj_lead_created":
+            daily[d]["leads"] = r["count"]
+
+    # Hourly heatmap
+    hourly_pipeline = [
+        {"$match": {**ts_filter, "event_name": {"$in": ["tlj_session_start", "tlj_wizard_start", "tlj_lead_created"]}}},
+        {"$group": {
+            "_id": {"hour": {"$hour": "$server_timestamp"}, "dow": {"$dayOfWeek": "$server_timestamp"}, "event": "$event_name"},
+            "count": {"$sum": 1}
+        }}
+    ]
+    hourly_result = await db.events.aggregate(hourly_pipeline).to_list(500)
+    hourly = {}
+    for r in hourly_result:
+        key = f"{r['_id']['dow']}_{r['_id']['hour']}"
+        if key not in hourly:
+            hourly[key] = {"dow": r["_id"]["dow"], "hour": r["_id"]["hour"], "sessions": 0, "wizard_starts": 0, "leads": 0}
+        if r["_id"]["event"] == "tlj_session_start":
+            hourly[key]["sessions"] = r["count"]
+        elif r["_id"]["event"] == "tlj_wizard_start":
+            hourly[key]["wizard_starts"] = r["count"]
+        elif r["_id"]["event"] == "tlj_lead_created":
+            hourly[key]["leads"] = r["count"]
+
+    return {"daily": sorted(daily.values(), key=lambda x: x["date"]), "hourly": list(hourly.values())}
+
+@router.get("/analytics/friction")
+async def analytics_friction(
+    admin=Depends(require_admin),
+    days: int = Query(30),
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+):
+    start, end = build_date_filter(days, date_from, date_to)
+    ts_filter = {"server_timestamp": {"$gte": start, "$lte": end}}
+
+    # Step-level friction: abandons by step
+    abandon_pipeline = [
+        {"$match": {**ts_filter, "event_name": "tlj_step_abandon"}},
+        {"$group": {"_id": "$wizard_step", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 15}
+    ]
+    abandon_result = await db.events.aggregate(abandon_pipeline).to_list(15)
+
+    # Field errors
+    field_error_pipeline = [
+        {"$match": {**ts_filter, "event_name": "tlj_field_error"}},
+        {"$group": {"_id": {"field": "$field_name", "error": "$error_code"}, "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 20}
+    ]
+    field_error_result = await db.events.aggregate(field_error_pipeline).to_list(20)
+
+    # Slowest steps (avg time)
+    slow_step_pipeline = [
+        {"$match": {**ts_filter, "event_name": "tlj_step_complete", "step_time_ms": {"$exists": True, "$gt": 0}}},
+        {"$group": {"_id": "$wizard_step", "avg_time_ms": {"$avg": "$step_time_ms"}, "max_time_ms": {"$max": "$step_time_ms"}, "count": {"$sum": 1}}},
+        {"$sort": {"avg_time_ms": -1}},
+        {"$limit": 15}
+    ]
+    slow_step_result = await db.events.aggregate(slow_step_pipeline).to_list(15)
+
+    # Back-button frequency by step
+    back_pipeline = [
+        {"$match": {**ts_filter, "event_name": "tlj_step_back"}},
+        {"$group": {"_id": "$event_data.from_step_id", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 10}
+    ]
+    back_result = await db.events.aggregate(back_pipeline).to_list(10)
+
+    return {
+        "abandon_by_step": [{"step": a["_id"] or "unknown", "count": a["count"]} for a in abandon_result],
+        "field_errors": [{"field": f["_id"]["field"] or "unknown", "error": f["_id"]["error"] or "unknown", "count": f["count"]} for f in field_error_result],
+        "slowest_steps": [{"step": s["_id"] or "unknown", "avg_time_sec": round(s["avg_time_ms"] / 1000, 1), "max_time_sec": round(s["max_time_ms"] / 1000, 1), "count": s["count"]} for s in slow_step_result],
+        "back_navigation": [{"from_step": b["_id"] or "unknown", "count": b["count"]} for b in back_result],
+    }
+
+@router.get("/analytics/quality")
+async def analytics_quality(
+    admin=Depends(require_admin),
+    days: int = Query(30),
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+):
+    start, end = build_date_filter(days, date_from, date_to)
+    lead_filter = {"created_at": {"$gte": start, "$lte": end}}
+
+    # Score distribution
+    score_pipeline = [
+        {"$match": {**lead_filter, "lead_score": {"$exists": True}}},
+        {"$bucket": {"groupBy": "$lead_score", "boundaries": [0, 20, 40, 60, 80, 101], "default": "other", "output": {"count": {"$sum": 1}}}}
+    ]
+    try:
+        score_result = await db.leads.aggregate(score_pipeline).to_list(10)
+        score_dist = [{"range": f"{r['_id']}-{r['_id']+19}" if isinstance(r['_id'], int) else str(r['_id']), "count": r["count"]} for r in score_result]
+    except Exception:
+        score_dist = []
+
+    # Intent bucket breakdown
+    intent_pipeline = [
+        {"$match": lead_filter},
+        {"$group": {"_id": "$intent_bucket", "count": {"$sum": 1}, "avg_score": {"$avg": {"$ifNull": ["$lead_score", 0]}}}},
+        {"$sort": {"count": -1}}
+    ]
+    intent_result = await db.leads.aggregate(intent_pipeline).to_list(10)
+
+    # Quality by source
+    quality_by_source_pipeline = [
+        {"$match": {**lead_filter, "lead_score": {"$exists": True}}},
+        {"$group": {"_id": {"$ifNull": ["$attribution.utm_source", "direct"]}, "count": {"$sum": 1}, "avg_score": {"$avg": "$lead_score"}, "high_intent": {"$sum": {"$cond": [{"$gte": ["$lead_score", 70]}, 1, 0]}}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 15}
+    ]
+    quality_source_result = await db.leads.aggregate(quality_by_source_pipeline).to_list(15)
+
+    # Quality flags frequency
+    flags_pipeline = [
+        {"$match": {**lead_filter, "quality_flags": {"$exists": True}}},
+        {"$unwind": "$quality_flags"},
+        {"$group": {"_id": "$quality_flags", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}}
+    ]
+    flags_result = await db.leads.aggregate(flags_pipeline).to_list(20)
+
+    return {
+        "score_distribution": score_dist,
+        "intent_breakdown": [{"bucket": i["_id"] or "unscored", "count": i["count"], "avg_score": round(i["avg_score"], 1)} for i in intent_result],
+        "quality_by_source": [{"source": q["_id"], "count": q["count"], "avg_score": round(q["avg_score"], 1), "high_intent": q["high_intent"]} for q in quality_source_result],
+        "quality_flags": [{"flag": f["_id"], "count": f["count"]} for f in flags_result],
+    }
+
+@router.get("/analytics/geo")
+async def analytics_geo(
+    admin=Depends(require_admin),
+    days: int = Query(30),
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+):
+    start, end = build_date_filter(days, date_from, date_to)
+    ts_filter = {"server_timestamp": {"$gte": start, "$lte": end}}
+
+    # Geo from events (enriched)
+    country_pipeline = [
+        {"$match": {**ts_filter, "geo.country": {"$exists": True, "$ne": "Unknown"}}},
+        {"$group": {"_id": "$geo.country", "events": {"$sum": 1}, "sessions": {"$addToSet": "$session_id"}}},
+        {"$sort": {"events": -1}},
+        {"$limit": 20}
+    ]
+    country_result = await db.events.aggregate(country_pipeline).to_list(20)
+
+    # City breakdown
+    city_pipeline = [
+        {"$match": {**ts_filter, "geo.city": {"$exists": True, "$ne": ""}}},
+        {"$group": {"_id": {"city": "$geo.city", "region": "$geo.region", "country": "$geo.country"}, "events": {"$sum": 1}, "sessions": {"$addToSet": "$session_id"}}},
+        {"$sort": {"events": -1}},
+        {"$limit": 20}
+    ]
+    city_result = await db.events.aggregate(city_pipeline).to_list(20)
+
+    # Timezone breakdown
+    tz_pipeline = [
+        {"$match": {**ts_filter, "geo.timezone": {"$exists": True, "$ne": ""}}},
+        {"$group": {"_id": "$geo.timezone", "events": {"$sum": 1}}},
+        {"$sort": {"events": -1}},
+        {"$limit": 15}
+    ]
+    tz_result = await db.events.aggregate(tz_pipeline).to_list(15)
+
+    # Geo from leads (attribution IP-based)
+    lead_geo_pipeline = [
+        {"$match": {"created_at": {"$gte": start, "$lte": end}, "attribution.country": {"$exists": True}}},
+        {"$group": {"_id": "$attribution.country", "leads": {"$sum": 1}}},
+        {"$sort": {"leads": -1}},
+        {"$limit": 15}
+    ]
+    lead_geo_result = await db.leads.aggregate(lead_geo_pipeline).to_list(15)
+
+    return {
+        "countries": [{"country": c["_id"], "events": c["events"], "sessions": len(c["sessions"])} for c in country_result],
+        "cities": [{"city": c["_id"]["city"], "region": c["_id"]["region"], "country": c["_id"]["country"], "events": c["events"], "sessions": len(c["sessions"])} for c in city_result],
+        "timezones": [{"timezone": t["_id"], "events": t["events"]} for t in tz_result],
+        "lead_geo": [{"country": l["_id"], "leads": l["leads"]} for l in lead_geo_result],
+    }
 
 @router.get("/analytics/sources")
-async def analytics_sources(admin=Depends(require_admin), days: int = Query(30)):
+async def analytics_sources(
+    admin=Depends(require_admin),
+    days: int = Query(30),
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+):
+    start, end = build_date_filter(days, date_from, date_to)
+    lead_filter = {"created_at": {"$gte": start, "$lte": end}}
+
+    # Source/Medium breakdown from leads
+    source_pipeline = [
+        {"$match": lead_filter},
+        {"$group": {
+            "_id": {"source": {"$ifNull": ["$attribution.utm_source", "direct"]}, "medium": {"$ifNull": ["$attribution.utm_medium", "(none)"]}},
+            "count": {"$sum": 1},
+            "avg_score": {"$avg": {"$ifNull": ["$lead_score", 0]}},
+            "high_intent": {"$sum": {"$cond": [{"$gte": [{"$ifNull": ["$lead_score", 0]}, 70]}, 1, 0]}}
+        }},
+        {"$sort": {"count": -1}},
+        {"$limit": 20}
+    ]
+    source_result = await db.leads.aggregate(source_pipeline).to_list(20)
+
+    # Campaign breakdown
+    campaign_pipeline = [
+        {"$match": {**lead_filter, "attribution.utm_campaign": {"$exists": True, "$ne": ""}}},
+        {"$group": {
+            "_id": "$attribution.utm_campaign",
+            "count": {"$sum": 1},
+            "avg_score": {"$avg": {"$ifNull": ["$lead_score", 0]}}
+        }},
+        {"$sort": {"count": -1}},
+        {"$limit": 15}
+    ]
+    campaign_result = await db.leads.aggregate(campaign_pipeline).to_list(15)
+
+    # Referrer breakdown from events
+    ts_filter = {"server_timestamp": {"$gte": start, "$lte": end}}
+    referrer_pipeline = [
+        {"$match": {**ts_filter, "attribution.referrer_url": {"$exists": True, "$ne": ""}}},
+        {"$group": {"_id": "$attribution.referrer_url", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 10}
+    ]
+    referrer_result = await db.events.aggregate(referrer_pipeline).to_list(10)
+
+    # Landing page breakdown from events
+    landing_pipeline = [
+        {"$match": {**ts_filter, "event_name": "tlj_session_start", "attribution.landing_url": {"$exists": True, "$ne": ""}}},
+        {"$group": {"_id": "$attribution.landing_url", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 10}
+    ]
+    landing_result = await db.events.aggregate(landing_pipeline).to_list(10)
+
+    return {
+        "sources": [{"source": s["_id"]["source"], "medium": s["_id"]["medium"], "count": s["count"], "avg_score": round(s["avg_score"], 1), "high_intent": s["high_intent"]} for s in source_result],
+        "campaigns": [{"campaign": c["_id"], "count": c["count"], "avg_score": round(c["avg_score"], 1)} for c in campaign_result],
+        "referrers": [{"url": r["_id"], "count": r["count"]} for r in referrer_result],
+        "landing_pages": [{"url": l["_id"], "count": l["count"]} for l in landing_result],
+    }
+
+@router.get("/analytics/devices")
+async def analytics_devices(
+    admin=Depends(require_admin),
+    days: int = Query(30),
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+):
+    start, end = build_date_filter(days, date_from, date_to)
+    ts_filter = {"server_timestamp": {"$gte": start, "$lte": end}}
+
+    # Device type from enriched events
+    device_pipeline = [
+        {"$match": {**ts_filter, "ua_parsed.device": {"$exists": True}}},
+        {"$group": {"_id": "$ua_parsed.device", "events": {"$sum": 1}, "sessions": {"$addToSet": "$session_id"}}},
+        {"$sort": {"events": -1}}
+    ]
+    device_result = await db.events.aggregate(device_pipeline).to_list(10)
+
+    # Browser breakdown
+    browser_pipeline = [
+        {"$match": {**ts_filter, "ua_parsed.browser": {"$exists": True}}},
+        {"$group": {"_id": "$ua_parsed.browser", "events": {"$sum": 1}, "sessions": {"$addToSet": "$session_id"}}},
+        {"$sort": {"events": -1}},
+        {"$limit": 10}
+    ]
+    browser_result = await db.events.aggregate(browser_pipeline).to_list(10)
+
+    # OS breakdown
+    os_pipeline = [
+        {"$match": {**ts_filter, "ua_parsed.os": {"$exists": True}}},
+        {"$group": {"_id": "$ua_parsed.os", "events": {"$sum": 1}, "sessions": {"$addToSet": "$session_id"}}},
+        {"$sort": {"events": -1}},
+        {"$limit": 10}
+    ]
+    os_result = await db.events.aggregate(os_pipeline).to_list(10)
+
+    # Viewport breakdown
+    viewport_pipeline = [
+        {"$match": {**ts_filter, "viewport": {"$exists": True, "$ne": ""}}},
+        {"$group": {"_id": "$viewport", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 10}
+    ]
+    viewport_result = await db.events.aggregate(viewport_pipeline).to_list(10)
+
+    return {
+        "devices": [{"device": d["_id"] or "unknown", "events": d["events"], "sessions": len(d["sessions"])} for d in device_result],
+        "browsers": [{"browser": b["_id"] or "unknown", "events": b["events"], "sessions": len(b["sessions"])} for b in browser_result],
+        "os": [{"os": o["_id"] or "unknown", "events": o["events"], "sessions": len(o["sessions"])} for o in os_result],
+        "viewports": [{"viewport": v["_id"], "count": v["count"]} for v in viewport_result],
+    }
+
+@router.get("/analytics/visitors")
+async def analytics_visitors(
+    admin=Depends(require_admin),
+    days: int = Query(30),
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+):
+    start, end = build_date_filter(days, date_from, date_to)
+    ts_filter = {"server_timestamp": {"$gte": start, "$lte": end}}
+
+    # New vs returning from events
+    visitor_pipeline = [
+        {"$match": {**ts_filter, "visitor_type": {"$exists": True, "$ne": "unknown"}}},
+        {"$group": {"_id": "$visitor_type", "count": {"$sum": 1}, "sessions": {"$addToSet": "$session_id"}}},
+    ]
+    visitor_result = await db.events.aggregate(visitor_pipeline).to_list(10)
+    visitor_types = {v["_id"]: {"events": v["count"], "sessions": len(v["sessions"])} for v in visitor_result}
+
+    # Unique visitors over time
+    unique_pipeline = [
+        {"$match": {**ts_filter, "event_name": "tlj_session_start"}},
+        {"$group": {
+            "_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$server_timestamp"}},
+            "unique_visitors": {"$addToSet": "$anonymous_id"},
+            "total_sessions": {"$sum": 1}
+        }},
+        {"$sort": {"_id": 1}}
+    ]
+    unique_result = await db.events.aggregate(unique_pipeline).to_list(100)
+
+    # Session depth (events per session)
+    depth_pipeline = [
+        {"$match": ts_filter},
+        {"$group": {"_id": "$session_id", "event_count": {"$sum": 1}}},
+        {"$bucket": {"groupBy": "$event_count", "boundaries": [1, 3, 6, 10, 20, 100], "default": "100+", "output": {"count": {"$sum": 1}}}}
+    ]
+    try:
+        depth_result = await db.events.aggregate(depth_pipeline).to_list(10)
+        session_depth = [{"range": f"{d['_id']}-{d['_id']+2}" if isinstance(d['_id'], int) else str(d['_id']), "count": d["count"]} for d in depth_result]
+    except Exception:
+        session_depth = []
+
+    return {
+        "visitor_types": visitor_types,
+        "daily_visitors": [{"date": u["_id"], "unique": len(u["unique_visitors"]), "sessions": u["total_sessions"]} for u in unique_result],
+        "session_depth": session_depth,
+    }
+
+@router.get("/analytics/events-health")
+async def analytics_events_health(admin=Depends(require_admin)):
+    """Event health: last seen, counts, stale warnings for all critical events."""
+    critical_events = [
+        "tlj_session_start", "tlj_landing_view", "tlj_wizard_start",
+        "tlj_step_view", "tlj_step_complete", "tlj_step_back",
+        "tlj_step_abandon", "tlj_value_reveal_view",
+        "tlj_contact_submit_attempt", "tlj_lead_created",
+        "tlj_field_focus", "tlj_field_error",
+        "tlj_file_upload_start", "tlj_file_upload_success", "tlj_file_upload_fail",
+    ]
+    now = datetime.now(timezone.utc)
+    stale_threshold = now - timedelta(hours=24)
+    last_7d = now - timedelta(days=7)
+
+    results = []
+    for name in critical_events:
+        last = await db.events.find_one({"event_name": name}, sort=[("server_timestamp", -1)])
+        total = await db.events.count_documents({"event_name": name})
+        last_7d_count = await db.events.count_documents({"event_name": name, "server_timestamp": {"$gte": last_7d}})
+        
+        last_seen = None
+        is_stale = True
+        if last and "server_timestamp" in last:
+            ts = last["server_timestamp"]
+            if isinstance(ts, datetime):
+                # Ensure timezone-aware comparison
+                if ts.tzinfo is None:
+                    ts = ts.replace(tzinfo=timezone.utc)
+                last_seen = ts.isoformat()
+                is_stale = ts < stale_threshold
+            else:
+                last_seen = str(ts)
+        
+        results.append({
+            "event": name,
+            "total_count": total,
+            "last_7d_count": last_7d_count,
+            "last_seen": last_seen or "never",
+            "is_stale": is_stale if total > 0 else None,
+            "status": "healthy" if total > 0 and not is_stale else ("stale" if total > 0 and is_stale else "never_fired"),
+        })
+
+    return {"events": results, "checked_at": now.isoformat()}
+
+@router.get("/analytics/lead-ops")
+async def analytics_lead_ops(admin=Depends(require_admin)):
+    """Lead operations: aging, uncontacted, priority queue."""
+    now = datetime.now(timezone.utc)
+
+    # Aging buckets
+    aging_pipeline = [
+        {"$match": {"status": {"$in": ["new", "contacted"]}}},
+        {"$project": {
+            "lead_id": 1, "first_name": 1, "status": 1, "lead_score": 1, "intent_bucket": 1,
+            "product_type": 1, "created_at": 1,
+            "age_hours": {"$divide": [{"$subtract": [now, "$created_at"]}, 3600000]}
+        }},
+        {"$sort": {"age_hours": -1}}
+    ]
+    aging_result = await db.leads.aggregate(aging_pipeline).to_list(100)
+
+    # Bucket them
+    buckets = {"critical_48h": [], "urgent_24h": [], "aging_12h": [], "fresh": []}
+    for lead in aging_result:
+        age = lead.get("age_hours", 0)
+        entry = {
+            "lead_id": lead.get("lead_id", ""),
+            "first_name": lead.get("first_name", ""),
+            "status": lead.get("status", "new"),
+            "product_type": lead.get("product_type", ""),
+            "lead_score": lead.get("lead_score", 0),
+            "intent_bucket": lead.get("intent_bucket", ""),
+            "age_hours": round(age, 1),
+            "created_at": lead["created_at"].isoformat() if isinstance(lead.get("created_at"), datetime) else str(lead.get("created_at", "")),
+        }
+        if age >= 48:
+            buckets["critical_48h"].append(entry)
+        elif age >= 24:
+            buckets["urgent_24h"].append(entry)
+        elif age >= 12:
+            buckets["aging_12h"].append(entry)
+        else:
+            buckets["fresh"].append(entry)
+
+    # Uncontacted count
+    uncontacted = await db.leads.count_documents({"status": "new"})
+
+    # High-intent uncontacted
+    high_intent_new = await db.leads.count_documents({"status": "new", "intent_bucket": "high"})
+
+    return {
+        "aging_buckets": buckets,
+        "total_uncontacted": uncontacted,
+        "high_intent_uncontacted": high_intent_new,
+        "summary": {
+            "critical": len(buckets["critical_48h"]),
+            "urgent": len(buckets["urgent_24h"]),
+            "aging": len(buckets["aging_12h"]),
+            "fresh": len(buckets["fresh"]),
+        }
+    }
+
+@router.get("/analytics/smart-insights")
+async def analytics_smart_insights(
+    admin=Depends(require_admin),
+    days: int = Query(30),
+):
+    """Rules-based smart insights for founders."""
+    start = datetime.now(timezone.utc) - timedelta(days=days)
+    ts_filter = {"server_timestamp": {"$gte": start}}
+    lead_filter = {"created_at": {"$gte": start}}
+    insights = []
+
+    # 1. Top drop-off step
+    drop_pipeline = [
+        {"$match": {**ts_filter, "event_name": "tlj_step_abandon"}},
+        {"$group": {"_id": "$wizard_step", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 1}
+    ]
+    drop_result = await db.events.aggregate(drop_pipeline).to_list(1)
+    if drop_result:
+        insights.append({"type": "warning", "category": "funnel", "title": "Top Drop-off Step", "message": f"'{drop_result[0]['_id']}' has the most abandons ({drop_result[0]['count']}) in the last {days} days.", "metric": drop_result[0]["count"]})
+
+    # 2. Slowest step
+    slow_pipeline = [
+        {"$match": {**ts_filter, "event_name": "tlj_step_complete", "step_time_ms": {"$exists": True, "$gt": 0}}},
+        {"$group": {"_id": "$wizard_step", "avg_ms": {"$avg": "$step_time_ms"}}},
+        {"$sort": {"avg_ms": -1}},
+        {"$limit": 1}
+    ]
+    slow_result = await db.events.aggregate(slow_pipeline).to_list(1)
+    if slow_result:
+        secs = round(slow_result[0]["avg_ms"] / 1000, 1)
+        insights.append({"type": "info", "category": "friction", "title": "Slowest Step", "message": f"'{slow_result[0]['_id']}' takes an average of {secs}s to complete.", "metric": secs})
+
+    # 3. Best source by quality
+    best_source_pipeline = [
+        {"$match": {**lead_filter, "lead_score": {"$exists": True}}},
+        {"$group": {"_id": {"$ifNull": ["$attribution.utm_source", "direct"]}, "avg_score": {"$avg": "$lead_score"}, "count": {"$sum": 1}}},
+        {"$match": {"count": {"$gte": 2}}},
+        {"$sort": {"avg_score": -1}},
+        {"$limit": 1}
+    ]
+    best_source = await db.leads.aggregate(best_source_pipeline).to_list(1)
+    if best_source:
+        insights.append({"type": "success", "category": "attribution", "title": "Best Quality Source", "message": f"'{best_source[0]['_id']}' produces the highest quality leads (avg score: {round(best_source[0]['avg_score'], 1)}, {best_source[0]['count']} leads).", "metric": round(best_source[0]["avg_score"], 1)})
+
+    # 4. Device with worst completion
+    device_completion_pipeline = [
+        {"$match": {**ts_filter, "event_name": {"$in": ["tlj_wizard_start", "tlj_lead_created"]}, "ua_parsed.device": {"$exists": True}}},
+        {"$group": {"_id": {"device": "$ua_parsed.device", "event": "$event_name"}, "count": {"$sum": 1}}}
+    ]
+    device_comp = await db.events.aggregate(device_completion_pipeline).to_list(20)
+    device_starts = {}
+    device_completes = {}
+    for dc in device_comp:
+        dev = dc["_id"]["device"]
+        if dc["_id"]["event"] == "tlj_wizard_start":
+            device_starts[dev] = dc["count"]
+        elif dc["_id"]["event"] == "tlj_lead_created":
+            device_completes[dev] = dc["count"]
+    worst_device = None
+    worst_rate = 100
+    for dev, starts in device_starts.items():
+        if starts >= 3:
+            completes = device_completes.get(dev, 0)
+            rate = round((completes / starts) * 100, 1)
+            if rate < worst_rate:
+                worst_rate = rate
+                worst_device = dev
+    if worst_device:
+        insights.append({"type": "warning", "category": "device", "title": "Worst Device Completion", "message": f"'{worst_device}' has the lowest completion rate ({worst_rate}%).", "metric": worst_rate})
+
+    # 5. Uncontacted leads alert
+    uncontacted = await db.leads.count_documents({"status": "new", "created_at": {"$lte": datetime.now(timezone.utc) - timedelta(hours=12)}})
+    if uncontacted > 0:
+        insights.append({"type": "critical", "category": "ops", "title": "Uncontacted Leads", "message": f"{uncontacted} leads have been waiting 12+ hours without contact.", "metric": uncontacted})
+
+    # 6. Best hour for high-intent
+    hour_pipeline = [
+        {"$match": {**ts_filter, "event_name": "tlj_lead_created"}},
+        {"$group": {"_id": {"$hour": "$server_timestamp"}, "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 1}
+    ]
+    hour_result = await db.events.aggregate(hour_pipeline).to_list(1)
+    if hour_result:
+        h = hour_result[0]["_id"]
+        insights.append({"type": "info", "category": "trends", "title": "Peak Lead Hour", "message": f"{h}:00 UTC is when most leads submit ({hour_result[0]['count']} in {days}d).", "metric": hour_result[0]["count"]})
+
+    return {"insights": insights, "period_days": days}
+
+@router.get("/analytics/abandonment")
+async def analytics_abandonment(admin=Depends(require_admin), days: int = Query(30)):
+    """Legacy abandonment endpoint."""
     since = datetime.now(timezone.utc) - timedelta(days=days)
-    pipeline = [{"$match": {"created_at": {"$gte": since}}}, {"$group": {"_id": {"source": {"$ifNull": ["$attribution.utm_source", "direct"]}, "medium": {"$ifNull": ["$attribution.utm_medium", ""]}}, "count": {"$sum": 1}}}, {"$sort": {"count": -1}}, {"$limit": 20}]
-    result = await db.leads.aggregate(pipeline).to_list(20)
-    sources = [{"source": r["_id"]["source"], "medium": r["_id"]["medium"], "count": r["count"]} for r in result]
-    return {"sources": sources}
+    pipeline = [{"$match": {"started_at": {"$gte": since}}}, {"$group": {"_id": "$current_step", "count": {"$sum": 1}}}, {"$sort": {"count": -1}}]
+    result = await db.wizard_sessions.aggregate(pipeline).to_list(30)
+    abandonment = [{"screen": r["_id"], "count": r["count"]} for r in result]
+    total_started = await db.wizard_sessions.count_documents({"started_at": {"$gte": since}})
+    total_completed = await db.leads.count_documents({"created_at": {"$gte": since}})
+    rate = round((1 - total_completed / total_started) * 100, 1) if total_started > 0 else 0
+    return {"abandonment_by_screen": abandonment, "total_started": total_started, "total_completed": total_completed, "abandonment_rate_pct": rate}
 
 @router.get("/analytics/campaigns")
 async def analytics_campaigns(admin=Depends(require_admin), days: int = Query(30)):
@@ -189,36 +894,6 @@ async def analytics_campaigns(admin=Depends(require_admin), days: int = Query(30
     result = await db.leads.aggregate(pipeline).to_list(20)
     campaigns = [{"campaign": r["_id"]["campaign"], "content": r["_id"]["content"], "count": r["count"]} for r in result]
     return {"campaigns": campaigns}
-
-@router.get("/analytics/devices")
-async def analytics_devices(admin=Depends(require_admin), days: int = Query(30)):
-    since = datetime.now(timezone.utc) - timedelta(days=days)
-    pipeline = [{"$match": {"created_at": {"$gte": since}}}, {"$group": {"_id": {"$ifNull": ["$attribution.device_type", "unknown"]}, "count": {"$sum": 1}}}]
-    result = await db.leads.aggregate(pipeline).to_list(10)
-    devices = [{"device": r["_id"], "count": r["count"]} for r in result]
-    return {"devices": devices}
-
-@router.get("/analytics/geo")
-async def analytics_geo(admin=Depends(require_admin), days: int = Query(30)):
-    since = datetime.now(timezone.utc) - timedelta(days=days)
-    pipeline = [{"$match": {"created_at": {"$gte": since}}}, {"$group": {"_id": {"$ifNull": ["$attribution.country", "Unknown"]}, "count": {"$sum": 1}}}, {"$sort": {"count": -1}}, {"$limit": 20}]
-    result = await db.leads.aggregate(pipeline).to_list(20)
-    geo = [{"country": r["_id"], "count": r["count"]} for r in result]
-    return {"geo": geo}
-
-@router.get("/analytics/abandonment")
-async def analytics_abandonment(admin=Depends(require_admin), days: int = Query(30)):
-    since = datetime.now(timezone.utc) - timedelta(days=days)
-    # Get sessions that never completed
-    pipeline = [{"$match": {"started_at": {"$gte": since}}}, {"$group": {"_id": "$current_step", "count": {"$sum": 1}}}, {"$sort": {"count": -1}}]
-    result = await db.wizard_sessions.aggregate(pipeline).to_list(30)
-    abandonment = [{"screen": r["_id"], "count": r["count"]} for r in result]
-
-    total_started = await db.wizard_sessions.count_documents({"started_at": {"$gte": since}})
-    total_completed = await db.leads.count_documents({"created_at": {"$gte": since}})
-    rate = round((1 - total_completed / total_started) * 100, 1) if total_started > 0 else 0
-
-    return {"abandonment_by_screen": abandonment, "total_started": total_started, "total_completed": total_completed, "abandonment_rate_pct": rate}
 
 # ── Lead CRM ─────────────────────────────────────────────────
 

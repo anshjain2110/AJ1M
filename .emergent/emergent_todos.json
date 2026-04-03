@@ -1,22 +1,38 @@
 [
   {
-    "content": "Add backend API for showcase pairs (CRUD + public endpoint)",
+    "content": "Phase 1: Backend - Enhanced /api/events with UA parsing, IP geo enrichment, enriched schema",
     "status": "completed"
   },
   {
-    "content": "Add admin UI to upload render/product image pairs",
+    "content": "Phase 1: Backend - Lead scoring v1 on /api/leads/submit",
     "status": "completed"
   },
   {
-    "content": "Build the auto-scrolling render-to-product slideshow component",
+    "content": "Phase 1: Backend - New analytics endpoints (executive, funnel-detailed, friction, quality, trends, geo, attribution, device, visitors, events-health, lead-ops, smart-insights)",
     "status": "completed"
   },
   {
-    "content": "Add slideshow to landing page below 'browse our collection'",
+    "content": "Phase 1: Backend - Add MongoDB indexes for analytics fields",
     "status": "completed"
   },
   {
-    "content": "Test full flow - admin upload pairs, landing page displays slideshow",
+    "content": "Phase 2: Frontend - Enhanced analytics.js with step timing, viewport, page_url, visitor_type",
     "status": "completed"
+  },
+  {
+    "content": "Phase 2: Frontend - Add tlj_session_start, tlj_step_view, tlj_step_abandon events in WizardContext",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 3: UI - Rebuild AnalyticsDashboard.js with tabbed layout + global date filter",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 3: UI - Build all analytics tab components (Executive, Funnel, Friction, Quality, Geo, Attribution, Device, Visitors, Events Health, Smart Insights)",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 4: Testing & verification with testing agent",
+    "status": "in_progress"
   }
 ]

@@ -15,6 +15,7 @@ class LocalJewelAPITester:
         self.test_results = []
         self.lead_id = None
         self.token = None
+        self.admin_token = None
         self.test_email = f"test_{uuid.uuid4().hex[:8]}@test.com"
         self.test_phone = f"+1555{uuid.uuid4().hex[:7]}"
 
@@ -341,6 +342,241 @@ class LocalJewelAPITester:
             self.log_result("File Upload API", False, error=str(e))
             return False
 
+    def test_admin_login(self):
+        """Test admin login with provided credentials"""
+        try:
+            data = {"email": "ansh@thelocaljewel.com", "password": "Rakesh@2709"}
+            response = self.session.post(f"{self.base_url}/api/admin/auth/login", json=data, timeout=10)
+            
+            if response.status_code == 200:
+                response_data = response.json()
+                if 'token' in response_data:
+                    self.admin_token = response_data['token']
+                    self.log_result("Admin Login", True, response)
+                    return True
+                else:
+                    self.log_result("Admin Login", False, response, "No token in response")
+                    return False
+            else:
+                self.log_result("Admin Login", False, response)
+                return False
+        except Exception as e:
+            self.log_result("Admin Login", False, error=str(e))
+            return False
+
+    def test_analytics_executive(self):
+        """Test executive analytics endpoint"""
+        if not self.admin_token:
+            self.log_result("Analytics Executive", False, error="No admin token")
+            return False
+            
+        try:
+            headers = {'Authorization': f'Bearer {self.admin_token}'}
+            response = self.session.get(f"{self.base_url}/api/admin/analytics/executive?days=30", headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                required_fields = ['metrics', 'quality_breakdown', 'status_breakdown']
+                for field in required_fields:
+                    if field not in data:
+                        self.log_result("Analytics Executive", False, response, f"Missing field: {field}")
+                        return False
+                
+                # Check metrics structure
+                metrics = data.get('metrics', {})
+                expected_metrics = ['sessions', 'wizard_starts', 'total_leads', 'completion_rate']
+                for metric in expected_metrics:
+                    if metric not in metrics or 'value' not in metrics[metric]:
+                        self.log_result("Analytics Executive", False, response, f"Missing metric: {metric}")
+                        return False
+                
+                self.log_result("Analytics Executive", True, response)
+                return True
+            else:
+                self.log_result("Analytics Executive", False, response)
+                return False
+        except Exception as e:
+            self.log_result("Analytics Executive", False, error=str(e))
+            return False
+
+    def test_analytics_funnel(self):
+        """Test funnel analytics endpoint"""
+        if not self.admin_token:
+            self.log_result("Analytics Funnel", False, error="No admin token")
+            return False
+            
+        try:
+            headers = {'Authorization': f'Bearer {self.admin_token}'}
+            response = self.session.get(f"{self.base_url}/api/admin/analytics/funnel?days=30", headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                required_fields = ['funnel', 'steps']
+                for field in required_fields:
+                    if field not in data:
+                        self.log_result("Analytics Funnel", False, response, f"Missing field: {field}")
+                        return False
+                
+                self.log_result("Analytics Funnel", True, response)
+                return True
+            else:
+                self.log_result("Analytics Funnel", False, response)
+                return False
+        except Exception as e:
+            self.log_result("Analytics Funnel", False, error=str(e))
+            return False
+
+    def test_analytics_events_health(self):
+        """Test events health endpoint"""
+        if not self.admin_token:
+            self.log_result("Analytics Events Health", False, error="No admin token")
+            return False
+            
+        try:
+            headers = {'Authorization': f'Bearer {self.admin_token}'}
+            response = self.session.get(f"{self.base_url}/api/admin/analytics/events-health", headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'events' not in data:
+                    self.log_result("Analytics Events Health", False, response, "Missing events field")
+                    return False
+                
+                events = data.get('events', [])
+                # Check for critical events
+                critical_events = ['tlj_session_start', 'tlj_wizard_start', 'tlj_lead_created']
+                for event_name in critical_events:
+                    event_found = any(e.get('event') == event_name for e in events)
+                    if not event_found:
+                        print(f"   ⚠️  Critical event not monitored: {event_name}")
+                
+                self.log_result("Analytics Events Health", True, response)
+                return True
+            else:
+                self.log_result("Analytics Events Health", False, response)
+                return False
+        except Exception as e:
+            self.log_result("Analytics Events Health", False, error=str(e))
+            return False
+
+    def test_analytics_smart_insights(self):
+        """Test smart insights endpoint"""
+        if not self.admin_token:
+            self.log_result("Analytics Smart Insights", False, error="No admin token")
+            return False
+            
+        try:
+            headers = {'Authorization': f'Bearer {self.admin_token}'}
+            response = self.session.get(f"{self.base_url}/api/admin/analytics/smart-insights?days=30", headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'insights' not in data:
+                    self.log_result("Analytics Smart Insights", False, response, "Missing insights field")
+                    return False
+                
+                self.log_result("Analytics Smart Insights", True, response)
+                return True
+            else:
+                self.log_result("Analytics Smart Insights", False, response)
+                return False
+        except Exception as e:
+            self.log_result("Analytics Smart Insights", False, error=str(e))
+            return False
+
+    def test_analytics_lead_ops(self):
+        """Test lead operations endpoint"""
+        if not self.admin_token:
+            self.log_result("Analytics Lead Ops", False, error="No admin token")
+            return False
+            
+        try:
+            headers = {'Authorization': f'Bearer {self.admin_token}'}
+            response = self.session.get(f"{self.base_url}/api/admin/analytics/lead-ops", headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                required_fields = ['aging_buckets', 'total_uncontacted', 'high_intent_uncontacted']
+                for field in required_fields:
+                    if field not in data:
+                        self.log_result("Analytics Lead Ops", False, response, f"Missing field: {field}")
+                        return False
+                
+                self.log_result("Analytics Lead Ops", True, response)
+                return True
+            else:
+                self.log_result("Analytics Lead Ops", False, response)
+                return False
+        except Exception as e:
+            self.log_result("Analytics Lead Ops", False, error=str(e))
+            return False
+
+    def test_all_analytics_endpoints(self):
+        """Test all remaining analytics endpoints"""
+        if not self.admin_token:
+            self.log_result("All Analytics Endpoints", False, error="No admin token")
+            return False
+            
+        endpoints = [
+            ("Analytics Trends", "api/admin/analytics/trends?days=30"),
+            ("Analytics Friction", "api/admin/analytics/friction?days=30"),
+            ("Analytics Quality", "api/admin/analytics/quality?days=30"),
+            ("Analytics Sources", "api/admin/analytics/sources?days=30"),
+            ("Analytics Geo", "api/admin/analytics/geo?days=30"),
+            ("Analytics Devices", "api/admin/analytics/devices?days=30"),
+            ("Analytics Visitors", "api/admin/analytics/visitors?days=30"),
+        ]
+        
+        all_passed = True
+        headers = {'Authorization': f'Bearer {self.admin_token}'}
+        
+        for name, endpoint in endpoints:
+            try:
+                response = self.session.get(f"{self.base_url}/{endpoint}", headers=headers, timeout=10)
+                if response.status_code == 200:
+                    self.log_result(name, True, response)
+                else:
+                    self.log_result(name, False, response)
+                    all_passed = False
+            except Exception as e:
+                self.log_result(name, False, error=str(e))
+                all_passed = False
+        
+        return all_passed
+
+    def test_enhanced_events_endpoint(self):
+        """Test events endpoint with enhanced payload"""
+        try:
+            test_event = {
+                "event_name": "tlj_session_start",
+                "event_data": {"test": True},
+                "anonymous_id": "test_anon_123",
+                "session_id": "test_session_123",
+                "client_ts": datetime.now().isoformat(),
+                "page_url": "https://test.com",
+                "viewport": "1920x1080",
+                "visitor_type": "new",
+                "visit_count": 1,
+                "attribution": {"utm_source": "test"}
+            }
+            
+            response = self.session.post(f"{self.base_url}/api/events", json=test_event, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('status') == 'logged':
+                    self.log_result("Enhanced Events Endpoint", True, response)
+                    return True
+                else:
+                    self.log_result("Enhanced Events Endpoint", False, response, "Invalid response status")
+                    return False
+            else:
+                self.log_result("Enhanced Events Endpoint", False, response)
+                return False
+        except Exception as e:
+            self.log_result("Enhanced Events Endpoint", False, error=str(e))
+            return False
+
     def run_all_tests(self):
         """Run all API tests in sequence"""
         print("🚀 Starting Local Jewel API Testing...")
@@ -358,6 +594,16 @@ class LocalJewelAPITester:
         self.test_authenticated_endpoints()
         self.test_events_api()
         self.test_file_upload_api()
+        
+        # Analytics Dashboard tests
+        self.test_admin_login()
+        self.test_analytics_executive()
+        self.test_analytics_funnel()
+        self.test_analytics_events_health()
+        self.test_analytics_smart_insights()
+        self.test_analytics_lead_ops()
+        self.test_all_analytics_endpoints()
+        self.test_enhanced_events_endpoint()
 
         # Print summary
         print("\n" + "=" * 50)
