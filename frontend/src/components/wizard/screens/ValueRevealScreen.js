@@ -118,8 +118,8 @@ export default function ValueRevealScreen() {
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-4 py-10 max-w-[520px] mx-auto w-full text-center">
       <div className="w-16 h-16 rounded-full flex items-center justify-center mb-8" style={{ background: 'rgba(15,94,76,0.08)', border: '1px solid rgba(15,94,76,0.15)', opacity: revealed ? 1 : 0, transition: 'opacity 600ms var(--lj-ease)' }}><Sparkles size={28} style={{ color: 'var(--lj-accent)' }} /></div>
-      <p className="text-[16px] leading-[24px] mb-4" style={{ color: 'var(--lj-muted)', opacity: revealed ? 1 : 0, transition: 'opacity 400ms var(--lj-ease)' }}>Based on what you're looking for...</p>
-      <h2 className="text-[13px] leading-[18px] uppercase tracking-widest mb-3 font-medium" style={{ color: 'var(--lj-accent)', opacity: revealed ? 1 : 0, transition: 'opacity 400ms var(--lj-ease) 200ms' }}>Customers like you typically save</h2>
+      <p className="text-[22px] leading-[30px] mb-3 font-medium" style={{ color: 'var(--lj-text)', opacity: revealed ? 1 : 0, transition: 'opacity 400ms var(--lj-ease)' }}>Based on what you're looking for...</p>
+      <h2 className="text-[18px] leading-[24px] uppercase tracking-widest mb-4 font-semibold" style={{ color: 'var(--lj-accent)', opacity: revealed ? 1 : 0, transition: 'opacity 400ms var(--lj-ease) 200ms' }}>Customers like you typically save</h2>
       <div className="mb-6" data-testid="value-reveal-savings-amount" style={{ opacity: revealed ? 1 : 0, transform: revealed ? 'translateY(0)' : 'translateY(8px)', transition: 'all 600ms var(--lj-ease) 400ms' }}>
         <span className="text-[48px] leading-[56px] font-bold" style={{ color: 'var(--lj-accent)' }}>
           {revealed ? (
