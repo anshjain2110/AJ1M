@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Star, Shield, Users, ArrowRight, ChevronRight, ChevronDown, ChevronLeft, ExternalLink, Sparkles, MapPin, Phone, Globe } from 'lucide-react';
+import React from 'react';
+import { Star, Users, ArrowRight, ChevronRight, ExternalLink, Sparkles, MapPin, Phone, Globe } from 'lucide-react';
 import { useWizard } from '../../../context/WizardContext';
 import { trackEvent } from '../../../utils/analytics';
 import { RenderShowcase } from '../../RenderShowcase';
@@ -43,18 +43,10 @@ const ETSY_REVIEWS = [
 
 export default function LandingScreen() {
   const { startWizard, state } = useWizard();
-  const [compareOpen, setCompareOpen] = useState(false);
 
   const handleStartWizard = async () => {
     trackEvent('tlj_cta_start_click', { cta_id: 'hero_cta' });
     await startWizard();
-  };
-
-  const handleCompareOpen = () => {
-    if (!compareOpen) {
-      trackEvent('tlj_savings_compare_open', {});
-    }
-    setCompareOpen(!compareOpen);
   };
 
   const handleSavingsCta = async () => {
@@ -90,27 +82,48 @@ export default function LandingScreen() {
           Compared to traditional retail jewelry pricing.
         </p>
 
-        {/* Expand trigger */}
-        <button
-          onClick={handleCompareOpen}
-          data-testid="savings-compare-trigger"
-          className="flex items-center gap-1.5 mb-5 text-[14px] font-medium transition-colors duration-300 hover:opacity-80"
-          style={{ color: 'var(--lj-accent)' }}
-        >
-          {compareOpen ? 'Hide comparison' : 'See a real comparison'}
-          <ChevronDown size={16} className="transition-transform duration-300" style={{ transform: compareOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
-        </button>
+        {/* Expand trigger removed — comparison is always visible below */}
 
-        {/* Inline accordion — comparison table */}
+        {/* Highlighted comparison — always visible, no dropdown */}
         <div
-          className="w-full max-w-lg overflow-hidden transition-all duration-500 mb-4"
-          style={{ maxHeight: compareOpen ? '800px' : '0px', opacity: compareOpen ? 1 : 0 }}
+          data-testid="savings-comparison-panel"
+          className="w-full max-w-2xl mb-6 rounded-[22px] p-4 sm:p-6 text-left relative overflow-hidden"
+          style={{
+            background: 'linear-gradient(180deg, rgba(15,94,76,0.04) 0%, rgba(15,94,76,0.01) 60%, var(--lj-surface) 100%)',
+            border: '1px solid var(--lj-border)',
+            boxShadow: '0 10px 40px rgba(15,94,76,0.06), 0 1px 0 rgba(255,255,255,0.6) inset',
+          }}
         >
-          <div className="grid md:grid-cols-2 gap-3">
+          {/* Decorative corner sparkle */}
+          <div aria-hidden="true" className="absolute -top-6 -right-6 w-28 h-28 rounded-full opacity-50" style={{ background: 'radial-gradient(closest-side, rgba(15,94,76,0.18), transparent)' }} />
+
+          {/* Section label */}
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <span className="h-px w-6" style={{ background: 'var(--lj-border)' }} />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.16em]" style={{ color: 'var(--lj-accent)' }}>
+              Real customer comparison
+            </span>
+            <span className="h-px w-6" style={{ background: 'var(--lj-border)' }} />
+          </div>
+          <h3 className="text-[22px] sm:text-[26px] leading-[1.15] font-semibold text-center mb-1 tracking-[-0.01em]" style={{ color: 'var(--lj-text)' }}>
+            Same ring. <span style={{ color: 'var(--lj-accent)' }}>{ex.savings} less.</span>
+          </h3>
+          <p className="text-[13px] text-center mb-5" style={{ color: 'var(--lj-muted)' }}>
+            Side-by-side: a recent client's piece vs. comparable retail listings.
+          </p>
+
+          {/* Two-column cards with center 'vs' badge on desktop */}
+          <div className="relative grid md:grid-cols-2 gap-3 md:gap-5">
+            {/* Center 'vs' divider — desktop only */}
+            <div aria-hidden="true" className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center rounded-full text-[11px] font-bold tracking-wider" style={{ background: 'var(--lj-text)', color: '#FFFFFF', boxShadow: '0 6px 18px rgba(0,0,0,0.12)' }}>
+              VS
+            </div>
+
             {/* Traditional Retail */}
-            <div className="p-4 rounded-[14px]" style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}>
-              <h4 className="text-[13px] font-medium mb-2 text-center" style={{ color: 'var(--lj-muted)' }}>Traditional Retail</h4>
-              {/* Competitor links right under title */}
+            <div className="p-4 rounded-[16px]" style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}>
+              <div className="flex items-center justify-center mb-2">
+                <span className="text-[12px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--lj-muted)' }}>Traditional Retail</span>
+              </div>
               <div className="flex flex-wrap justify-center gap-1.5 mb-3">
                 {ex.competitors.map((c, ci) => (
                   <a key={ci} href={c.url} target="_blank" rel="noopener noreferrer" className="text-[11px] px-2 py-1 rounded-full transition-colors hover:bg-[#EDEDEB]" style={{ color: 'var(--lj-muted)', border: '1px solid var(--lj-border)' }}>
@@ -128,15 +141,22 @@ export default function LandingScreen() {
                 <div className="pt-2.5 mt-2.5" style={{ borderTop: '1px solid var(--lj-border)' }}>
                   <div className="flex justify-between items-center">
                     <span className="text-[13px]" style={{ color: 'var(--lj-muted)' }}>Price</span>
-                    <span className="text-[18px] font-semibold" style={{ color: 'var(--lj-text)' }}>{ex.retailPrice}</span>
+                    <span className="text-[20px] font-semibold" style={{ color: 'var(--lj-text)' }}>
+                      <span className="line-through opacity-60 mr-0">{ex.retailPrice}</span>
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
+
             {/* The Local Jewel */}
-            <div className="p-4 rounded-[14px]" style={{ background: 'var(--lj-surface)', border: '2px solid var(--lj-accent)' }}>
-              <h4 className="text-[13px] font-medium mb-2 text-center" style={{ color: 'var(--lj-accent)' }}>The Local Jewel</h4>
-              {/* Store link right under title */}
+            <div className="p-4 rounded-[16px] relative" style={{ background: 'var(--lj-surface)', border: '2px solid var(--lj-accent)', boxShadow: '0 8px 28px rgba(15,94,76,0.12)' }}>
+              <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-[0.12em]" style={{ background: 'var(--lj-accent)', color: '#FFFFFF' }}>
+                Best value
+              </div>
+              <div className="flex items-center justify-center mb-2">
+                <span className="text-[12px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'var(--lj-accent)' }}>The Local Jewel</span>
+              </div>
               <div className="flex justify-center mb-3">
                 <a href={ex.tljProductLink} target="_blank" rel="noopener noreferrer" className="text-[11px] px-2 py-1 rounded-full transition-colors hover:opacity-80" style={{ color: 'var(--lj-accent)', border: '1px solid rgba(15,94,76,0.2)' }}>
                   View this piece ↗
@@ -149,7 +169,6 @@ export default function LandingScreen() {
                     <span className="font-medium text-right" style={{ color: 'var(--lj-text)' }}>{value}</span>
                   </div>
                 ))}
-                {/* Certification with link */}
                 <div className="flex justify-between text-[13px]">
                   <span style={{ color: 'var(--lj-muted)' }}>Certification</span>
                   <a href={ex.tljCertLink} target="_blank" rel="noopener noreferrer" className="font-medium text-right underline decoration-dotted underline-offset-2 hover:opacity-80 transition-opacity" style={{ color: 'var(--lj-accent)' }}>
@@ -159,17 +178,33 @@ export default function LandingScreen() {
                 <div className="pt-2.5 mt-2.5" style={{ borderTop: '1px solid rgba(15,94,76,0.2)' }}>
                   <div className="flex justify-between items-center">
                     <span className="text-[13px]" style={{ color: 'var(--lj-muted)' }}>Price</span>
-                    <span className="text-[18px] font-semibold" style={{ color: 'var(--lj-accent)' }}>{ex.tljPrice}</span>
+                    <span className="text-[20px] font-semibold" style={{ color: 'var(--lj-accent)' }}>{ex.tljPrice}</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div className="mt-4 text-center">
-            <p className="text-[14px] mb-3" style={{ color: 'var(--lj-text)' }}>Estimated savings: <span className="font-semibold text-[16px]" style={{ color: 'var(--lj-accent)' }}>{ex.savings}</span></p>
-            <button onClick={handleSavingsCta} data-testid="savings-cta-button" className="min-h-[44px] px-6 rounded-[14px] font-medium text-[14px] inline-flex items-center gap-2 transition-all duration-300 active:scale-[0.99]" style={{ background: 'var(--lj-accent)', color: '#FFFFFF' }}>See my savings <ArrowRight size={16} /></button>
-            <p className="mt-3 text-[11px]" style={{ color: 'var(--lj-muted)', opacity: 0.7 }}>Example based on a recent client purchase and comparable retail pricing.</p>
+
+          {/* Savings highlight */}
+          <div className="mt-5 flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3.5 rounded-[14px]" style={{ background: 'var(--lj-accent)', color: '#FFFFFF', boxShadow: '0 8px 22px rgba(15,94,76,0.22)' }}>
+            <div className="flex items-center gap-2">
+              <Sparkles size={16} />
+              <span className="text-[14px] sm:text-[15px] leading-[1.35]">
+                You save <span className="font-semibold text-[18px] sm:text-[20px] tracking-tight">{ex.savings}</span> <span className="opacity-80">on this exact piece.</span>
+              </span>
+            </div>
+            <button
+              onClick={handleSavingsCta}
+              data-testid="savings-cta-button"
+              className="min-h-[40px] px-4 rounded-full font-medium text-[13px] inline-flex items-center gap-1.5 transition-all duration-300 active:scale-[0.99] hover:opacity-95 whitespace-nowrap"
+              style={{ background: '#FFFFFF', color: 'var(--lj-accent)' }}
+            >
+              See my savings <ArrowRight size={14} />
+            </button>
           </div>
+          <p className="mt-3 text-[11px] text-center" style={{ color: 'var(--lj-muted)', opacity: 0.8 }}>
+            Example based on a recent client purchase and comparable retail pricing.
+          </p>
         </div>
 
         <div className="flex items-center gap-4 mb-8">
