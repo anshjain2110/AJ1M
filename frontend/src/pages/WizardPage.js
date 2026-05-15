@@ -3,6 +3,7 @@ import { useWizard } from '../context/WizardContext';
 import WizardShell from '../components/wizard/WizardShell';
 import FloatingWidget from '../components/wizard/FloatingWidget';
 import LandingScreen from '../components/wizard/screens/LandingScreen';
+import HowItWorksScreen from '../components/wizard/screens/HowItWorksScreen';
 import SingleSelectScreen from '../components/wizard/SingleSelectScreen';
 import DiamondShapeScreen from '../components/wizard/DiamondShapeScreen';
 import BraceletScreen from '../components/wizard/screens/BraceletScreen';
@@ -31,6 +32,9 @@ export default function WizardPage() {
     switch (currentScreen) {
       case 'landing':
         return <LandingScreen />;
+      
+      case 'how_it_works':
+        return <HowItWorksScreen />;
       
       case 'product_type':
         return (

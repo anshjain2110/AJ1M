@@ -101,6 +101,7 @@ export const RING_SIZES = [
 // Branching logic: determines the flow of screens based on answers
 export function getScreenFlow(answers) {
   const flow = ['landing']; // Screen 0
+  flow.push('how_it_works'); // Interstitial — explains the 3-step process
   flow.push('product_type'); // Screen 1
   
   const product = answers.product_type;
@@ -155,17 +156,17 @@ export function getScreenFlow(answers) {
   return flow;
 }
 
-// Calculate total wizard steps (excluding landing and thank you)
+// Calculate total wizard steps (excluding landing, how_it_works and thank you)
 export function getWizardStepCount(answers) {
   const flow = getScreenFlow(answers);
-  // Exclude landing and thank_you from count
-  return flow.filter(s => s !== 'landing' && s !== 'thank_you').length;
+  // Exclude landing, how_it_works and thank_you from count
+  return flow.filter(s => s !== 'landing' && s !== 'how_it_works' && s !== 'thank_you').length;
 }
 
 // Get current step number (1-based)
 export function getCurrentStepNumber(currentScreen, answers) {
   const flow = getScreenFlow(answers);
-  const wizardScreens = flow.filter(s => s !== 'landing' && s !== 'thank_you');
+  const wizardScreens = flow.filter(s => s !== 'landing' && s !== 'how_it_works' && s !== 'thank_you');
   const index = wizardScreens.indexOf(currentScreen);
   return index >= 0 ? index + 1 : 0;
 }

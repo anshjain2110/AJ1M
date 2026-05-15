@@ -145,6 +145,7 @@ export function WizardProvider({ children }) {
       localStorage.removeItem(STORAGE_KEY);
       return;
     }
+    if (state.currentScreen === 'how_it_works') return; // Don't persist the interstitial
     
     const toSave = {
       currentScreen: state.currentScreen,
@@ -160,7 +161,7 @@ export function WizardProvider({ children }) {
   // Track step views and timing when screen changes
   useEffect(() => {
     const screen = state.currentScreen;
-    if (screen && screen !== 'landing' && screen !== 'thank_you') {
+    if (screen && screen !== 'landing' && screen !== 'how_it_works' && screen !== 'thank_you') {
       // Start timer for this step
       startStepTimer(screen);
       setCurrentWizardStep(screen);
@@ -175,7 +176,7 @@ export function WizardProvider({ children }) {
   // Server autosave (debounced)
   const autosaveToServer = useCallback(async () => {
     const s = stateRef.current;
-    if (!s.leadId || s.currentScreen === 'landing' || s.currentScreen === 'thank_you') return;
+    if (!s.leadId || s.currentScreen === 'landing' || s.currentScreen === 'how_it_works' || s.currentScreen === 'thank_you') return;
     try {
       await axios.put(`${BACKEND_URL}/api/wizard/${s.leadId}/autosave`, {
         answers: s.answers,
@@ -189,7 +190,7 @@ export function WizardProvider({ children }) {
 
   useEffect(() => {
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
-    if (state.leadId && state.currentScreen !== 'landing' && state.currentScreen !== 'thank_you') {
+    if (state.leadId && state.currentScreen !== 'landing' && state.currentScreen !== 'how_it_works' && state.currentScreen !== 'thank_you') {
       autosaveTimer.current = setTimeout(autosaveToServer, 2000);
     }
     return () => {
@@ -208,7 +209,7 @@ export function WizardProvider({ children }) {
       });
       const leadId = res.data.lead_id;
       dispatch({ type: 'SET_LEAD_ID', leadId });
-      dispatch({ type: 'SET_SCREEN', screen: 'product_type' });
+      dispatch({ type: 'SET_SCREEN', screen: 'how_it_works' });
       
       trackEvent('tlj_wizard_start', {}, { lead_id: leadId, anonymous_id: s.anonymousId, session_id: s.sessionId });
       

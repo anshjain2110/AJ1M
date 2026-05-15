@@ -11,7 +11,7 @@ export default function WizardShell({ children, showBack = true, showProgress = 
   const currentStep = getCurrentStepNumber(currentScreen, answers);
   const totalSteps = frozenStepTotal || 12;
   const progress = totalSteps > 0 ? (currentStep / totalSteps) * 100 : 0;
-  const isWizardScreen = currentScreen !== 'landing' && currentScreen !== 'thank_you';
+  const isWizardScreen = currentScreen !== 'landing' && currentScreen !== 'how_it_works' && currentScreen !== 'thank_you';
   const isLoggedIn = !!localStorage.getItem('tlj_token');
   const canGoBack = isWizardScreen && currentScreen !== 'product_type';
 
