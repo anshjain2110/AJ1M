@@ -1,10 +1,29 @@
 import React from 'react';
-import { Star, Users, ArrowRight, ChevronRight, ExternalLink, Sparkles, MapPin, Phone, Globe } from 'lucide-react';
+import { Star, Users, ArrowRight, ChevronRight, ExternalLink, Sparkles, MapPin, Phone, Globe, Clock, ShieldCheck } from 'lucide-react';
 import { useWizard } from '../../../context/WizardContext';
 import { trackEvent } from '../../../utils/analytics';
 import { RenderShowcase } from '../../RenderShowcase';
 
 const HERO_IMAGE = '/hero-photo.jpeg';
+
+// Small modern reassurance line shown under every wizard-starting CTA
+const CtaReassurance = ({ testid }) => (
+  <div
+    data-testid={testid}
+    className="mt-3 inline-flex items-center gap-2.5 text-[11.5px] font-medium tracking-[0.01em]"
+    style={{ color: 'var(--lj-muted)' }}
+  >
+    <span className="inline-flex items-center gap-1.5">
+      <Clock size={12} strokeWidth={2.2} style={{ color: 'var(--lj-accent)', opacity: 0.85 }} />
+      Takes about 90 seconds
+    </span>
+    <span className="w-[3px] h-[3px] rounded-full" style={{ background: 'var(--lj-muted)', opacity: 0.35 }} />
+    <span className="inline-flex items-center gap-1.5">
+      <ShieldCheck size={12} strokeWidth={2.2} style={{ color: 'var(--lj-accent)', opacity: 0.85 }} />
+      No payment required
+    </span>
+  </div>
+);
 
 const COMPARISON = {
   savingsAmount: '$4,200',
@@ -216,6 +235,7 @@ export default function LandingScreen() {
           style={{ background: 'var(--lj-accent)', color: '#FFFFFF', boxShadow: '0 4px 20px rgba(15,94,76,0.2)' }}>
           Get My Free Quote <ArrowRight size={18} />
         </button>
+        <CtaReassurance testid="cta-reassurance-hero" />
         <a href="https://shop.thelocaljewel.com/" target="_blank" rel="noopener noreferrer"
           className="mt-4 text-[13px] leading-[18px] flex items-center gap-1 transition-colors duration-300" style={{ color: 'var(--lj-muted)' }}>
           or browse our collection <ChevronRight size={14} />
@@ -334,10 +354,11 @@ export default function LandingScreen() {
           <p className="text-[13px] text-center mb-5" style={{ color: 'var(--lj-muted)' }}>
             From A–Z alphabet diamonds to custom shapes — set in 14K gold rings, pendants, and more.
           </p>
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center">
             <button onClick={handleStartWizard} className="min-h-[44px] px-6 rounded-[14px] font-medium text-[14px] inline-flex items-center gap-2 transition-all duration-300 active:scale-[0.99]" style={{ background: 'var(--lj-accent)', color: '#FFFFFF' }}>
               Request a Custom Cut <ArrowRight size={16} />
             </button>
+            <CtaReassurance testid="cta-reassurance-custom-cut" />
           </div>
         </div>
       </div>
@@ -380,12 +401,13 @@ export default function LandingScreen() {
       </div>
 
       {/* Bottom CTA */}
-      <div className="px-4 pb-10 flex justify-center">
+      <div className="px-4 pb-10 flex flex-col items-center">
         <button onClick={handleStartWizard} data-testid="landing-bottom-cta"
           className="w-full max-w-sm min-h-[52px] px-6 rounded-[14px] font-medium text-[16px] flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.99]"
           style={{ background: 'var(--lj-accent)', color: '#FFFFFF', boxShadow: '0 4px 20px rgba(15,94,76,0.2)' }}>
           Start Your Custom Quote <ArrowRight size={18} />
         </button>
+        <CtaReassurance testid="cta-reassurance-bottom" />
       </div>
 
       {/* Contact & Shipping Info */}

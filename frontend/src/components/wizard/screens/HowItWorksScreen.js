@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ArrowRight, PenTool, Eye, Gem, Sparkles, ShieldCheck, Clock } from 'lucide-react';
+import { ArrowLeft, ArrowRight, PenTool, Eye, Gem, Sparkles, ShieldCheck, Clock } from 'lucide-react';
 import { useWizard } from '../../../context/WizardContext';
 import { trackEvent } from '../../../utils/analytics';
 
@@ -40,7 +40,7 @@ const ASSURANCES = [
 ];
 
 export default function HowItWorksScreen() {
-  const { goNext, state } = useWizard();
+  const { goNext, dispatch, state } = useWizard();
 
   useEffect(() => {
     trackEvent('tlj_howitworks_view', {}, { lead_id: state.leadId });
@@ -51,14 +51,33 @@ export default function HowItWorksScreen() {
     goNext('how_it_works');
   };
 
+  const handleBack = () => {
+    trackEvent('tlj_howitworks_back', {}, { lead_id: state.leadId });
+    dispatch({ type: 'SET_SCREEN', screen: 'landing' });
+  };
+
   return (
     <div
       data-testid="how-it-works-screen"
       className="flex-1 flex flex-col"
       style={{ background: 'var(--lj-bg)' }}
     >
+      {/* Back button — top-left, contextually scoped to this screen */}
+      <div className="px-4 pt-4">
+        <button
+          onClick={handleBack}
+          data-testid="how-it-works-back-button"
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-[14px] font-medium transition-colors duration-300 hover:bg-[#F0F0EE]"
+          style={{ color: 'var(--lj-accent)' }}
+          aria-label="Go back to home"
+        >
+          <ArrowLeft size={18} />
+          <span>Back</span>
+        </button>
+      </div>
+
       {/* Hero */}
-      <div className="px-4 pt-10 pb-6 text-center">
+      <div className="px-4 pt-4 pb-6 text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-5"
           style={{ background: 'rgba(15,94,76,0.08)', border: '1px solid rgba(15,94,76,0.15)' }}>
           <Sparkles size={13} style={{ color: 'var(--lj-accent)' }} />
