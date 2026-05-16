@@ -20,6 +20,8 @@ import TermsPage from './pages/TermsPage';
 import CutsPage from './pages/CutsPage';
 import ProjectsIndexPage from './pages/ProjectsIndexPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
+import PitchLoginPage from './pages/PitchLoginPage';
+import PitchPage from './pages/PitchPage';
 
 function App() {
   return (
@@ -44,6 +46,8 @@ function App() {
           <Route path="/cuts" element={<CutsPage />} />
           <Route path="/projects" element={<ProjectsIndexPage />} />
           <Route path="/projects/:slug" element={<ProjectDetailPage />} />
+          <Route path="/pitch/login" element={<PitchLoginPage />} />
+          <Route path="/pitch" element={<PitchPage />} />
 
           {/* Admin routes — all share same AdminProvider */}
           <Route path="/admin/*" element={

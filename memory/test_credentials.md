@@ -4,7 +4,9 @@
 - ansh@thelocaljewel.com / Rakesh@2709
 - nayan@thelocaljewel.com / Nayan@123
 
-## Customer OTP Login (`/login`)
-- Phone/email OTP — no pre-seeded test customer. OTP is sent via Twilio/SendGrid; check backend logs in dev or use any test number/email that the user account provides.
+## Investor Pitch Access (`/pitch/login`)
+- Password: **TLJ@2026**
+- Token TTL: 7 days
 
-> No auth credentials were created or modified in the current session.
+## Customer OTP Login (`/login`)
+- Phone/email OTP — no pre-seeded test customer.

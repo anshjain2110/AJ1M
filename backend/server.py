@@ -772,3 +772,52 @@ async def get_abtest_config():
 @app.get("/api/health")
 async def health():
     return {"status": "ok", "service": "thelocaljewel-api"}
+
+# ── Investor Pitch — Password Gate ────────────────────────────
+
+import hmac as _hmac
+import hashlib as _hashlib
+import base64 as _b64
+
+PITCH_PASSWORD = "TLJ@2026"
+PITCH_TOKEN_SECRET = os.environ.get("JWT_SECRET", "tlj-pitch-secret-2026")
+PITCH_TOKEN_TTL_SECONDS = 7 * 24 * 3600  # 7 days
+
+def _sign_pitch_token() -> str:
+    expires_at = int(datetime.now(timezone.utc).timestamp()) + PITCH_TOKEN_TTL_SECONDS
+    payload = f"pitch.{expires_at}"
+    sig = _hmac.new(PITCH_TOKEN_SECRET.encode(), payload.encode(), _hashlib.sha256).hexdigest()
+    raw = f"{payload}.{sig}"
+    return _b64.urlsafe_b64encode(raw.encode()).decode().rstrip("=")
+
+def _verify_pitch_token(token: str) -> bool:
+    try:
+        padded = token + "=" * (-len(token) % 4)
+        raw = _b64.urlsafe_b64decode(padded.encode()).decode()
+        parts = raw.split(".")
+        if len(parts) != 3 or parts[0] != "pitch":
+            return False
+        expires_at = int(parts[1])
+        if datetime.now(timezone.utc).timestamp() > expires_at:
+            return False
+        expected = _hmac.new(PITCH_TOKEN_SECRET.encode(), f"pitch.{expires_at}".encode(), _hashlib.sha256).hexdigest()
+        return _hmac.compare_digest(expected, parts[2])
+    except Exception:
+        return False
+
+
+class PitchVerifyRequest(BaseModel):
+    password: str
+
+@app.post("/api/pitch/verify")
+async def pitch_verify(req: PitchVerifyRequest):
+    if not _hmac.compare_digest(req.password.strip(), PITCH_PASSWORD):
+        raise HTTPException(401, "Incorrect password")
+    return {"token": _sign_pitch_token(), "expires_in": PITCH_TOKEN_TTL_SECONDS}
+
+@app.get("/api/pitch/check")
+async def pitch_check(token: str):
+    if not _verify_pitch_token(token):
+        raise HTTPException(401, "Invalid or expired token")
+    return {"ok": True}
+
