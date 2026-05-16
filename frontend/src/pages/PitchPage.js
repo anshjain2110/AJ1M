@@ -321,30 +321,80 @@ const Hero = () => {
         style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(244,236,221,0.55) 1px, transparent 0)', backgroundSize: '34px 34px' }} />
 
       <div className="relative max-w-6xl mx-auto px-5 sm:px-8 pt-16 pb-20 sm:pt-24 sm:pb-28">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-6"
-          style={{ background: 'rgba(212,175,55,0.12)', border: '1px solid rgba(212,175,55,0.3)' }}>
-          <Sparkles size={13} style={{ color: C.accent }} />
-          <span className="text-[10.5px] font-semibold uppercase tracking-[0.18em]" style={{ color: C.accent }}>Investor Brief · Confidential</span>
+        <div className="grid lg:grid-cols-[1fr_auto] gap-10 lg:gap-14 items-center">
+          {/* Left: copy + stats */}
+          <div className="min-w-0">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-6"
+              style={{ background: 'rgba(212,175,55,0.12)', border: '1px solid rgba(212,175,55,0.3)' }}>
+              <Sparkles size={13} style={{ color: C.accent }} />
+              <span className="text-[10.5px] font-semibold uppercase tracking-[0.18em]" style={{ color: C.accent }}>Investor Brief · Confidential</span>
+            </div>
+
+            <h1 className="text-[42px] sm:text-[64px] lg:text-[68px] leading-[1.02] font-semibold tracking-[-0.02em] mb-6"
+              style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>
+              Custom diamond engagement rings,
+              <span className="italic" style={{ color: C.accent }}> without the markup.</span>
+            </h1>
+            <p className="text-[16px] sm:text-[19px] leading-[1.55] max-w-2xl mb-10" style={{ color: C.textMute }}>
+              A profitable, founder-led custom jewelry brand built on direct diamond sourcing, in-house tech, and a high-trust customer process. Funding will move us from steady early sales to a repeatable 100-rings-per-month engine.
+            </p>
+
+            <div className="grid grid-cols-3 gap-3 sm:gap-5 max-w-2xl">
+              <Stat value={'$' + revenue + 'K'} label="FY revenue" sub="Last fiscal year" accent />
+              <Stat value={margin + '%'} label="Gross margin" sub="Direct sourcing" />
+              <Stat value={target + '/mo'} label="Target run-rate" sub="Rings shipped" />
+            </div>
+
+            <div className="mt-10 flex items-center gap-2 text-[12.5px]" style={{ color: C.textDim }}>
+              <ArrowDown size={14} /> Scroll to read the full brief
+            </div>
+          </div>
+
+          {/* Right: brand logo lockup (desktop only) */}
+          <div className="hidden lg:flex flex-col items-center justify-center relative" style={{ width: 340 }}>
+            {/* soft gold halo */}
+            <div aria-hidden="true" className="absolute inset-0 -z-0"
+              style={{ background: 'radial-gradient(circle at 50% 45%, rgba(212,175,55,0.22), transparent 65%)', filter: 'blur(8px)' }} />
+            {/* faint outer ring */}
+            <div aria-hidden="true" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] h-[360px] rounded-full"
+              style={{ border: '1px solid rgba(212,175,55,0.18)' }} />
+            <div aria-hidden="true" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[440px] h-[440px] rounded-full"
+              style={{ border: '1px solid rgba(212,175,55,0.08)' }} />
+
+            <img
+              src="/tlj-logo-light.png"
+              alt="The Local Jewel"
+              data-testid="pitch-hero-logo"
+              className="relative z-10 w-[320px] h-auto select-none"
+              style={{
+                filter: 'drop-shadow(0 18px 38px rgba(0,0,0,0.5)) drop-shadow(0 0 22px rgba(212,175,55,0.18))',
+                animation: 'tljLogoFloat 6s ease-in-out infinite',
+              }}
+              draggable="false"
+            />
+
+            <div className="relative z-10 mt-7 text-center">
+              <div className="text-[10.5px] font-semibold uppercase tracking-[0.32em]" style={{ color: C.accent }}>Est. 2024</div>
+              <div className="mt-2 text-[12px] tracking-[0.12em]" style={{ color: C.textMute }}>
+                Orlando, FL · IGI / GIA Certified
+              </div>
+            </div>
+          </div>
         </div>
 
-        <h1 className="text-[42px] sm:text-[72px] leading-[1.02] font-semibold tracking-[-0.02em] mb-6 max-w-4xl"
-          style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>
-          Custom diamond engagement rings,
-          <span className="italic" style={{ color: C.accent }}> without the markup.</span>
-        </h1>
-        <p className="text-[16px] sm:text-[19px] leading-[1.55] max-w-2xl mb-10" style={{ color: C.textMute }}>
-          A profitable, founder-led custom jewelry brand built on direct diamond sourcing, in-house tech, and a high-trust customer process. Funding will move us from steady early sales to a repeatable 100-rings-per-month engine.
-        </p>
-
-        <div className="grid grid-cols-3 gap-3 sm:gap-5 max-w-3xl">
-          <Stat value={'$' + revenue + 'K'} label="FY revenue" sub="Last fiscal year" accent />
-          <Stat value={margin + '%'} label="Gross margin" sub="Direct sourcing" />
-          <Stat value={target + '/mo'} label="Target run-rate" sub="Rings shipped" />
+        {/* Mobile logo strip — small, centered, between description and stats wouldn't crowd things; placed at the very bottom of hero */}
+        <div className="lg:hidden mt-12 flex flex-col items-center" data-testid="pitch-hero-logo-mobile">
+          <img src="/tlj-logo-light.png" alt="The Local Jewel" className="w-44 h-auto opacity-95"
+            style={{ filter: 'drop-shadow(0 10px 24px rgba(0,0,0,0.4))' }} />
+          <div className="mt-3 text-[10px] font-semibold uppercase tracking-[0.3em]" style={{ color: C.accent }}>Est. 2024 · Orlando, FL</div>
         </div>
 
-        <div className="mt-10 flex items-center gap-2 text-[12.5px]" style={{ color: C.textDim }}>
-          <ArrowDown size={14} /> Scroll to read the full brief
-        </div>
+        <style>{`
+          @keyframes tljLogoFloat {
+            0%, 100% { transform: translateY(0); }
+            50%      { transform: translateY(-6px); }
+          }
+        `}</style>
       </div>
     </section>
   );
