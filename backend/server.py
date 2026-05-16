@@ -88,6 +88,14 @@ async def lifespan(app: FastAPI):
     await db.quotes.create_index("lead_id")
     await db.orders.create_index("order_id", unique=True)
     await db.orders.create_index("lead_id")
+    # Projects (Past Custom Work CMS)
+    try:
+        await db.projects.create_index("slug", unique=True)
+    except Exception:
+        pass
+    await db.projects.create_index("published")
+    await db.projects.create_index("tags")
+    await db.projects.create_index([("published", 1), ("featured", -1), ("position", 1)])
     await db.users.update_many({"phone": ""}, {"$unset": {"phone": ""}})
     yield
     client.close()
@@ -326,6 +334,53 @@ async def get_public_showcase_pairs():
             "product_image": p.get("product_image", {}),
         })
     return {"pairs": result}
+
+
+# ── API: Public Projects (SEO/Past Work) ─────────────────────
+
+def _project_strip_internal(doc: dict) -> dict:
+    if not doc:
+        return None
+    out = {k: v for k, v in doc.items() if k != "_id"}
+    for k, v in out.items():
+        if isinstance(v, datetime):
+            out[k] = v.isoformat()
+    return out
+
+@app.get("/api/projects")
+async def get_public_projects(
+    tag: Optional[str] = None,
+    featured: Optional[bool] = None,
+    limit: int = 50,
+    exclude_slug: Optional[str] = None,
+):
+    """Public list of published projects. Optionally filter by tag / featured."""
+    query = {"published": True}
+    if tag:
+        query["tags"] = tag
+    if featured is True:
+        query["featured"] = True
+    if exclude_slug:
+        query["slug"] = {"$ne": exclude_slug}
+    cursor = db.projects.find(query, {"_id": 0}).sort([("featured", -1), ("position", 1), ("created_at", -1)]).limit(min(limit, 100))
+    items = [_project_strip_internal(doc) async for doc in cursor]
+    # Collect distinct tags for filter chips
+    tag_pipeline = [
+        {"$match": {"published": True}},
+        {"$unwind": "$tags"},
+        {"$group": {"_id": "$tags", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+    ]
+    tag_docs = await db.projects.aggregate(tag_pipeline).to_list(50)
+    tags = [{"tag": t["_id"], "count": t["count"]} for t in tag_docs if t["_id"]]
+    return {"projects": items, "tags": tags, "total": len(items)}
+
+@app.get("/api/projects/{slug}")
+async def get_public_project_by_slug(slug: str):
+    doc = await db.projects.find_one({"slug": slug, "published": True}, {"_id": 0})
+    if not doc:
+        raise HTTPException(404, "Project not found")
+    return _project_strip_internal(doc)
 
 
 # ── API: Lead Submission ─────────────────────────────────────

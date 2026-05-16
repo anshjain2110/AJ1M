@@ -12,6 +12,7 @@ export function AdminProvider({ children }) {
     const headers = { Authorization: `Bearer ${token}` };
     if (method === 'get') return axios.get(`${BACKEND_URL}${url}`, { headers });
     if (method === 'post') return axios.post(`${BACKEND_URL}${url}`, data, { headers });
+    if (method === 'put') return axios.put(`${BACKEND_URL}${url}`, data, { headers });
     if (method === 'patch') return axios.patch(`${BACKEND_URL}${url}`, data, { headers });
     if (method === 'delete') return axios.delete(`${BACKEND_URL}${url}`, { headers });
   }, [token]);

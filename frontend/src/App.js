@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { WizardProvider } from './context/WizardContext';
 import { AdminProvider } from './context/AdminContext';
 import WizardPage from './pages/WizardPage';
@@ -13,49 +14,57 @@ import OrdersPage from './pages/admin/OrdersPage';
 import SettingsPage from './pages/admin/SettingsPage';
 import TrackingPage from './pages/admin/TrackingPage';
 import ShowcasePage from './pages/admin/ShowcasePage';
+import ProjectsAdminPage from './pages/admin/ProjectsAdminPage';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
 import CutsPage from './pages/CutsPage';
+import ProjectsIndexPage from './pages/ProjectsIndexPage';
+import ProjectDetailPage from './pages/ProjectDetailPage';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Customer-facing routes */}
-        <Route path="/" element={
-          <WizardProvider>
-            <WizardPage />
-          </WizardProvider>
-        } />
-        <Route path="/thank-you" element={
-          <WizardProvider>
-            <WizardPage />
-          </WizardProvider>
-        } />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/privacy" element={<PrivacyPage />} />
-        <Route path="/terms" element={<TermsPage />} />
-        <Route path="/cuts" element={<CutsPage />} />
+    <HelmetProvider>
+      <Router>
+        <Routes>
+          {/* Customer-facing routes */}
+          <Route path="/" element={
+            <WizardProvider>
+              <WizardPage />
+            </WizardProvider>
+          } />
+          <Route path="/thank-you" element={
+            <WizardProvider>
+              <WizardPage />
+            </WizardProvider>
+          } />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/cuts" element={<CutsPage />} />
+          <Route path="/projects" element={<ProjectsIndexPage />} />
+          <Route path="/projects/:slug" element={<ProjectDetailPage />} />
 
-        {/* Admin routes — all share same AdminProvider */}
-        <Route path="/admin/*" element={
-          <AdminProvider>
-            <Routes>
-              <Route path="login" element={<AdminLoginPage />} />
-              <Route path="*" element={<AdminLayout />}>
-                <Route index element={<AnalyticsDashboard />} />
-                <Route path="leads" element={<LeadsCRM />} />
-                <Route path="orders" element={<OrdersPage />} />
-                <Route path="settings" element={<SettingsPage />} />
-                <Route path="tracking" element={<TrackingPage />} />
-                <Route path="showcase" element={<ShowcasePage />} />
-              </Route>
-            </Routes>
-          </AdminProvider>
-        } />
-      </Routes>
-    </Router>
+          {/* Admin routes — all share same AdminProvider */}
+          <Route path="/admin/*" element={
+            <AdminProvider>
+              <Routes>
+                <Route path="login" element={<AdminLoginPage />} />
+                <Route path="*" element={<AdminLayout />}>
+                  <Route index element={<AnalyticsDashboard />} />
+                  <Route path="leads" element={<LeadsCRM />} />
+                  <Route path="orders" element={<OrdersPage />} />
+                  <Route path="projects" element={<ProjectsAdminPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                  <Route path="tracking" element={<TrackingPage />} />
+                  <Route path="showcase" element={<ShowcasePage />} />
+                </Route>
+              </Routes>
+            </AdminProvider>
+          } />
+        </Routes>
+      </Router>
+    </HelmetProvider>
   );
 }
 

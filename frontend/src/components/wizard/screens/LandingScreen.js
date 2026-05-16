@@ -445,7 +445,9 @@ export default function LandingScreen() {
         <p className="text-[13px] mb-3" style={{ color: 'var(--lj-muted)' }}>
           Already submitted a quote? <a href="/login" className="font-medium underline" style={{ color: 'var(--lj-accent)' }}>Login to your account</a>
         </p>
-        <div className="flex items-center justify-center gap-3 text-[12px]" style={{ color: 'var(--lj-muted)' }}>
+        <div className="flex items-center justify-center gap-3 text-[12px] flex-wrap" style={{ color: 'var(--lj-muted)' }}>
+          <a href="/projects" className="hover:underline font-medium" style={{ color: 'var(--lj-accent)' }} data-testid="footer-projects-link">Past Projects</a>
+          <span>·</span>
           <a href="/privacy" className="hover:underline">Privacy Policy</a>
           <span>·</span>
           <a href="/terms" className="hover:underline">Terms & Conditions</a>

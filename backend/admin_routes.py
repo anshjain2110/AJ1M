@@ -1244,3 +1244,112 @@ async def delete_showcase_pair(pair_id: str, admin=Depends(require_admin)):
     if result.deleted_count == 0:
         raise HTTPException(404, "Pair not found")
     return {"status": "deleted"}
+
+
+# ── Projects (Past Custom Work CMS) ───────────────────────────
+
+from pydantic import Field as _Field
+
+class ProjectSpec(BaseModel):
+    carat: Optional[str] = ""
+    shape: Optional[str] = ""
+    setting_style: Optional[str] = ""
+    metal: Optional[str] = ""
+    color: Optional[str] = ""
+    clarity: Optional[str] = ""
+    certification: Optional[str] = ""
+    cert_number: Optional[str] = ""
+    cert_link: Optional[str] = ""
+
+class ProjectJourneyStep(BaseModel):
+    label: str
+    description: Optional[str] = ""
+    image_url: Optional[str] = ""
+
+class ProjectGalleryImage(BaseModel):
+    url: str
+    caption: Optional[str] = ""
+    type: Optional[str] = "final"  # render | final | journey
+
+class ProjectCustomerStory(BaseModel):
+    name: Optional[str] = ""
+    location: Optional[str] = ""
+    quote: Optional[str] = ""
+    date: Optional[str] = ""
+
+class ProjectPayload(BaseModel):
+    slug: str
+    title: str
+    subtitle: Optional[str] = ""
+    hero_image_url: str = ""
+    gallery: List[ProjectGalleryImage] = []
+    specs: ProjectSpec = _Field(default_factory=ProjectSpec)
+    journey: List[ProjectJourneyStep] = []
+    customer_story: Optional[ProjectCustomerStory] = None
+    tags: List[str] = []
+    description: str = ""
+    meta_title: Optional[str] = ""
+    meta_description: Optional[str] = ""
+    published: bool = True
+    featured: bool = False
+    position: int = 0
+
+def _project_public_view(doc: dict) -> dict:
+    """Strip _id, format dates, return JSON-safe dict."""
+    if not doc:
+        return None
+    out = {k: v for k, v in doc.items() if k != "_id"}
+    for k, v in out.items():
+        if isinstance(v, datetime):
+            out[k] = v.isoformat()
+    return out
+
+@router.get("/projects")
+async def admin_list_projects(admin=Depends(require_admin)):
+    cursor = db.projects.find({}, {"_id": 0}).sort([("position", 1), ("created_at", -1)])
+    items = [_project_public_view(doc) async for doc in cursor]
+    return {"projects": items}
+
+@router.get("/projects/{project_id}")
+async def admin_get_project(project_id: str, admin=Depends(require_admin)):
+    doc = await db.projects.find_one({"project_id": project_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(404, "Project not found")
+    return _project_public_view(doc)
+
+@router.post("/projects")
+async def admin_create_project(req: ProjectPayload, admin=Depends(require_admin)):
+    # Ensure unique slug
+    existing = await db.projects.find_one({"slug": req.slug})
+    if existing:
+        raise HTTPException(400, "A project with this slug already exists")
+    now = datetime.now(timezone.utc)
+    doc = req.dict()
+    doc["project_id"] = f"proj_{uuid.uuid4().hex[:12]}"
+    doc["created_at"] = now
+    doc["updated_at"] = now
+    await db.projects.insert_one(doc)
+    return _project_public_view({k: v for k, v in doc.items() if k != "_id"})
+
+@router.put("/projects/{project_id}")
+async def admin_update_project(project_id: str, req: ProjectPayload, admin=Depends(require_admin)):
+    existing = await db.projects.find_one({"project_id": project_id})
+    if not existing:
+        raise HTTPException(404, "Project not found")
+    # If slug changed, ensure unique
+    if req.slug != existing.get("slug"):
+        clash = await db.projects.find_one({"slug": req.slug, "project_id": {"$ne": project_id}})
+        if clash:
+            raise HTTPException(400, "A project with this slug already exists")
+    update = req.dict()
+    update["updated_at"] = datetime.now(timezone.utc)
+    await db.projects.update_one({"project_id": project_id}, {"$set": update})
+    doc = await db.projects.find_one({"project_id": project_id}, {"_id": 0})
+    return _project_public_view(doc)
+
+@router.delete("/projects/{project_id}")
+async def admin_delete_project(project_id: str, admin=Depends(require_admin)):
+    result = await db.projects.delete_one({"project_id": project_id})
+    if result.deleted_count == 0:
+        raise HTTPException(404, "Project not found")
+    return {"status": "deleted"}
