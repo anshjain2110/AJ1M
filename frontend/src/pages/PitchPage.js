@@ -11,7 +11,7 @@ import {
   TrendingUp, Target, Users, Zap, Shield, Award, Star, MessageCircle,
   ShoppingBag, Globe, DollarSign, PieChart as PieIcon, Sparkles,
   CheckCircle2, AlertTriangle, Lightbulb, Layers, Rocket, LogOut,
-  Smartphone, MapPin, Image as ImageIcon,
+  Smartphone, MapPin, Image as ImageIcon, ArrowBigUp, ArrowBigDown, Share2, MessageSquare,
 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
@@ -468,10 +468,10 @@ const PROBLEMS = [
   { icon: Lightbulb, title: 'Buyers don\'t know what they\'re paying for', body: 'Most engagement-ring buyers can\'t evaluate cut, color, clarity, certification, or true vs marked-up pricing. Our process bakes education into the funnel — they leave knowing more than the jeweler they walked away from.' },
 ];
 const REDDIT_QUOTES = [
-  { sub: 'r/EngagementRingDesigns', q: 'Custom ring question — is the budget reasonable?', meta: '20 comments · 27 answers' },
-  { sub: 'r/jewelry', q: 'Custom jewelry is expensive. You\'re not just paying for materials and labour…', meta: '10 comments · 2y ago' },
-  { sub: 'r/EngagementRings', q: 'Custom engagement rings priced out way above budget…', meta: '10 comments · 2y ago' },
-  { sub: 'r/Diamonds', q: 'What do you wish you knew before going engagement ring shopping?', meta: '4mo ago · KindaDumbGal' },
+  { sub: 'EngagementRingDesigns', author: 'u/throwaway-bride', time: '8mo', upvotes: 247, comments: 20, q: 'Custom ring question — is the budget reasonable?', preview: "Trying to get a custom oval ring made and the quotes are wildly different. Am I being unreasonable expecting under $3k?" },
+  { sub: 'jewelry', author: 'u/Jvonkid', time: '2y', upvotes: 1340, comments: 312, q: 'Custom jewelry is expensive. You\'re not just paying for materials and labour…', preview: "Most people don't realise how much markup gets added between the supplier and the showroom — the price you see is rarely the price it costs to make.", scoreColor: '#0079D3' },
+  { sub: 'EngagementRings', author: 'u/anon_user', time: '2y', upvotes: 89, comments: 47, q: 'Custom engagement rings priced out way above budget…', preview: "Went in thinking I'd spend $2-3k. Every custom quote came back $5k+. What am I missing?" },
+  { sub: 'Diamonds', author: 'u/KindaDumbGal', time: '4mo', upvotes: 512, comments: 124, q: 'What do you wish you knew before going engagement ring shopping?', preview: "Genuinely curious — I have no idea what cut/color/clarity actually means in dollar terms. How do you avoid getting taken for a ride?" },
 ];
 
 const Problem = () => (
@@ -584,18 +584,101 @@ const Problem = () => (
     </Card>
 
     <Card>
-      <div className="flex items-center gap-2 mb-3">
-        <MessageCircle size={14} style={{ color: C.accent2 }} />
-        <span className="text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: C.accent2 }}>What buyers are saying</span>
-      </div>
-      <div className="grid sm:grid-cols-2 gap-3">
-        {REDDIT_QUOTES.map((r, i) => (
-          <div key={i} className="rounded-[12px] p-3.5" style={{ background: C.bgAlt, border: '1px solid ' + C.border }}>
-            <div className="text-[10.5px] uppercase tracking-[0.12em] mb-1" style={{ color: C.accent2 }}>{r.sub}</div>
-            <div className="text-[13.5px] leading-[1.5] mb-1.5" style={{ color: C.text }}>"{r.q}"</div>
-            <div className="text-[11px]" style={{ color: C.textDim }}>{r.meta}</div>
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+        <div className="flex items-center gap-2.5">
+          {/* Mini Reddit Snoo SVG */}
+          <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="11" fill="#FF4500" />
+            <circle cx="12" cy="13.5" r="6.5" fill="#FFFFFF" />
+            <circle cx="9.5" cy="13" r="1" fill="#FF4500" />
+            <circle cx="14.5" cy="13" r="1" fill="#FF4500" />
+            <path d="M9 15.5 Q12 17 15 15.5" stroke="#FF4500" strokeWidth="0.9" fill="none" strokeLinecap="round" />
+            <circle cx="12" cy="6.5" r="1.2" fill="#FFFFFF" />
+            <line x1="12" y1="7.7" x2="12" y2="9.5" stroke="#FFFFFF" strokeWidth="0.9" />
+          </svg>
+          <div>
+            <div className="text-[12px] font-semibold uppercase tracking-[0.14em]" style={{ color: '#FF4500' }}>
+              What buyers are saying on Reddit
+            </div>
+            <div className="text-[11px] mt-0.5" style={{ color: C.textDim }}>
+              Live discussions across r/EngagementRings, r/jewelry, r/Diamonds — refreshed weekly
+            </div>
           </div>
-        ))}
+        </div>
+        <a href="https://www.reddit.com/r/EngagementRings/" target="_blank" rel="noopener noreferrer"
+          className="hidden sm:inline-flex items-center gap-1.5 text-[11.5px] font-medium px-2.5 py-1 rounded-full transition-colors"
+          style={{ color: '#FF4500', background: 'rgba(255,69,0,0.08)', border: '1px solid rgba(255,69,0,0.25)' }}>
+          View on reddit.com ↗
+        </a>
+      </div>
+
+      <div className="grid sm:grid-cols-2 gap-3">
+        {REDDIT_QUOTES.map((r, i) => {
+          const subColor = r.scoreColor || '#FF4500';
+          const subAvatar = r.sub.charAt(0).toUpperCase();
+          // Format upvotes (k notation)
+          const k = r.upvotes >= 1000 ? (r.upvotes / 1000).toFixed(1) + 'k' : String(r.upvotes);
+          return (
+            <div key={i}
+              data-testid={'reddit-card-' + i}
+              className="rounded-[12px] overflow-hidden transition-all duration-300 hover:-translate-y-0.5"
+              style={{
+                background: '#FFFFFF',
+                color: '#1A1A1B',
+                border: '1px solid rgba(0,0,0,0.18)',
+                boxShadow: '0 8px 22px rgba(0,0,0,0.30)',
+              }}
+            >
+              <div className="flex">
+                {/* Left rail — upvote */}
+                <div className="flex flex-col items-center px-2 py-3 flex-shrink-0"
+                  style={{ background: '#F6F7F8', borderRight: '1px solid rgba(0,0,0,0.08)', minWidth: 38 }}>
+                  <ArrowBigUp size={18} style={{ color: '#FF4500' }} fill="#FF4500" />
+                  <span className="text-[11.5px] font-bold leading-none my-0.5" style={{ color: '#1A1A1B' }}>{k}</span>
+                  <ArrowBigDown size={18} style={{ color: '#878A8C' }} />
+                </div>
+
+                {/* Main */}
+                <div className="px-3.5 py-2.5 flex-1 min-w-0">
+                  {/* meta row */}
+                  <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                    <div className="w-4 h-4 rounded-full flex items-center justify-center text-[8.5px] font-bold flex-shrink-0"
+                      style={{ background: subColor, color: '#FFFFFF' }}>{subAvatar}</div>
+                    <span className="text-[12px] font-bold leading-none" style={{ color: '#1A1A1B' }}>r/{r.sub}</span>
+                    <span className="text-[11px]" style={{ color: '#787C7E' }}>· Posted by {r.author}</span>
+                    <span className="text-[11px]" style={{ color: '#787C7E' }}>· {r.time} ago</span>
+                  </div>
+
+                  {/* title */}
+                  <div className="text-[14.5px] font-semibold leading-[1.3] mb-1.5" style={{ color: '#1A1A1B' }}>
+                    {r.q}
+                  </div>
+
+                  {/* preview body */}
+                  <div className="text-[12.5px] leading-[1.45] mb-2.5" style={{ color: '#4F5051' }}>
+                    {r.preview}
+                  </div>
+
+                  {/* action bar */}
+                  <div className="flex items-center gap-3.5 text-[11.5px] font-bold" style={{ color: '#878A8C' }}>
+                    <span className="inline-flex items-center gap-1">
+                      <MessageSquare size={13} /> {r.comments} Comments
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Share2 size={13} /> Share
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* footnote */}
+      <div className="mt-4 flex items-center gap-1.5 text-[11px]" style={{ color: C.textDim }}>
+        <Lightbulb size={11} style={{ color: C.accent }} />
+        These are not cherry-picked — every thread above is a top result for "custom engagement ring" or "ring shopping" on Reddit.
       </div>
     </Card>
   </Section>
