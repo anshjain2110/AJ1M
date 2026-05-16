@@ -691,7 +691,7 @@ const FOUNDER_PILLARS = [
   { icon: Diamond, label: '5 yrs', sub: 'Loose diamond wholesale' },
   { icon: Code, label: 'CS', sub: 'Computer science + full-stack' },
   { icon: Box, label: 'PD', sub: 'Product development' },
-  { icon: Megaphone, label: 'Agency', sub: 'Social + paid acquisition' },
+  { icon: Megaphone, label: 'Agency Owner', sub: 'Social + paid acquisition' },
   { icon: BarChart3, label: 'Hustle', sub: 'Business DNA' },
 ];
 
@@ -715,15 +715,25 @@ const Founder = () => (
       })}
     </div>
     <Card className="flex flex-col sm:flex-row items-center gap-5 sm:gap-7">
-      <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center flex-shrink-0"
-        style={{ background: 'linear-gradient(135deg, ' + C.accent + ', #B8932F)', color: C.bg }}>
-        <span className="text-[32px] font-semibold" style={{ fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>AJ</span>
+      <div
+        className="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden flex-shrink-0 relative"
+        style={{
+          background: 'linear-gradient(135deg, ' + C.accent + ', #B8932F)',
+          boxShadow: '0 0 0 3px ' + C.surface + ', 0 0 0 4px rgba(212,175,55,0.45), 0 12px 28px rgba(0,0,0,0.4)',
+        }}
+      >
+        <img
+          src="/pitch-founder-ansh.png"
+          alt="Ansh Jain — Founder of The Local Jewel"
+          data-testid="founder-photo"
+          className="w-full h-full object-cover"
+        />
       </div>
       <div className="text-center sm:text-left flex-1">
         <div className="text-[11px] uppercase tracking-[0.14em] mb-1" style={{ color: C.accent }}>Founder & Operator</div>
-        <div className="text-[26px] sm:text-[30px] font-semibold mb-1" style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>Ansh Jain, 26</div>
+        <div className="text-[26px] sm:text-[30px] font-semibold mb-1.5" style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>Ansh Jain, 26</div>
         <p className="text-[14px] leading-[1.55]" style={{ color: C.textMute }}>
-          Five years in loose-diamond wholesale before launching The Local Jewel. CS degree. Built the customer site, the admin CRM, the analytics suite, the project CMS — and the supply chain behind them — solo.
+          A rare combination of diamond trade knowledge, technical execution, digital growth, and operator hustle.
         </p>
       </div>
     </Card>
