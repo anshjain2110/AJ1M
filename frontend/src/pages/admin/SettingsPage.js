@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAdmin } from '../../context/AdminContext';
-import { Settings, Save, Loader2, CheckCircle } from 'lucide-react';
+import { Save, Loader2, CheckCircle } from 'lucide-react';
+import ApiKeysPanel from './ApiKeysPanel';
 
 export default function SettingsPage() {
   const { api } = useAdmin();
@@ -62,6 +63,9 @@ export default function SettingsPage() {
           <Toggle label="New Lead Alert" checked={settings?.email_notify_new_lead} onChange={v => updateField('email_notify_new_lead', v)} />
           <Toggle label="Quote Alert" checked={settings?.email_notify_quote} onChange={v => updateField('email_notify_quote', v)} />
         </Section>
+
+        {/* Automation API Keys */}
+        <ApiKeysPanel />
       </div>
     </div>
   );

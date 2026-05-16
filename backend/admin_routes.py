@@ -1353,3 +1353,69 @@ async def admin_delete_project(project_id: str, admin=Depends(require_admin)):
     if result.deleted_count == 0:
         raise HTTPException(404, "Project not found")
     return {"status": "deleted"}
+
+
+# ── Admin: Projects Automation API Key (rotation) ───────────────────────
+
+import secrets as _secrets
+
+def _mask_api_key(key: str) -> str:
+    if not key or len(key) < 12:
+        return "—"
+    return key[:8] + "•" * 12 + key[-4:]
+
+@router.get("/api-keys/projects")
+async def admin_get_projects_api_key(admin=Depends(require_admin)):
+    """Return masked key + metadata. Full key is never re-shown after rotation."""
+    doc = await db.settings.find_one({"key": "projects_api_key"}, {"_id": 0})
+    env_key = os.environ.get("PROJECTS_API_KEY", "")
+    if not doc:
+        # No DB-stored key yet — show env-var as the active one (if any)
+        return {
+            "configured": bool(env_key),
+            "source": "env" if env_key else "none",
+            "masked": _mask_api_key(env_key) if env_key else "—",
+            "created_at": None,
+            "rotated_at": None,
+        }
+    return {
+        "configured": True,
+        "source": "db",
+        "masked": _mask_api_key(doc.get("value", "")),
+        "created_at": doc.get("created_at").isoformat() if doc.get("created_at") else None,
+        "rotated_at": doc.get("rotated_at").isoformat() if doc.get("rotated_at") else None,
+    }
+
+@router.post("/api-keys/projects/rotate")
+async def admin_rotate_projects_api_key(admin=Depends(require_admin)):
+    """Generate a new key. Returns the FULL key ONCE — store it immediately on the client side."""
+    new_key = "tlj_" + _secrets.token_urlsafe(32)
+    now = datetime.now(timezone.utc)
+    existing = await db.settings.find_one({"key": "projects_api_key"})
+    if existing:
+        await db.settings.update_one(
+            {"key": "projects_api_key"},
+            {"$set": {"value": new_key, "rotated_at": now}},
+        )
+        created_at = existing.get("created_at", now)
+    else:
+        await db.settings.insert_one({
+            "key": "projects_api_key",
+            "value": new_key,
+            "created_at": now,
+            "rotated_at": now,
+        })
+        created_at = now
+    return {
+        "full_key": new_key,  # shown ONCE — UI must surface "copy now, can't be retrieved again"
+        "masked": _mask_api_key(new_key),
+        "created_at": created_at.isoformat() if isinstance(created_at, datetime) else None,
+        "rotated_at": now.isoformat(),
+        "warning": "Save this key now — it cannot be retrieved again after you close this view.",
+    }
+
+@router.delete("/api-keys/projects")
+async def admin_revoke_projects_api_key(admin=Depends(require_admin)):
+    """Revoke the DB-stored key (env fallback still works if present)."""
+    await db.settings.delete_one({"key": "projects_api_key"})
+    return {"status": "revoked"}

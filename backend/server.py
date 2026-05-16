@@ -385,14 +385,22 @@ async def get_public_project_by_slug(slug: str):
 
 # ── Public Projects API (key-gated, for automation/n8n/scripts) ─────────
 
-def _require_projects_api_key(x_api_key: Optional[str] = Header(None, alias="X-API-Key")):
-    """Auth dependency for the projects automation API."""
-    expected = os.environ.get("PROJECTS_API_KEY", "")
-    if not expected:
-        raise HTTPException(500, "PROJECTS_API_KEY not configured on server")
-    if not x_api_key or x_api_key != expected:
+async def _require_projects_api_key(x_api_key: Optional[str] = Header(None, alias="X-API-Key")):
+    """Auth dependency for the projects automation API.
+    Checks the rotated key in the `settings` collection first (admin-managed),
+    then falls back to the PROJECTS_API_KEY env var for initial bootstrap.
+    """
+    if not x_api_key:
         raise HTTPException(401, "Invalid or missing X-API-Key header")
-    return True
+    # DB-stored key (preferred — set/rotated from admin panel)
+    doc = await db.settings.find_one({"key": "projects_api_key"}, {"_id": 0, "value": 1})
+    if doc and doc.get("value") and x_api_key == doc.get("value"):
+        return True
+    # Env-var fallback (bootstrap for first-time use)
+    env_key = os.environ.get("PROJECTS_API_KEY", "")
+    if env_key and x_api_key == env_key:
+        return True
+    raise HTTPException(401, "Invalid or missing X-API-Key header")
 
 async def _upload_to_r2(file: UploadFile, subfolder: str = "projects") -> str:
     """Upload a single UploadFile to R2, return the public URL."""
