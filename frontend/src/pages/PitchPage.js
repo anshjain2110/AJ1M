@@ -444,7 +444,7 @@ const Opportunity = () => (
       <div className="lg:col-span-2 space-y-3.5">
         <Stat value="60%" label="Lab share of engagement rings, 2024" accent />
         <Stat value="3.4×" label="Lab-grown unit-growth, 2021→2024" />
-        <Stat value="-74%" label="Average lab-grown wholesale price drop, 5y" />
+        <Stat value="70.9%" label="Jeweler GM on lab-grown · Dec 2024" sub="GemGuide / Edahn Golan, Apr 2025" />
         <div className="rounded-[14px] p-4" style={{ background: C.surfaceAlt, border: '1px solid ' + C.border }}>
           <div className="flex items-center gap-2 mb-1.5">
             <Lightbulb size={14} style={{ color: C.accent }} />
