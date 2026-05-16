@@ -383,6 +383,190 @@ async def get_public_project_by_slug(slug: str):
     return _project_strip_internal(doc)
 
 
+# ── Public Projects API (key-gated, for automation/n8n/scripts) ─────────
+
+def _require_projects_api_key(x_api_key: Optional[str] = Header(None, alias="X-API-Key")):
+    """Auth dependency for the projects automation API."""
+    expected = os.environ.get("PROJECTS_API_KEY", "")
+    if not expected:
+        raise HTTPException(500, "PROJECTS_API_KEY not configured on server")
+    if not x_api_key or x_api_key != expected:
+        raise HTTPException(401, "Invalid or missing X-API-Key header")
+    return True
+
+async def _upload_to_r2(file: UploadFile, subfolder: str = "projects") -> str:
+    """Upload a single UploadFile to R2, return the public URL."""
+    from storage import upload_file as cloud_upload
+    content = await file.read()
+    if len(content) > 15 * 1024 * 1024:
+        raise HTTPException(400, f"File '{file.filename}' exceeds 15 MB limit")
+    result = cloud_upload(
+        data=content,
+        original_filename=file.filename or "image.png",
+        content_type=file.content_type,
+        subfolder=subfolder,
+    )
+    return f"/api/uploads/cloud/{result['storage_path']}"
+
+def _slugify(s: str) -> str:
+    import re
+    s = (s or "").lower().strip()
+    s = re.sub(r"[^a-z0-9]+", "-", s)
+    return s.strip("-")
+
+@app.post("/api/projects/api/create", status_code=201)
+async def projects_api_create(
+    payload: str = Form(..., description="JSON string with project metadata"),
+    hero: Optional[UploadFile] = File(None),
+    gallery: List[UploadFile] = File([]),
+    renders: List[UploadFile] = File([]),
+    _auth: bool = Depends(_require_projects_api_key),
+):
+    """
+    Create a project via API (for automation/n8n/scripts). Multipart form:
+      - payload (form field, JSON): {slug?, title, subtitle?, description?, specs?, journey?, customer_story?, tags?, meta_title?, meta_description?, published?, featured?, position?}
+      - hero (file, optional): single hero image
+      - gallery (files, optional): multiple FINAL photos
+      - renders (files, optional): multiple 3D-RENDER photos
+
+    Auth: X-API-Key header.
+    """
+    import json
+    try:
+        data = json.loads(payload)
+    except Exception:
+        raise HTTPException(400, "payload must be valid JSON")
+
+    title = (data.get("title") or "").strip()
+    if not title:
+        raise HTTPException(400, "title is required in payload")
+    slug = _slugify(data.get("slug") or title)
+    if not slug:
+        raise HTTPException(400, "slug could not be derived; provide a valid slug or title")
+
+    # Ensure unique slug
+    if await db.projects.find_one({"slug": slug}):
+        raise HTTPException(400, f"A project with slug '{slug}' already exists")
+
+    # Upload media
+    hero_url = ""
+    if hero and hero.filename:
+        hero_url = await _upload_to_r2(hero)
+
+    gallery_items = []
+    final_captions = data.get("gallery_captions") or []
+    render_captions = data.get("render_captions") or []
+    for i, f in enumerate(gallery or []):
+        if not f or not f.filename:
+            continue
+        url = await _upload_to_r2(f)
+        cap = final_captions[i] if i < len(final_captions) else ""
+        gallery_items.append({"url": url, "caption": cap, "type": "final"})
+    for i, f in enumerate(renders or []):
+        if not f or not f.filename:
+            continue
+        url = await _upload_to_r2(f)
+        cap = render_captions[i] if i < len(render_captions) else ""
+        gallery_items.append({"url": url, "caption": cap, "type": "render"})
+
+    now = datetime.now(timezone.utc)
+    doc = {
+        "project_id": f"proj_{uuid.uuid4().hex[:12]}",
+        "slug": slug,
+        "title": title,
+        "subtitle": data.get("subtitle", ""),
+        "hero_image_url": hero_url,
+        "gallery": gallery_items,
+        "specs": data.get("specs") or {},
+        "journey": data.get("journey") or [],
+        "customer_story": data.get("customer_story") or None,
+        "tags": data.get("tags") or [],
+        "description": data.get("description", ""),
+        "meta_title": data.get("meta_title", ""),
+        "meta_description": data.get("meta_description", ""),
+        "published": bool(data.get("published", True)),
+        "featured": bool(data.get("featured", False)),
+        "position": int(data.get("position", 0)),
+        "created_at": now,
+        "updated_at": now,
+    }
+    await db.projects.insert_one(doc)
+    return _project_strip_internal({k: v for k, v in doc.items() if k != "_id"})
+
+
+@app.put("/api/projects/api/{slug}")
+async def projects_api_update(
+    slug: str,
+    payload: str = Form("{}"),
+    hero: Optional[UploadFile] = File(None),
+    gallery: List[UploadFile] = File([]),
+    renders: List[UploadFile] = File([]),
+    replace_gallery: bool = Form(False, description="If true, replace existing gallery; otherwise append"),
+    _auth: bool = Depends(_require_projects_api_key),
+):
+    """Partial update of a project by slug. Same shape as /create — all payload fields optional. Files (if provided) get uploaded to R2."""
+    import json
+    existing = await db.projects.find_one({"slug": slug})
+    if not existing:
+        raise HTTPException(404, "Project not found")
+    try:
+        data = json.loads(payload) if payload else {}
+    except Exception:
+        raise HTTPException(400, "payload must be valid JSON")
+
+    update = {}
+    for k in ["title", "subtitle", "description", "meta_title", "meta_description", "tags", "specs", "journey", "customer_story", "published", "featured", "position"]:
+        if k in data:
+            update[k] = data[k]
+    if "slug" in data and data["slug"]:
+        new_slug = _slugify(data["slug"])
+        if new_slug != slug:
+            clash = await db.projects.find_one({"slug": new_slug})
+            if clash:
+                raise HTTPException(400, f"slug '{new_slug}' already exists")
+            update["slug"] = new_slug
+
+    if hero and hero.filename:
+        update["hero_image_url"] = await _upload_to_r2(hero)
+
+    new_gallery_items = []
+    final_captions = data.get("gallery_captions") or []
+    render_captions = data.get("render_captions") or []
+    for i, f in enumerate(gallery or []):
+        if not f or not f.filename:
+            continue
+        url = await _upload_to_r2(f)
+        cap = final_captions[i] if i < len(final_captions) else ""
+        new_gallery_items.append({"url": url, "caption": cap, "type": "final"})
+    for i, f in enumerate(renders or []):
+        if not f or not f.filename:
+            continue
+        url = await _upload_to_r2(f)
+        cap = render_captions[i] if i < len(render_captions) else ""
+        new_gallery_items.append({"url": url, "caption": cap, "type": "render"})
+    if new_gallery_items:
+        update["gallery"] = new_gallery_items if replace_gallery else (existing.get("gallery") or []) + new_gallery_items
+    elif replace_gallery:
+        update["gallery"] = []
+
+    if not update:
+        raise HTTPException(400, "No fields or files provided to update")
+
+    update["updated_at"] = datetime.now(timezone.utc)
+    target_slug = update.get("slug", slug)
+    await db.projects.update_one({"slug": slug}, {"$set": update})
+    doc = await db.projects.find_one({"slug": target_slug}, {"_id": 0})
+    return _project_strip_internal(doc)
+
+
+@app.delete("/api/projects/api/{slug}")
+async def projects_api_delete(slug: str, _auth: bool = Depends(_require_projects_api_key)):
+    result = await db.projects.delete_one({"slug": slug})
+    if result.deleted_count == 0:
+        raise HTTPException(404, "Project not found")
+    return {"status": "deleted", "slug": slug}
+
+
 # ── API: Lead Submission ─────────────────────────────────────
 
 @app.post("/api/leads/submit")
