@@ -77,8 +77,8 @@ export default function HowItWorksScreen() {
       </div>
 
       {/* Hero */}
-      <div className="px-4 pt-4 pb-6 text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-5"
+      <div className="px-4 pt-4 pb-5 sm:pb-6 text-center">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-4 sm:mb-5"
           style={{ background: 'rgba(15,94,76,0.08)', border: '1px solid rgba(15,94,76,0.15)' }}>
           <Sparkles size={13} style={{ color: 'var(--lj-accent)' }} />
           <span className="text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: 'var(--lj-accent)' }}>
@@ -86,12 +86,12 @@ export default function HowItWorksScreen() {
           </span>
         </div>
         <h1
-          className="text-[34px] sm:text-[40px] leading-[1.1] font-semibold tracking-[-0.02em] max-w-xl mx-auto mb-4"
+          className="text-[26px] sm:text-[40px] leading-[1.1] font-semibold tracking-[-0.02em] max-w-xl mx-auto mb-3 sm:mb-4"
           style={{ color: 'var(--lj-text)', fontFamily: 'var(--lj-serif, "Cormorant Garamond", "Playfair Display", Georgia, serif)' }}
         >
           Here's how it works.
         </h1>
-        <p className="text-[16px] sm:text-[17px] leading-[1.55] max-w-md mx-auto" style={{ color: 'var(--lj-muted)' }}>
+        <p className="text-[14px] sm:text-[17px] leading-[1.5] sm:leading-[1.55] max-w-md mx-auto" style={{ color: 'var(--lj-muted)' }}>
           Three simple steps to your dream piece — designed with you, made for you.
         </p>
       </div>
@@ -102,7 +102,7 @@ export default function HowItWorksScreen() {
           {/* vertical connector line */}
           <div
             aria-hidden="true"
-            className="absolute left-[35px] sm:left-[39px] top-[60px] bottom-[60px] w-px"
+            className="absolute left-[29px] sm:left-[39px] top-[60px] bottom-[60px] w-px"
             style={{ background: 'linear-gradient(to bottom, transparent, var(--lj-border) 12%, var(--lj-border) 88%, transparent)' }}
           />
 
@@ -112,7 +112,7 @@ export default function HowItWorksScreen() {
               <div
                 key={step.n}
                 data-testid={`how-it-works-step-${i + 1}`}
-                className="relative flex gap-4 sm:gap-6 py-6 first:pt-2 last:pb-2"
+                className="relative flex gap-3.5 sm:gap-6 py-5 sm:py-6 first:pt-2 last:pb-2"
                 style={{
                   opacity: 0,
                   animation: `tljFadeUp 600ms var(--lj-ease, cubic-bezier(0.22, 1, 0.36, 1)) ${i * 140}ms forwards`,
@@ -121,17 +121,17 @@ export default function HowItWorksScreen() {
                 {/* Step badge */}
                 <div className="relative flex-shrink-0">
                   <div
-                    className="w-[72px] h-[72px] sm:w-[80px] sm:h-[80px] rounded-full flex items-center justify-center relative z-10"
+                    className="w-[60px] h-[60px] sm:w-[80px] sm:h-[80px] rounded-full flex items-center justify-center relative z-10"
                     style={{
                       background: 'var(--lj-surface, #FFFFFF)',
                       border: '1px solid var(--lj-border)',
                       boxShadow: '0 8px 28px rgba(15,94,76,0.08), 0 2px 6px rgba(0,0,0,0.04)',
                     }}
                   >
-                    <Icon size={26} strokeWidth={1.5} style={{ color: 'var(--lj-accent)' }} />
+                    <Icon size={22} strokeWidth={1.5} style={{ color: 'var(--lj-accent)' }} className="sm:!w-[26px] sm:!h-[26px]" />
                   </div>
                   <div
-                    className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold z-20"
+                    className="absolute -bottom-1 -right-1 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-[9.5px] sm:text-[10px] font-bold z-20"
                     style={{
                       background: 'var(--lj-accent)',
                       color: '#FFFFFF',
@@ -143,21 +143,21 @@ export default function HowItWorksScreen() {
                 </div>
 
                 {/* Step content */}
-                <div className="flex-1 min-w-0 pt-1">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] mb-1.5" style={{ color: 'var(--lj-accent)', opacity: 0.85 }}>
+                <div className="flex-1 min-w-0 pt-0.5 sm:pt-1">
+                  <div className="text-[10.5px] sm:text-[11px] font-semibold uppercase tracking-[0.16em] mb-1 sm:mb-1.5" style={{ color: 'var(--lj-accent)', opacity: 0.85 }}>
                     {step.eyebrow}
                   </div>
                   <h3
-                    className="text-[22px] sm:text-[24px] leading-[1.2] font-semibold mb-2 tracking-[-0.01em]"
+                    className="text-[18px] sm:text-[24px] leading-[1.2] font-semibold mb-1.5 sm:mb-2 tracking-[-0.01em]"
                     style={{ color: 'var(--lj-text)', fontFamily: 'var(--lj-serif, "Cormorant Garamond", "Playfair Display", Georgia, serif)' }}
                   >
                     {step.title}
                   </h3>
-                  <p className="text-[15px] leading-[1.6] mb-3" style={{ color: 'var(--lj-muted)' }}>
+                  <p className="text-[13.5px] sm:text-[15px] leading-[1.55] sm:leading-[1.6] mb-2.5 sm:mb-3" style={{ color: 'var(--lj-muted)' }}>
                     {step.desc}
                   </p>
                   <div
-                    className="inline-flex items-center text-[12px] font-medium px-2.5 py-1 rounded-full"
+                    className="inline-flex items-center text-[11px] sm:text-[12px] font-medium px-2 sm:px-2.5 py-1 rounded-full"
                     style={{
                       background: 'rgba(15,94,76,0.06)',
                       color: 'var(--lj-accent)',
