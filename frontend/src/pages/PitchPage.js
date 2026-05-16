@@ -493,6 +493,96 @@ const Problem = () => (
         );
       })}
     </div>
+
+    {/* Real-world price comparison */}
+    <Card className="mb-6" testid="problem-price-comparison">
+      <div className="flex items-center gap-2 mb-1">
+        <span className="h-px w-5" style={{ background: C.border }} />
+        <span className="text-[10.5px] font-semibold uppercase tracking-[0.16em]" style={{ color: C.accent }}>Real-world price comparison · Live listings</span>
+      </div>
+      <h3 className="text-[20px] sm:text-[24px] font-semibold mb-1 tracking-[-0.01em]"
+        style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>
+        Same category. Same certification. Half the price.
+      </h3>
+      <p className="text-[13px] leading-[1.55] mb-6 max-w-2xl" style={{ color: C.textMute }}>
+        Comparable lab-grown solitaire engagement rings, IGI-certified, 14K gold — pulled from each brand's site this week.
+      </p>
+
+      <div className="grid md:grid-cols-[1fr_auto_1fr] gap-4 md:gap-6 items-stretch">
+        {/* Grown Brilliance card */}
+        <div className="rounded-[14px] p-4 flex flex-col" style={{ background: C.bgAlt, border: '1px solid ' + C.border }}>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.14em]" style={{ color: C.danger }}>Traditional retail</span>
+            <span className="text-[9.5px] uppercase tracking-[0.14em] px-1.5 py-0.5 rounded" style={{ background: 'rgba(255,122,110,0.12)', color: C.danger, border: '1px solid rgba(255,122,110,0.25)' }}>Grown Brilliance</span>
+          </div>
+          <div className="rounded-[10px] overflow-hidden mb-3" style={{ border: '1px solid ' + C.border, background: '#fff' }}>
+            <img src="/pitch-gb-screenshot.png" alt="Grown Brilliance — Gala 3ctw round lab-grown solitaire" className="w-full h-auto block" />
+          </div>
+          <div className="text-[13px] font-medium leading-[1.4] mb-2.5" style={{ color: C.text }}>
+            Gala 3 ctw Round Lab Solitaire
+          </div>
+          <div className="text-[11.5px] mb-3" style={{ color: C.textMute }}>
+            14K White Gold · E / VS1 · IGI Certified
+          </div>
+          <div className="mt-auto flex items-baseline justify-between">
+            <span className="text-[11px] uppercase tracking-[0.12em]" style={{ color: C.textDim }}>Listed price</span>
+            <span className="text-[28px] font-semibold tracking-tight" style={{ color: C.danger, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>$3,885</span>
+          </div>
+        </div>
+
+        {/* VS divider (desktop only) */}
+        <div className="hidden md:flex flex-col items-center justify-center">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center text-[11px] font-bold tracking-wider"
+            style={{ background: C.text, color: C.bg, boxShadow: '0 8px 22px rgba(0,0,0,0.35)' }}>
+            VS
+          </div>
+        </div>
+
+        {/* The Local Jewel card */}
+        <div className="rounded-[14px] p-4 flex flex-col relative"
+          style={{ background: C.bgAlt, border: '2px solid ' + C.accent, boxShadow: '0 12px 32px rgba(212,175,55,0.12)' }}>
+          <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full text-[9.5px] font-bold uppercase tracking-[0.14em]"
+            style={{ background: C.accent, color: C.bg }}>Best value</div>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.14em]" style={{ color: C.accent }}>The Local Jewel</span>
+            <span className="text-[9.5px] uppercase tracking-[0.14em] px-1.5 py-0.5 rounded" style={{ background: 'rgba(212,175,55,0.12)', color: C.accent, border: '1px solid rgba(212,175,55,0.3)' }}>thelocaljewel.com</span>
+          </div>
+          <div className="rounded-[10px] overflow-hidden mb-3" style={{ border: '1px solid ' + C.border, background: '#fff' }}>
+            <img src="/pitch-tlj-screenshot.png" alt="The Local Jewel — 2.43 carat oval lab-grown solitaire" className="w-full h-auto block" />
+          </div>
+          <div className="text-[13px] font-medium leading-[1.4] mb-2.5" style={{ color: C.text }}>
+            2.43 ct Oval Lab Solitaire · Hidden Halo
+          </div>
+          <div className="text-[11.5px] mb-3" style={{ color: C.textMute }}>
+            14K Gold · IGI Certified · Plain Band
+          </div>
+          <div className="mt-auto flex items-baseline justify-between">
+            <span className="text-[11px] uppercase tracking-[0.12em]" style={{ color: C.textDim }}>Listed price</span>
+            <span className="text-[28px] font-semibold tracking-tight" style={{ color: C.accent, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>
+              <span className="text-[15px] line-through opacity-50 mr-1.5" style={{ color: C.textDim }}>$2,050</span>$1,450
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Savings strip */}
+      <div className="mt-5 flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3.5 rounded-[12px]"
+        style={{ background: 'linear-gradient(135deg, rgba(123,196,168,0.16), rgba(123,196,168,0.04))', border: '1px solid rgba(123,196,168,0.28)' }}>
+        <div className="flex items-center gap-2 text-center sm:text-left">
+          <Sparkles size={15} style={{ color: C.accent2 }} />
+          <div className="text-[13.5px] leading-[1.4]" style={{ color: C.text }}>
+            Same lab-grown stone class. Same IGI certification. <strong>$2,435 lower</strong> at The Local Jewel — and we still ship at <strong>50% gross margin</strong>.
+          </div>
+        </div>
+        <div className="flex items-center gap-3 text-right flex-shrink-0">
+          <div>
+            <div className="text-[10px] uppercase tracking-[0.12em]" style={{ color: C.accent2 }}>Customer saves</div>
+            <div className="text-[20px] font-semibold" style={{ color: C.accent2, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>$2,435</div>
+          </div>
+        </div>
+      </div>
+    </Card>
+
     <Card>
       <div className="flex items-center gap-2 mb-3">
         <MessageCircle size={14} style={{ color: C.accent2 }} />
