@@ -12,6 +12,7 @@ import {
   ShoppingBag, Globe, DollarSign, PieChart as PieIcon, Sparkles,
   CheckCircle2, AlertTriangle, Lightbulb, Layers, Rocket, LogOut,
   Smartphone, MapPin, Image as ImageIcon, ArrowBigUp, ArrowBigDown, Share2, MessageSquare,
+  Calendar, TrendingDown, Send, X, Bot, MessageCircle as ChatIcon, Loader2,
 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
@@ -118,26 +119,27 @@ const MARKET_SHARE_DATA = [
 ];
 
 const SALES_CHANNELS = [
-  { name: 'Etsy', value: 42, color: '#D4AF37' },
-  { name: 'Lead Gen (Site)', value: 28, color: '#7BC4A8' },
-  { name: 'eBay', value: 18, color: '#C58E5A' },
-  { name: 'Word of Mouth', value: 12, color: '#A88FC9' },
+  { name: 'Etsy', value: 45, color: '#D4AF37' },
+  { name: 'Direct / Lead Gen', value: 30, color: '#7BC4A8' },
+  { name: 'Resellers', value: 18, color: '#C58E5A' },
+  { name: 'eBay', value: 5, color: '#A88FC9' },
+  { name: 'TikTok / Organic', value: 2, color: '#6B95A8' },
 ];
 
-// Realistic monthly distribution summing to ~$250K
+// Trailing-12 monthly distribution (sums to ~$245K total sales activity)
 const REVENUE_HISTORY = [
-  { m: 'Apr', revenue: 12500, orders: 6 },
-  { m: 'May', revenue: 16800, orders: 8 },
-  { m: 'Jun', revenue: 19400, orders: 9 },
-  { m: 'Jul', revenue: 18900, orders: 9 },
-  { m: 'Aug', revenue: 22300, orders: 11 },
-  { m: 'Sep', revenue: 24800, orders: 12 },
-  { m: 'Oct', revenue: 21500, orders: 10 },
-  { m: 'Nov', revenue: 26900, orders: 13 },
-  { m: 'Dec', revenue: 28600, orders: 14 },
-  { m: 'Jan', revenue: 19700, orders: 9 },
-  { m: 'Feb', revenue: 17200, orders: 8 },
-  { m: 'Mar', revenue: 21400, orders: 10 },
+  { m: 'Apr', revenue: 13600, orders: 8 },
+  { m: 'May', revenue: 18700, orders: 11 },
+  { m: 'Jun', revenue: 22100, orders: 13 },
+  { m: 'Jul', revenue: 51000, orders: 30 },
+  { m: 'Aug', revenue: 27200, orders: 16 },
+  { m: 'Sep', revenue: 23800, orders: 14 },
+  { m: 'Oct', revenue: 17000, orders: 10 },
+  { m: 'Nov', revenue: 20400, orders: 12 },
+  { m: 'Dec', revenue: 23800, orders: 14 },
+  { m: 'Jan', revenue: 11900, orders: 7 },
+  { m: 'Feb', revenue: 8500, orders: 5 },
+  { m: 'Mar', revenue: 10200, orders: 6 },
 ];
 
 const USE_OF_FUNDS = [
@@ -201,7 +203,7 @@ export default function PitchPage() {
   // Scroll spy
   useEffect(() => {
     if (verified !== true) return;
-    const ids = ['hero', 'opportunity', 'problem', 'founder', 'solution', 'traction', 'economics', 'channels', 'reviews', 'tech', 'content', 'bottleneck', 'use-of-funds', 'ask'];
+    const ids = ['hero', 'opportunity', 'problem', 'founder', 'solution', 'traction', 'economics', 'ramp', 'projection', 'returns', 'channels', 'reviews', 'tech', 'content', 'bottleneck', 'use-of-funds', 'ask'];
     const onScroll = () => {
       for (const id of ids) {
         const el = document.getElementById(id);
@@ -235,6 +237,9 @@ export default function PitchPage() {
       <Solution />
       <Traction />
       <Economics />
+      <FourMonthRamp />
+      <ThreeYearProjection />
+      <InvestorReturns />
       <Channels />
       <Reviews />
       <Tech />
@@ -244,6 +249,7 @@ export default function PitchPage() {
       <Ask />
 
       <Footer />
+      <ChatWidget />
     </div>
   );
 }
@@ -258,8 +264,9 @@ const TopNav = ({ active, onLogout }) => {
     { id: 'founder', label: 'Founder' },
     { id: 'traction', label: 'Traction' },
     { id: 'economics', label: 'Economics' },
-    { id: 'channels', label: 'Channels' },
-    { id: 'tech', label: 'Tech' },
+    { id: 'ramp', label: '4-Mo Ramp' },
+    { id: 'projection', label: '3-Yr Outlook' },
+    { id: 'returns', label: 'Returns' },
     { id: 'use-of-funds', label: 'Use of Funds' },
     { id: 'ask', label: 'The Ask' },
   ];
@@ -309,8 +316,8 @@ const TopNav = ({ active, onLogout }) => {
    1. HERO
    ───────────────────────────────────────────────────────── */
 const Hero = () => {
-  const revenue = useCountUp(250, 1400);
-  const margin = useCountUp(50, 1200);
+  const revenue = useCountUp(245, 1400);
+  const margin = useCountUp(44, 1200);
   const target = useCountUp(100, 1300);
   return (
     <section id="hero" data-testid="pitch-section-hero" className="relative overflow-hidden">
@@ -336,13 +343,13 @@ const Hero = () => {
               <span className="italic" style={{ color: C.accent }}> without the markup.</span>
             </h1>
             <p className="text-[16px] sm:text-[19px] leading-[1.55] max-w-2xl mb-10" style={{ color: C.textMute }}>
-              A profitable, founder-led custom jewelry brand built on direct diamond sourcing, in-house tech, and a high-trust customer process. Funding will move us from steady early sales to a repeatable 100-rings-per-month engine.
+              A profitable, founder-led custom jewelry brand. $245K in trailing sales activity, $700 gross margin per ring, and a clear 4-month plan to scale to 100 rings/month with a $100K equity raise.
             </p>
 
             <div className="grid grid-cols-3 gap-3 sm:gap-5 max-w-2xl">
-              <Stat value={'$' + revenue + 'K'} label="FY revenue" sub="Last fiscal year" accent />
-              <Stat value={margin + '%'} label="Gross margin" sub="Direct sourcing" />
-              <Stat value={target + '/mo'} label="Target run-rate" sub="Rings shipped" />
+              <Stat value={'$' + revenue + 'K'} label="Trailing sales" sub="$200K bank-verified + $44K Etsy" accent />
+              <Stat value={'~' + margin + '%'} label="Gross margin" sub="$700 / ring" />
+              <Stat value={target + '/mo'} label="Month-4 target" sub="From 6 avg today" />
             </div>
 
             <div className="mt-10 flex items-center gap-2 text-[12.5px]" style={{ color: C.textDim }}>
@@ -780,19 +787,19 @@ const Solution = () => (
    ───────────────────────────────────────────────────────── */
 const Traction = () => (
   <Section id="traction" label="Traction" withDivider
-    title="$250K in the last fiscal year — profitable, bootstrapped, founder-led."
-    intro="Every dollar of this revenue was generated without external capital, without a paid sales team, and without inventory carry. The system already works — we're now optimizing for predictability and scale.">
+    title="$245K in trailing sales — profitable, bootstrapped, founder-led."
+    intro="Built without external capital, without inventory carry, and without a paid sales team. The system already works on a small scale — we're now scaling the engine.">
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-      <Stat value="$250K" label="FY revenue" accent />
-      <Stat value="119" label="Custom rings shipped" />
-      <Stat value="50%" label="Gross margin" />
-      <Stat value="5★" label="Avg. customer rating" />
+      <Stat value="$245K" label="Trailing 12-mo sales" sub="$200K bank + $44K Etsy" accent />
+      <Stat value="6 / 30" label="Current avg / best month" sub="Rings shipped" />
+      <Stat value="4" label="Active resellers" sub="On memo, 12 sales to date" />
+      <Stat value="37.75×" label="Etsy ad ROAS" sub="$417 spend → $15.7K rev" />
     </div>
     <Card testid="traction-chart">
       <div className="flex items-baseline justify-between mb-3 flex-wrap gap-2">
         <div>
           <div className="text-[14px] font-semibold" style={{ color: C.text }}>Monthly revenue & orders</div>
-          <div className="text-[11.5px]" style={{ color: C.textDim }}>Last fiscal year · bootstrapped run-rate</div>
+          <div className="text-[11.5px]" style={{ color: C.textDim }}>Trailing 12 months · best month: 30 rings · current avg: 6/mo</div>
         </div>
         <div className="flex items-center gap-3 text-[11.5px]" style={{ color: C.textMute }}>
           <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm" style={{ background: C.accent }} />Revenue</span>
@@ -821,35 +828,58 @@ const Traction = () => (
    ───────────────────────────────────────────────────────── */
 const UNIT_ECON = [
   { name: 'Stone (lab-grown)', value: 520, color: '#D4AF37' },
-  { name: 'Setting + metal', value: 180, color: '#C58E5A' },
-  { name: 'CAD + production', value: 110, color: '#7BC4A8' },
-  { name: 'Shipping (insured)', value: 35, color: '#A88FC9' },
-  { name: 'Payment fees', value: 55, color: '#6B95A8' },
+  { name: 'Setting + metal', value: 160, color: '#C58E5A' },
+  { name: 'CAD + production', value: 80, color: '#7BC4A8' },
+  { name: 'Shipping (insured)', value: 25, color: '#A88FC9' },
+  { name: 'Platform / payment fees', value: 115, color: '#6B95A8' },
+];
+
+// 4-month ramp from the projection doc
+const RAMP_DATA = [
+  { m: 'M1', etsy: 15, ebay: 0,  web: 10, resellers: 10, referrals: 0, rings: 35,  revenue: 56000,  gm: 24500 },
+  { m: 'M2', etsy: 20, ebay: 2,  web: 20, resellers: 12, referrals: 1, rings: 55,  revenue: 88000,  gm: 38500 },
+  { m: 'M3', etsy: 23, ebay: 5,  web: 30, resellers: 15, referrals: 2, rings: 75,  revenue: 120000, gm: 52500 },
+  { m: 'M4', etsy: 25, ebay: 10, web: 40, resellers: 20, referrals: 5, rings: 100, revenue: 160000, gm: 70000 },
+];
+
+// Three-year jewelry-expansion projection
+const THREE_YEAR = [
+  { y: 'Y1', rings: 1065, ringRev: 1704000, jewelryRev: 50000,   total: 1750000, gm: 765000  },
+  { y: 'Y2', rings: 1440, ringRev: 2304000, jewelryRev: 500000,  total: 2800000, gm: 1210000 },
+  { y: 'Y3', rings: 1800, ringRev: 2880000, jewelryRev: 1250000, total: 4130000, gm: 1760000 },
+];
+
+// Investor return scenarios at 6.25% ownership ($100K @ $1.5M pre-money)
+const RETURN_SCENARIOS = [
+  { fcv: 2000000,  stake: 125000,  mult: 1.25 },
+  { fcv: 3000000,  stake: 187500,  mult: 1.88 },
+  { fcv: 5000000,  stake: 312500,  mult: 3.13 },
+  { fcv: 10000000, stake: 625000,  mult: 6.25 },
 ];
 const Economics = () => {
-  const ringPrice = 1800;
+  const ringPrice = 1600;
   const cogs = UNIT_ECON.reduce((s, x) => s + x.value, 0);
   const gm = ringPrice - cogs;
   const gmPct = Math.round((gm / ringPrice) * 100);
   return (
     <Section id="economics" label="Unit Economics" withDivider
-      title="Half the retail price. Half the price goes home as margin."
-      intro="Same diamond, same setting, same certification — but built without showroom overhead and without a layer of middlemen. The customer wins on price; we win on margin.">
+      title="$1,600 selling price. $700 stays as gross margin."
+      intro="Direct sourcing, no showroom, no broker layer. Same lab-grown stone class as the retail comparison — at a price the customer feels good about and a margin we can compound.">
       <div className="grid lg:grid-cols-2 gap-5 mb-6">
         {/* Price comparison */}
         <Card>
-          <div className="text-[11.5px] uppercase tracking-[0.12em] mb-3" style={{ color: C.textMute }}>2.5ct lab-grown oval hidden halo · F/VS1 · IGI certified</div>
+          <div className="text-[11.5px] uppercase tracking-[0.12em] mb-3" style={{ color: C.textMute }}>~2.5ct lab oval / round · F/VS1 · IGI · 14K</div>
           <div className="space-y-3">
             <div>
               <div className="flex items-baseline justify-between mb-1">
-                <span className="text-[12.5px]" style={{ color: C.textMute }}>Grown Brilliance retail</span>
+                <span className="text-[12.5px]" style={{ color: C.textMute }}>Traditional retail (Grown Brilliance)</span>
                 <span className="text-[20px] font-semibold line-through" style={{ color: C.textDim }}>$3,885</span>
               </div>
               <div className="h-1.5 rounded-full" style={{ background: 'linear-gradient(90deg,' + C.danger + '88, ' + C.danger + ')' }} />
             </div>
             <div>
               <div className="flex items-baseline justify-between mb-1">
-                <span className="text-[12.5px] font-medium" style={{ color: C.accent }}>The Local Jewel</span>
+                <span className="text-[12.5px] font-medium" style={{ color: C.accent }}>The Local Jewel (avg)</span>
                 <span className="text-[28px] font-semibold" style={{ color: C.accent, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>${ringPrice.toLocaleString()}</span>
               </div>
               <div className="h-1.5 rounded-full" style={{ background: 'linear-gradient(90deg,' + C.accent + '88, ' + C.accent + ')', width: Math.round((ringPrice / 3885) * 100) + '%' }} />
@@ -859,7 +889,7 @@ const Economics = () => {
             style={{ background: 'rgba(123,196,168,0.10)', border: '1px solid rgba(123,196,168,0.25)' }}>
             <div>
               <div className="text-[11px] uppercase tracking-[0.12em]" style={{ color: C.accent2 }}>Customer saves</div>
-              <div className="text-[22px] font-semibold" style={{ color: C.accent2, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>$2,085</div>
+              <div className="text-[22px] font-semibold" style={{ color: C.accent2, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>$2,285</div>
             </div>
             <div className="text-right">
               <div className="text-[11px] uppercase tracking-[0.12em]" style={{ color: C.accent }}>We keep</div>
@@ -870,7 +900,7 @@ const Economics = () => {
 
         {/* COGS donut */}
         <Card testid="economics-donut">
-          <div className="text-[14px] font-semibold mb-2" style={{ color: C.text }}>Where each $1,800 ring goes</div>
+          <div className="text-[14px] font-semibold mb-2" style={{ color: C.text }}>Where each $1,600 ring goes</div>
           <div style={{ width: '100%', height: 240 }}>
             <ResponsiveContainer>
               <PieChart>
@@ -899,12 +929,12 @@ const Economics = () => {
 
       {/* Scale projection */}
       <Card>
-        <div className="text-[11.5px] uppercase tracking-[0.12em] mb-3" style={{ color: C.accent }}>At target run-rate</div>
+        <div className="text-[11.5px] uppercase tracking-[0.12em] mb-3" style={{ color: C.accent }}>At Month-4 run-rate</div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Stat value="100/mo" label="Target rings" accent />
-          <Stat value="$180K" label="Monthly revenue" />
-          <Stat value="$90K" label="Monthly gross profit" />
-          <Stat value="$2.16M" label="Annual run-rate" />
+          <Stat value="100/mo" label="Rings" accent />
+          <Stat value="$160K" label="Monthly revenue" />
+          <Stat value="$70K" label="Monthly gross margin" />
+          <Stat value="$1.92M" label="Annual run-rate" />
         </div>
       </Card>
     </Section>
@@ -936,12 +966,13 @@ const Channels = () => (
       <div className="space-y-3">
         {SALES_CHANNELS.map((c, i) => {
           const meta = [
-            { icon: ShoppingBag, name: 'Etsy', detail: 'Top listings ranked organically; review-flywheel kicks in at scale.' },
-            { icon: Globe, name: 'Lead Gen (Site)', detail: 'Custom wizard + admin CRM. Highest LTV, highest GM per lead.' },
-            { icon: Box, name: 'eBay', detail: 'Auction + Buy-It-Now. Reaches a different deal-seeking buyer.' },
-            { icon: Users, name: 'Word of Mouth', detail: '4 active resellers + organic referrals from past customers.' },
+            { icon: ShoppingBag, detail: 'Top listings ranked organically; review-flywheel kicks in at scale. 37.75× ROAS in our most recent test.' },
+            { icon: Globe, detail: 'Custom wizard + admin CRM. Highest LTV, highest GM per lead. Meta / Google / TikTok ads feed into this.' },
+            { icon: Users, detail: '4 active resellers on memo. 12 sales so far without funded inventory — funded inventory unlocks the next leg.' },
+            { icon: Box, detail: 'Two sales already without ads. Untapped — promoted listings + automated relisting coming in Month 1.' },
+            { icon: Smartphone, detail: 'Organic TikTok inquiries already happening. Founder-built content engine ready to scale.' },
           ];
-          const m = meta[i];
+          const m = meta[i] || { icon: ShoppingBag, detail: '' };
           const Icon = m.icon;
           return (
             <Card key={i}>
@@ -1287,6 +1318,352 @@ const Ask = () => (
     </Card>
   </Section>
 );
+
+/* ─────────────────────────────────────────────────────────
+   FOUR-MONTH RAMP
+   ───────────────────────────────────────────────────────── */
+const FourMonthRamp = () => (
+  <Section id="ramp" label="The 4-Month Plan" withDivider
+    title="From 6 rings/month to 100, in four months."
+    intro="The full month-by-month sales mix backing the run-rate. Built around channels that are already working — Etsy first, paid social second, resellers third.">
+    <div className="grid lg:grid-cols-2 gap-5 mb-5">
+      {/* Stacked bar — rings by channel */}
+      <Card testid="ramp-chart">
+        <div className="text-[14px] font-semibold mb-2" style={{ color: C.text }}>Rings sold by channel</div>
+        <div style={{ width: '100%', height: 280 }}>
+          <ResponsiveContainer>
+            <BarChart data={RAMP_DATA} margin={{ top: 6, right: 6, bottom: 0, left: -16 }}>
+              <CartesianGrid strokeDasharray="3 4" stroke={C.border} vertical={false} />
+              <XAxis dataKey="m" stroke={C.textMute} tick={{ fontSize: 11 }} />
+              <YAxis stroke={C.textMute} tick={{ fontSize: 11 }} />
+              <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(212,175,55,0.06)' }} />
+              <Legend wrapperStyle={{ fontSize: 11, color: C.textMute, paddingTop: 6 }} />
+              <Bar dataKey="etsy" stackId="r" name="Etsy" fill="#D4AF37" />
+              <Bar dataKey="web" stackId="r" name="Web (Meta/TikTok/Google)" fill="#7BC4A8" />
+              <Bar dataKey="resellers" stackId="r" name="Resellers" fill="#C58E5A" />
+              <Bar dataKey="ebay" stackId="r" name="eBay" fill="#A88FC9" />
+              <Bar dataKey="referrals" stackId="r" name="Referrals" fill="#6B95A8" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
+
+      {/* Revenue + GM line */}
+      <Card>
+        <div className="text-[14px] font-semibold mb-2" style={{ color: C.text }}>Revenue & gross margin by month</div>
+        <div style={{ width: '100%', height: 280 }}>
+          <ResponsiveContainer>
+            <AreaChart data={RAMP_DATA} margin={{ top: 6, right: 6, bottom: 0, left: -8 }}>
+              <defs>
+                <linearGradient id="gRev" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={C.accent} stopOpacity={0.6} />
+                  <stop offset="100%" stopColor={C.accent} stopOpacity={0.02} />
+                </linearGradient>
+                <linearGradient id="gGm" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={C.accent2} stopOpacity={0.55} />
+                  <stop offset="100%" stopColor={C.accent2} stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 4" stroke={C.border} vertical={false} />
+              <XAxis dataKey="m" stroke={C.textMute} tick={{ fontSize: 11 }} />
+              <YAxis stroke={C.textMute} tick={{ fontSize: 11 }} tickFormatter={(v) => '$' + Math.round(v / 1000) + 'k'} />
+              <Tooltip content={<ChartTooltip />} cursor={{ stroke: C.border }} />
+              <Area type="monotone" dataKey="revenue" name="Revenue" stroke={C.accent} strokeWidth={2} fill="url(#gRev)" />
+              <Area type="monotone" dataKey="gm" name="Gross margin" stroke={C.accent2} strokeWidth={2} fill="url(#gGm)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
+    </div>
+
+    {/* 4-month totals */}
+    <Card>
+      <div className="text-[11.5px] uppercase tracking-[0.12em] mb-3" style={{ color: C.accent }}>4-month deployment totals</div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <Stat value="265" label="Rings shipped" accent />
+        <Stat value="$424K" label="Revenue" />
+        <Stat value="$185.5K" label="Gross margin" />
+        <Stat value="$45K" label="Ad budget deployed" sub="$7.8K → $14.5K/mo" />
+      </div>
+    </Card>
+  </Section>
+);
+
+/* ─────────────────────────────────────────────────────────
+   THREE-YEAR PROJECTION
+   ───────────────────────────────────────────────────────── */
+const ThreeYearProjection = () => (
+  <Section id="projection" label="3-Year Outlook" withDivider
+    title="Engagement rings are the wedge. Jewelry expansion compounds the LTV."
+    intro="Once we hit 100 rings/month, we open the second act: wedding bands, anniversary jewelry, lab-grown studs, tennis bracelets, necklaces — sold to the same customers we already converted.">
+    <Card testid="projection-chart">
+      <div style={{ width: '100%', height: 320 }}>
+        <ResponsiveContainer>
+          <BarChart data={THREE_YEAR} margin={{ top: 6, right: 6, bottom: 0, left: -8 }}>
+            <CartesianGrid strokeDasharray="3 4" stroke={C.border} vertical={false} />
+            <XAxis dataKey="y" stroke={C.textMute} tick={{ fontSize: 12 }} />
+            <YAxis stroke={C.textMute} tick={{ fontSize: 11 }} tickFormatter={(v) => '$' + (v / 1000000).toFixed(1) + 'M'} />
+            <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(212,175,55,0.06)' }} />
+            <Legend wrapperStyle={{ fontSize: 12, color: C.textMute, paddingTop: 6 }} />
+            <Bar dataKey="ringRev" stackId="t" name="Engagement-ring revenue" fill="#D4AF37" />
+            <Bar dataKey="jewelryRev" stackId="t" name="Jewelry expansion" fill="#7BC4A8" radius={[6, 6, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </Card>
+
+    <div className="mt-5 grid lg:grid-cols-3 gap-3">
+      {THREE_YEAR.map((y, i) => (
+        <Card key={i}>
+          <div className="flex items-baseline justify-between mb-2">
+            <span className="text-[12px] uppercase tracking-[0.14em]" style={{ color: C.accent }}>{y.y}</span>
+            <span className="text-[11px]" style={{ color: C.textDim }}>{y.rings.toLocaleString()} rings</span>
+          </div>
+          <div className="text-[26px] font-semibold tracking-[-0.01em]" style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>
+            ${(y.total / 1000000).toFixed(2)}M
+          </div>
+          <div className="text-[12px] mb-3" style={{ color: C.textMute }}>Total revenue</div>
+          <div className="grid grid-cols-2 gap-2 text-[12.5px]">
+            <div>
+              <div className="text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Ring rev</div>
+              <div style={{ color: C.text }}>${(y.ringRev / 1000).toLocaleString()}K</div>
+            </div>
+            <div>
+              <div className="text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>GM</div>
+              <div style={{ color: C.accent2 }}>${(y.gm / 1000).toLocaleString()}K</div>
+            </div>
+          </div>
+        </Card>
+      ))}
+    </div>
+
+    <div className="mt-5 px-5 py-4 rounded-[14px] flex items-center gap-3"
+      style={{ background: 'rgba(123,196,168,0.08)', border: '1px solid rgba(123,196,168,0.25)' }}>
+      <TrendingUp size={16} style={{ color: C.accent2 }} />
+      <span className="text-[13.5px] leading-[1.5]" style={{ color: C.text }}>
+        From <strong>$1.75M</strong> in Year 1 to <strong>$4.13M</strong> in Year 3 — a <strong>2.36×</strong> revenue compound with the same founder, same model, expanded SKUs.
+      </span>
+    </div>
+  </Section>
+);
+
+/* ─────────────────────────────────────────────────────────
+   INVESTOR RETURNS FRAMING
+   ───────────────────────────────────────────────────────── */
+const InvestorReturns = () => (
+  <Section id="returns" label="Investor Returns" withDivider
+    title="$100K at $1.5M pre-money = 6.25% ownership."
+    intro="Returns come from increase in company value — not gross-margin share or scheduled repayments. Here's what 6.25% looks like at different exit / valuation events.">
+    <Card>
+      <div className="grid sm:grid-cols-4 gap-3 mb-5">
+        <Stat value="$100K" label="Investment" accent />
+        <Stat value="$1.5M" label="Pre-money valuation" />
+        <Stat value="6.25%" label="Investor ownership" />
+        <Stat value="Equity" label="Instrument" sub="Not debt, not gross-margin share" />
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-[13px]" style={{ color: C.text }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid ' + C.border }}>
+              <th className="text-left py-2 px-2 text-[11px] uppercase tracking-[0.12em]" style={{ color: C.textMute }}>If TLJ is valued at</th>
+              <th className="text-right py-2 px-2 text-[11px] uppercase tracking-[0.12em]" style={{ color: C.textMute }}>Investor stake worth</th>
+              <th className="text-right py-2 px-2 text-[11px] uppercase tracking-[0.12em]" style={{ color: C.textMute }}>Return multiple</th>
+            </tr>
+          </thead>
+          <tbody>
+            {RETURN_SCENARIOS.map((s, i) => (
+              <tr key={i} style={{ borderBottom: '1px solid ' + C.border }}>
+                <td className="py-3 px-2" style={{ color: C.text }}>${(s.fcv / 1000000).toFixed(0)}M</td>
+                <td className="py-3 px-2 text-right font-semibold" style={{ color: C.text }}>${s.stake.toLocaleString()}</td>
+                <td className="py-3 px-2 text-right font-semibold" style={{ color: s.mult >= 3 ? C.accent : C.accent2, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif', fontSize: 18 }}>{s.mult.toFixed(2)}×</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-5 grid sm:grid-cols-2 gap-3">
+        <div className="rounded-[12px] p-4" style={{ background: C.bgAlt, border: '1px solid ' + C.border }}>
+          <div className="text-[11.5px] uppercase tracking-[0.12em] mb-1" style={{ color: C.accent }}>Path to $5M</div>
+          <p className="text-[12.5px] leading-[1.5]" style={{ color: C.textMute }}>
+            Achievable by end of Year 1 at the projected $1.75M revenue + jewelry expansion — common 3× revenue multiple for high-margin DTC.
+          </p>
+        </div>
+        <div className="rounded-[12px] p-4" style={{ background: C.bgAlt, border: '1px solid ' + C.border }}>
+          <div className="text-[11.5px] uppercase tracking-[0.12em] mb-1" style={{ color: C.accent }}>Path to $10M</div>
+          <p className="text-[12.5px] leading-[1.5]" style={{ color: C.textMute }}>
+            Tracks with Year 2 ($2.8M revenue / $1.21M GM). Equity is held — there's no clock — investor can hold through Year 3 / $4.13M and beyond.
+          </p>
+        </div>
+      </div>
+    </Card>
+  </Section>
+);
+
+/* ─────────────────────────────────────────────────────────
+   AI CHAT WIDGET — investor Q&A
+   ───────────────────────────────────────────────────────── */
+const SAMPLE_QUESTIONS = [
+  'What\'s the current vs target run rate?',
+  'How are you using the $100K?',
+  'Show me the unit economics',
+  'What\'s the 4-month plan?',
+  'Why this valuation?',
+];
+
+const ChatWidget = () => {
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState([
+    { role: 'assistant', content: "Hi — I'm The Local Jewel's investor-brief assistant. Ask me about traction, unit economics, the 4-month plan, the use of funds, or anything else from the deck." },
+  ]);
+  const [input, setInput] = useState('');
+  const [sending, setSending] = useState(false);
+  const scrollRef = useRef(null);
+  const sessionId = useRef('pitch_' + Math.random().toString(36).slice(2, 10));
+
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages, sending]);
+
+  const send = async (text) => {
+    const q = (text || input).trim();
+    if (!q || sending) return;
+    setInput('');
+    const token = localStorage.getItem(TOKEN_KEY);
+    const newHistory = [...messages, { role: 'user', content: q }];
+    setMessages(newHistory);
+    setSending(true);
+    try {
+      const res = await axios.post(BACKEND_URL + '/api/pitch/chat', {
+        token,
+        session_id: sessionId.current,
+        message: q,
+        history: messages,
+      }, { timeout: 60000 });
+      setMessages(m => [...m, { role: 'assistant', content: res.data.reply }]);
+    } catch (e) {
+      setMessages(m => [...m, { role: 'assistant', content: 'Sorry — I hit an error. Try again in a moment, or contact ansh@thelocaljewel.com directly.' }]);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <>
+      {/* Floating launcher */}
+      {!open && (
+        <button
+          onClick={() => setOpen(true)}
+          data-testid="pitch-chat-launcher"
+          className="fixed bottom-5 right-5 z-50 inline-flex items-center gap-2 px-5 py-3 rounded-full text-[14px] font-medium transition-all duration-300 hover:scale-105"
+          style={{
+            background: C.accent, color: C.bg,
+            boxShadow: '0 14px 32px rgba(212,175,55,0.4), 0 2px 6px rgba(0,0,0,0.3)',
+          }}
+        >
+          <Bot size={17} />
+          <span>Ask anything about this brief</span>
+        </button>
+      )}
+
+      {/* Panel */}
+      {open && (
+        <div data-testid="pitch-chat-panel"
+          className="fixed z-50 bottom-5 right-5 left-5 sm:left-auto rounded-[18px] flex flex-col overflow-hidden"
+          style={{
+            background: C.surface,
+            border: '1px solid ' + C.border,
+            width: 'min(420px, calc(100vw - 40px))',
+            height: 'min(620px, calc(100vh - 80px))',
+            boxShadow: '0 30px 70px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.05) inset',
+          }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid ' + C.border, background: C.bgAlt }}>
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center"
+                style={{ background: 'linear-gradient(135deg, ' + C.accent + ', #B8932F)' }}>
+                <Diamond size={14} style={{ color: C.bg }} />
+              </div>
+              <div>
+                <div className="text-[13px] font-semibold leading-none" style={{ color: C.text }}>Investor Q&A</div>
+                <div className="text-[10px] uppercase tracking-[0.14em] mt-0.5" style={{ color: C.accent }}>AI · trained on the brief</div>
+              </div>
+            </div>
+            <button onClick={() => setOpen(false)} data-testid="pitch-chat-close"
+              className="p-1.5 rounded-full hover:bg-[rgba(244,236,221,0.08)]" style={{ color: C.textMute }}>
+              <X size={16} />
+            </button>
+          </div>
+
+          {/* Messages */}
+          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+            {messages.map((m, i) => (
+              <div key={i} className={'flex gap-2 ' + (m.role === 'user' ? 'justify-end' : 'justify-start')}>
+                {m.role === 'assistant' && (
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'rgba(212,175,55,0.15)' }}>
+                    <Bot size={12} style={{ color: C.accent }} />
+                  </div>
+                )}
+                <div data-testid={'pitch-chat-msg-' + m.role}
+                  className="rounded-[12px] px-3 py-2 max-w-[78%] text-[13px] leading-[1.5] whitespace-pre-wrap"
+                  style={{
+                    background: m.role === 'user' ? C.accent : C.bgAlt,
+                    color: m.role === 'user' ? C.bg : C.text,
+                    border: m.role === 'user' ? 'none' : '1px solid ' + C.border,
+                  }}>
+                  {m.content}
+                </div>
+              </div>
+            ))}
+            {sending && (
+              <div className="flex gap-2 items-center">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: 'rgba(212,175,55,0.15)' }}>
+                  <Bot size={12} style={{ color: C.accent }} />
+                </div>
+                <div className="rounded-[12px] px-3 py-2 text-[12.5px]" style={{ background: C.bgAlt, border: '1px solid ' + C.border, color: C.textMute }}>
+                  <Loader2 size={13} className="inline animate-spin mr-1" /> Thinking…
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Suggestions (only at start) */}
+          {messages.length <= 1 && !sending && (
+            <div className="px-4 pb-2 flex flex-wrap gap-1.5">
+              {SAMPLE_QUESTIONS.map((s, i) => (
+                <button key={i} onClick={() => send(s)}
+                  className="text-[11px] px-2 py-1 rounded-full transition-colors"
+                  style={{ background: C.bgAlt, color: C.textMute, border: '1px solid ' + C.border }}>
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Input */}
+          <form onSubmit={(e) => { e.preventDefault(); send(); }} className="px-3 py-3 flex items-center gap-2" style={{ borderTop: '1px solid ' + C.border, background: C.bgAlt }}>
+            <input
+              type="text" value={input} onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask anything about traction, terms, plan…"
+              data-testid="pitch-chat-input"
+              disabled={sending}
+              maxLength={800}
+              className="flex-1 px-3 py-2.5 rounded-[10px] text-[13px] outline-none"
+              style={{ background: C.surface, border: '1px solid ' + C.border, color: C.text }}
+            />
+            <button type="submit" disabled={sending || !input.trim()} data-testid="pitch-chat-send"
+              className="w-10 h-10 rounded-[10px] flex items-center justify-center transition-opacity"
+              style={{ background: C.accent, color: C.bg, opacity: (sending || !input.trim()) ? 0.4 : 1 }}>
+              <Send size={15} />
+            </button>
+          </form>
+        </div>
+      )}
+    </>
+  );
+};
 
 /* ─────────────────────────────────────────────────────────
    FOOTER

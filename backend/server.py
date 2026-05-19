@@ -1013,3 +1013,61 @@ async def pitch_check(token: str):
         raise HTTPException(401, "Invalid or expired token")
     return {"ok": True}
 
+
+# ── Investor Pitch — AI Chat ─────────────────────────────────
+
+class PitchChatMessage(BaseModel):
+    role: str  # "user" | "assistant"
+    content: str
+
+class PitchChatRequest(BaseModel):
+    token: str
+    session_id: str
+    message: str
+    history: Optional[List[PitchChatMessage]] = []
+
+@app.post("/api/pitch/chat")
+async def pitch_chat(req: PitchChatRequest):
+    if not _verify_pitch_token(req.token):
+        raise HTTPException(401, "Invalid or expired token")
+
+    user_msg = (req.message or "").strip()
+    if not user_msg:
+        raise HTTPException(400, "Empty message")
+    if len(user_msg) > 800:
+        raise HTTPException(400, "Message too long (max 800 chars)")
+
+    # Lazy import so a broken integration doesn't block startup
+    try:
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        from pitch_context import PITCH_SYSTEM_PROMPT
+    except Exception as e:
+        raise HTTPException(500, f"LLM integration unavailable: {e}")
+
+    api_key = os.environ.get("EMERGENT_LLM_KEY", "")
+    if not api_key:
+        raise HTTPException(500, "EMERGENT_LLM_KEY not configured")
+
+    # Build a single prompt with history + new user turn (this keeps things stateless server-side)
+    history_text = ""
+    if req.history:
+        recent = req.history[-8:]  # last 8 turns to bound tokens
+        history_text = "\n\nPrior conversation:\n"
+        for m in recent:
+            label = "Investor" if m.role == "user" else "Assistant"
+            history_text += f"\n{label}: {m.content.strip()}"
+        history_text += "\n"
+
+    combined = f"{history_text}\nInvestor: {user_msg}"
+
+    try:
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=req.session_id or "pitch_anon",
+            system_message=PITCH_SYSTEM_PROMPT,
+        ).with_model("anthropic", "claude-sonnet-4-5-20250929")
+        reply = await chat.send_message(UserMessage(text=combined))
+        return {"reply": str(reply).strip()}
+    except Exception as e:
+        raise HTTPException(502, f"LLM error: {e}")
+
