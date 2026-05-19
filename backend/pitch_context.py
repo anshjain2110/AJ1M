@@ -29,26 +29,26 @@ A. CURRENT BUSINESS SNAPSHOT
 - Target AI/software/tools after funding: ~$1,500/month
 
 ══════════════════════════════════════════════════════════════
-B. CURRENT TRACTION
+B. CURRENT TRACTION (Apr 2025 → Apr 2026)
 ══════════════════════════════════════════════════════════════
-- Bank-verified business deposits, trailing 12 months: $200K+
-- Etsy revenue outside business account: $44K
-- Approx. total sales activity: ~$245K
-- Reported prior-year sales: ~$300K
+- Trailing 12-month total revenue: ~$300K
+- Best month achieved: 30 rings
+- Current avg: ~6 rings/month
 - Confirmed resellers: 4
 - eBay sales: 2 (without ads)
 - Organic TikTok inquiries: 2 (no ad spend)
-- Meta ad test: $25 spend → ~3,000 impressions → 4 lead-form submissions → 2 quote-ready leads (asked for payment details, didn't convert — needs better follow-up + retargeting)
+- Meta ad test: $25 spend → ~3,000 impressions → 4 lead-form submissions → 2 quote-ready leads
+- Marketplace ads (Etsy promoted listings): 57,200 views · 1,214 clicks · 9 orders · $15,742.44 revenue · $418.64 spend · 37.6× ROAS
 
 ══════════════════════════════════════════════════════════════
 C. ETSY ADS PROOF (the strongest single channel today)
 ══════════════════════════════════════════════════════════════
-- Views: 57,100
-- Clicks: 1,212
+- Views: 57,200
+- Clicks: 1,214
 - Orders: 9
 - Revenue: $15,742.44
-- Spend: $417.03
-- ROAS: 37.75x
+- Spend: $418.64
+- ROAS: 37.6x
 - Current monthly Etsy revenue: ~$3,750 from 2-3 orders
 
 ══════════════════════════════════════════════════════════════
@@ -189,32 +189,28 @@ M. 3-YEAR PROJECTION (engagement rings + jewelry expansion)
 ══════════════════════════════════════════════════════════════
 After reaching 100 rings/mo, expand into wedding bands, anniversary jewelry, lab-grown diamond studs, tennis bracelets, necklaces — engagement rings become the customer-acquisition wedge.
 
-Year | Eng Rings Sold | Eng Ring Rev | Jewelry Expansion Rev | TOTAL Rev | Total GM
-- Y1: 1,065 | $1,704,000 | $0-$100,000 | $1.70M-$1.80M | $745K-$785K
-- Y2: 1,440 | $2,304,000 | $500,000 | $2.80M | $1.21M
-- Y3: 1,800 | $2,880,000 | $1,250,000 | $4.13M | $1.76M
-
-3-Year operating contribution:
-- Y1: $456K-$496K
-- Y2: ~$703K
-- Y3: ~$960K
+Year | Eng Rings Sold | Eng Ring Rev | Jewelry Expansion Rev | TOTAL Rev | Total GM | Op. Contribution
+- Y1: 1,065 | $1.70M | $50K     | $1.75M | $766K   | $490K
+- Y2: 1,600 | $2.56M | $500K    | $3.06M | $1.32M  | $770K
+- Y3: 2,720 | $4.35M | $1.25M   | $5.60M | $2.40M  | $1.31M
 
 ══════════════════════════════════════════════════════════════
-N. CUSTOMER & RESELLER LTV
+N. CUSTOMER & RESELLER LIFETIME VALUE
 ══════════════════════════════════════════════════════════════
-Purchase type | Timing | Example value
-- Engagement ring | First purchase | $1,500-$1,700
-- Wedding bands | 3-12 mo later | $500-$1,500
-- Earrings / pendant / bracelet | Future gift | $300-$2,500
-- Anniversary jewelry | Future repeat | $500-$5,000
-- Referral | Friend/family | $1,500-$3,000+
+Customer LTV (typical sequence):
+- Engagement ring                   → $1,600 rev / $700 GM
+- Wedding bands (couple)            → $1,000 rev / $450 GM
+- Future jewelry (1-2 items)        → $1,200 rev / $480 GM
+- Anniversary jewelry               → $2,000 rev / $800 GM
+- Referral (1 new customer / 2 yrs) → $1,800 rev / $720 GM
+Sum-of-all-categories LTV:           ~$7,600 rev / ~$3,150 GM
+Base case (ring + 1-2 follow-ups):   ~$2,800 rev / ~$1,326 GM
 
-Reseller metric | Conservative | Target
-- Sales per reseller/month | 1 | 2-3
-- Active resellers | 20 | 40-50
-- Monthly reseller sales | 20 | 80-150
-- Revenue per reseller sale | $1,600 | $1,600+
-- GM per sale | $700 | $700+
+Reseller LTV:
+- 2 sales/month × 18 months = 36 customers per reseller
+- $1,326 GM/customer (base case)
+- LTV per reseller: $47,736
+- Network: 20 resellers → $954,720 ; 40 resellers → $1,909,440
 
 ══════════════════════════════════════════════════════════════
 O. STRENGTHS (founder summary)

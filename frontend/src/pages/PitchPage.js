@@ -108,6 +108,7 @@ const useCountUp = (to, ms = 1200) => {
 /* ─────────────────────────────────────────────────────────
    DATA
    ───────────────────────────────────────────────────────── */
+// Updated market-share series — 2025 crossover at ~70%
 const MARKET_SHARE_DATA = [
   { year: '2019', lab: 4, natural: 96 },
   { year: '2020', lab: 8, natural: 92 },
@@ -115,7 +116,8 @@ const MARKET_SHARE_DATA = [
   { year: '2022', lab: 28, natural: 72 },
   { year: '2023', lab: 46, natural: 54 },
   { year: '2024', lab: 60, natural: 40 },
-  { year: '2025E', lab: 70, natural: 30 },
+  { year: '2025', lab: 70, natural: 30 },
+  { year: '2026E', lab: 78, natural: 22 },
 ];
 
 const SALES_CHANNELS = [
@@ -126,20 +128,20 @@ const SALES_CHANNELS = [
   { name: 'TikTok / Organic', value: 2, color: '#6B95A8' },
 ];
 
-// Trailing-12 monthly distribution (sums to ~$245K total sales activity)
+// Trailing-12 monthly distribution (Apr 2025 → Apr 2026, sums to ~$300K)
 const REVENUE_HISTORY = [
-  { m: 'Apr', revenue: 13600, orders: 8 },
-  { m: 'May', revenue: 18700, orders: 11 },
-  { m: 'Jun', revenue: 22100, orders: 13 },
+  { m: 'Apr', revenue: 17000, orders: 10 },
+  { m: 'May', revenue: 22100, orders: 13 },
+  { m: 'Jun', revenue: 27200, orders: 16 },
   { m: 'Jul', revenue: 51000, orders: 30 },
-  { m: 'Aug', revenue: 27200, orders: 16 },
-  { m: 'Sep', revenue: 23800, orders: 14 },
-  { m: 'Oct', revenue: 17000, orders: 10 },
-  { m: 'Nov', revenue: 20400, orders: 12 },
-  { m: 'Dec', revenue: 23800, orders: 14 },
-  { m: 'Jan', revenue: 11900, orders: 7 },
-  { m: 'Feb', revenue: 8500, orders: 5 },
-  { m: 'Mar', revenue: 10200, orders: 6 },
+  { m: 'Aug', revenue: 30600, orders: 18 },
+  { m: 'Sep', revenue: 27200, orders: 16 },
+  { m: 'Oct', revenue: 22100, orders: 13 },
+  { m: 'Nov', revenue: 25500, orders: 15 },
+  { m: 'Dec', revenue: 30600, orders: 18 },
+  { m: 'Jan', revenue: 15300, orders: 9 },
+  { m: 'Feb', revenue: 13600, orders: 8 },
+  { m: 'Mar', revenue: 17000, orders: 10 },
 ];
 
 const USE_OF_FUNDS = [
@@ -203,7 +205,7 @@ export default function PitchPage() {
   // Scroll spy
   useEffect(() => {
     if (verified !== true) return;
-    const ids = ['hero', 'opportunity', 'problem', 'founder', 'solution', 'traction', 'economics', 'ramp', 'projection', 'returns', 'channels', 'reviews', 'tech', 'content', 'bottleneck', 'use-of-funds', 'ask'];
+    const ids = ['hero', 'opportunity', 'problem', 'founder', 'solution', 'traction', 'economics', 'ramp', 'projection', 'ltv', 'returns', 'channels', 'reviews', 'tech', 'content', 'bottleneck', 'use-of-funds', 'ask'];
     const onScroll = () => {
       for (const id of ids) {
         const el = document.getElementById(id);
@@ -239,6 +241,7 @@ export default function PitchPage() {
       <Economics />
       <FourMonthRamp />
       <ThreeYearProjection />
+      <LifetimeValue />
       <InvestorReturns />
       <Channels />
       <Reviews />
@@ -266,6 +269,7 @@ const TopNav = ({ active, onLogout }) => {
     { id: 'economics', label: 'Economics' },
     { id: 'ramp', label: '4-Mo Ramp' },
     { id: 'projection', label: '3-Yr Outlook' },
+    { id: 'ltv', label: 'LTV' },
     { id: 'returns', label: 'Returns' },
     { id: 'use-of-funds', label: 'Use of Funds' },
     { id: 'ask', label: 'The Ask' },
@@ -316,7 +320,7 @@ const TopNav = ({ active, onLogout }) => {
    1. HERO
    ───────────────────────────────────────────────────────── */
 const Hero = () => {
-  const revenue = useCountUp(245, 1400);
+  const revenue = useCountUp(300, 1400);
   const margin = useCountUp(44, 1200);
   const target = useCountUp(100, 1300);
   return (
@@ -343,11 +347,11 @@ const Hero = () => {
               <span className="italic" style={{ color: C.accent }}> without the markup.</span>
             </h1>
             <p className="text-[16px] sm:text-[19px] leading-[1.55] max-w-2xl mb-10" style={{ color: C.textMute }}>
-              A profitable, founder-led custom jewelry brand. $245K in trailing sales activity, $700 gross margin per ring, and a clear 4-month plan to scale to 100 rings/month with a $100K equity raise.
+              A profitable, founder-led custom jewelry brand. $300K in trailing sales activity, $700 gross margin per ring, and a clear 4-month plan to scale to 100 rings/month with a $100K equity raise.
             </p>
 
             <div className="grid grid-cols-3 gap-3 sm:gap-5 max-w-2xl">
-              <Stat value={'$' + revenue + 'K'} label="Trailing sales" sub="$200K bank-verified + $44K Etsy" accent />
+              <Stat value={'$' + revenue + 'K'} label="Trailing sales" sub="Apr 2025 → Apr 2026" accent />
               <Stat value={'~' + margin + '%'} label="Gross margin" sub="$700 / ring" />
               <Stat value={target + '/mo'} label="Month-4 target" sub="From 6 avg today" />
             </div>
@@ -412,13 +416,13 @@ const Hero = () => {
    ───────────────────────────────────────────────────────── */
 const Opportunity = () => (
   <Section id="opportunity" label="The Opportunity" withDivider
-    title="Lab-grown diamonds now own 60% of the U.S. engagement ring market."
-    intro="Five years ago, lab-grown was a curiosity. Today it's the default for new buyers — and it's compressing retail margins at every traditional jeweler. The window to build the trusted, custom-first brand of this transition is open right now.">
+    title="Lab-grown diamonds now own 70% of the U.S. engagement ring market."
+    intro="Five years ago, lab-grown was a curiosity. By 2025 it's the default for new buyers — and it's compressing retail margins at every traditional jeweler. The window to build the trusted, custom-first brand of this transition is open right now.">
     <div className="grid lg:grid-cols-5 gap-5 sm:gap-7">
       <Card className="lg:col-span-3" testid="opportunity-chart">
         <div className="flex items-baseline justify-between mb-3">
           <div className="text-[14px] font-semibold" style={{ color: C.text }}>U.S. engagement ring market share</div>
-          <div className="text-[11px] uppercase tracking-[0.12em]" style={{ color: C.textDim }}>2019 — 2025E</div>
+          <div className="text-[11px] uppercase tracking-[0.12em]" style={{ color: C.textDim }}>2019 — 2026E</div>
         </div>
         <div style={{ width: '100%', height: 280 }}>
           <ResponsiveContainer>
@@ -444,13 +448,13 @@ const Opportunity = () => (
           </ResponsiveContainer>
         </div>
         <div className="mt-3 text-[11.5px]" style={{ color: C.textDim }}>
-          Source: Industry consensus (Tenoris / MVI / Edahn Golan / De Beers reports). 2024 marked the crossover at ~60%.
+          Source: Industry consensus (Tenoris / MVI / Edahn Golan / De Beers reports). 2025 crossed ~70% share.
         </div>
       </Card>
 
       <div className="lg:col-span-2 space-y-3.5">
-        <Stat value="60%" label="Lab share of engagement rings, 2024" accent />
-        <Stat value="3.4×" label="Lab-grown unit-growth, 2021→2024" />
+        <Stat value="70%" label="Lab share of engagement rings, 2025" accent />
+        <Stat value="4.7×" label="Lab-grown unit-growth, 2021 → 2025" />
         <Stat value="70.9%" label="Jeweler GM on lab-grown · Dec 2024" sub="GemGuide / Edahn Golan, Apr 2025" />
         <div className="rounded-[14px] p-4" style={{ background: C.surfaceAlt, border: '1px solid ' + C.border }}>
           <div className="flex items-center gap-2 mb-1.5">
@@ -705,7 +709,7 @@ const FOUNDER_PILLARS = [
 const Founder = () => (
   <Section id="founder" label="Founder Advantage" withDivider
     title="A rare 5-way stack: diamond trade, code, product, marketing, and hustle."
-    intro="The Local Jewel isn't a marketing brand bolted onto someone else's supply chain. The founder personally sources the diamonds, ships the product, writes the code, runs the ads, and replies to customers — which is why margins, speed, and trust scale together.">
+    intro="">
     <div className="grid lg:grid-cols-5 gap-4 mb-6">
       {FOUNDER_PILLARS.map((p, i) => {
         const Icon = p.icon;
@@ -751,15 +755,15 @@ const Founder = () => (
    5. SOLUTION
    ───────────────────────────────────────────────────────── */
 const SOLUTION_PILLARS = [
-  { icon: Diamond, title: 'Direct from wholesale', body: 'Stones sourced direct from our 5-year wholesale network — no broker, no showroom, no double-markup.' },
-  { icon: Layers, title: 'Custom-only, zero inventory', body: 'We design, render in 3D, get customer approval, then cut. No deadstock, no clearance, no working-capital trap.' },
-  { icon: Smartphone, title: 'Tech-first operations', body: 'Custom-built customer site, lead-gen wizard, admin CRM, project CMS, and a 12-tab analytics suite — all in-house.' },
-  { icon: Shield, title: 'No payment until you love it', body: 'Customers see photoreal 3D renders before paying. Unlimited revisions. Zero risk for the buyer, zero refunds for us.' },
+  { icon: Diamond, title: 'Wholesale Advantage', body: 'Five years of loose-diamond experience gives access to better sourcing, pricing, and product value.' },
+  { icon: Smartphone, title: 'Digital-First Distribution', body: 'Customers come through Etsy, eBay, social media, paid ads, referrals, and reseller partners — not showrooms.' },
+  { icon: Layers, title: 'Custom Without Retail Markup', body: 'Customers get a personalized engagement-ring experience without the showroom-level overhead baked into traditional pricing.' },
+  { icon: Zap, title: 'Lean Operating Model', body: 'AI and automation support listings, content engine, lead tracking, customer follow-up, and fulfillment workflows.' },
 ];
 const Solution = () => (
   <Section id="solution" label="The Solution" withDivider
     title="A custom-only, tech-led brand built directly on top of the diamond supply chain."
-    intro="Most direct-to-consumer jewelry brands are marketing companies that buy diamonds. We're a diamond company that learned how to ship product, code, and stories.">
+    intro="For couples buying engagement rings, The Local Jewel offers custom lab-grown diamond rings with better pricing, faster fulfillment, and personal guidance — by sourcing directly and operating without traditional showroom overhead.">
     <div className="grid md:grid-cols-2 gap-4">
       {SOLUTION_PILLARS.map((s, i) => {
         const Icon = s.icon;
@@ -786,20 +790,74 @@ const Solution = () => (
    6. TRACTION
    ───────────────────────────────────────────────────────── */
 const Traction = () => (
-  <Section id="traction" label="Traction" withDivider
-    title="$245K in trailing sales — profitable, bootstrapped, founder-led."
-    intro="Built without external capital, without inventory carry, and without a paid sales team. The system already works on a small scale — we're now scaling the engine.">
+  <Section id="traction" label="Where We Are Today" withDivider
+    title="$300K in trailing sales — and the channels are already firing.">
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-      <Stat value="$245K" label="Trailing 12-mo sales" sub="$200K bank + $44K Etsy" accent />
-      <Stat value="6 / 30" label="Current avg / best month" sub="Rings shipped" />
-      <Stat value="4" label="Active resellers" sub="On memo, 12 sales to date" />
-      <Stat value="37.75×" label="Etsy ad ROAS" sub="$417 spend → $15.7K rev" />
+      <Stat value="$300K" label="Total revenue" sub="Apr 2025 → Apr 2026" accent />
+      <Stat value="6 / 30" label="Avg / best month" sub="Rings shipped" />
+      <Stat value="4" label="Active resellers" sub="On memo · 12 sales to date" />
+      <Stat value="37.6×" label="Marketplace Ads ROAS" sub="$418 spend → $15.7K rev" />
     </div>
+
+    {/* Marketplace Ads + Meta detail cards */}
+    <div className="grid lg:grid-cols-2 gap-5 mb-6">
+      <Card testid="traction-marketplace-ads">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-[8px] flex items-center justify-center" style={{ background: 'rgba(212,175,55,0.12)', border: '1px solid rgba(212,175,55,0.3)' }}>
+              <ShoppingBag size={14} style={{ color: C.accent }} />
+            </div>
+            <div>
+              <div className="text-[13px] font-semibold" style={{ color: C.text }}>Marketplace Ads</div>
+              <div className="text-[10.5px] uppercase tracking-[0.12em]" style={{ color: C.textDim }}>Etsy promoted listings</div>
+            </div>
+          </div>
+          <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(212,175,55,0.10)', color: C.accent, border: '1px solid rgba(212,175,55,0.3)' }}>Top channel</span>
+        </div>
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <div><div className="text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Views</div><div className="text-[18px] font-semibold" style={{ color: C.text }}>57.2K</div></div>
+          <div><div className="text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Clicks</div><div className="text-[18px] font-semibold" style={{ color: C.text }}>1,214</div></div>
+          <div><div className="text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Orders</div><div className="text-[18px] font-semibold" style={{ color: C.text }}>9</div></div>
+        </div>
+        <div className="rounded-[10px] p-3 grid grid-cols-3 gap-2" style={{ background: C.bgAlt, border: '1px solid ' + C.border }}>
+          <div><div className="text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Revenue</div><div className="text-[16px] font-semibold" style={{ color: C.accent }}>$15,742</div></div>
+          <div><div className="text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Spend</div><div className="text-[16px] font-semibold" style={{ color: C.text }}>$418.64</div></div>
+          <div><div className="text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>ROAS</div><div className="text-[16px] font-semibold" style={{ color: C.accent2 }}>37.6×</div></div>
+        </div>
+        <p className="text-[12px] mt-3 leading-[1.5]" style={{ color: C.textMute }}>Proven paid-acquisition channel — every $1 spent returned $37.60 in revenue.</p>
+      </Card>
+
+      <Card testid="traction-meta-ads">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-[8px] flex items-center justify-center" style={{ background: 'rgba(123,196,168,0.12)', border: '1px solid rgba(123,196,168,0.3)' }}>
+              <Megaphone size={14} style={{ color: C.accent2 }} />
+            </div>
+            <div>
+              <div className="text-[13px] font-semibold" style={{ color: C.text }}>Meta Ad Test</div>
+              <div className="text-[10.5px] uppercase tracking-[0.12em]" style={{ color: C.textDim }}>$25 budget · early signal</div>
+            </div>
+          </div>
+          <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(123,196,168,0.10)', color: C.accent2, border: '1px solid rgba(123,196,168,0.3)' }}>Proof of demand</span>
+        </div>
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <div><div className="text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Spend</div><div className="text-[18px] font-semibold" style={{ color: C.text }}>$25</div></div>
+          <div><div className="text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Impressions</div><div className="text-[18px] font-semibold" style={{ color: C.text }}>~3,000</div></div>
+          <div><div className="text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Leads</div><div className="text-[18px] font-semibold" style={{ color: C.text }}>4</div></div>
+        </div>
+        <div className="rounded-[10px] p-3" style={{ background: C.bgAlt, border: '1px solid ' + C.border }}>
+          <div className="text-[10.5px] uppercase tracking-[0.1em] mb-1" style={{ color: C.textDim }}>Outcome</div>
+          <div className="text-[13.5px] leading-[1.4]" style={{ color: C.text }}>4 lead-form submissions · 2 quote-ready leads · $6.25 CPL at test scale.</div>
+        </div>
+        <p className="text-[12px] mt-3 leading-[1.5]" style={{ color: C.textMute }}>With proper retargeting + follow-up at scale, this channel becomes the second Etsy.</p>
+      </Card>
+    </div>
+
     <Card testid="traction-chart">
       <div className="flex items-baseline justify-between mb-3 flex-wrap gap-2">
         <div>
           <div className="text-[14px] font-semibold" style={{ color: C.text }}>Monthly revenue & orders</div>
-          <div className="text-[11.5px]" style={{ color: C.textDim }}>Trailing 12 months · best month: 30 rings · current avg: 6/mo</div>
+          <div className="text-[11.5px]" style={{ color: C.textDim }}>Apr 2025 → Apr 2026 · best month: 30 rings · current avg: 6/mo</div>
         </div>
         <div className="flex items-center gap-3 text-[11.5px]" style={{ color: C.textMute }}>
           <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm" style={{ background: C.accent }} />Revenue</span>
@@ -827,26 +885,25 @@ const Traction = () => (
    7. ECONOMICS (per-ring breakdown)
    ───────────────────────────────────────────────────────── */
 const UNIT_ECON = [
-  { name: 'Stone (lab-grown)', value: 520, color: '#D4AF37' },
-  { name: 'Setting + metal', value: 160, color: '#C58E5A' },
-  { name: 'CAD + production', value: 80, color: '#7BC4A8' },
+  { name: 'Design + Metal + Diamond + Setting', value: 760, color: '#D4AF37' },
+  { name: 'Platform fee (~7.2%)', value: 115, color: '#6B95A8' },
   { name: 'Shipping (insured)', value: 25, color: '#A88FC9' },
-  { name: 'Platform / payment fees', value: 115, color: '#6B95A8' },
 ];
 
-// 4-month ramp from the projection doc
+// 4-month ramp — adds month-by-month ad spend, ops, contribution
 const RAMP_DATA = [
-  { m: 'M1', etsy: 15, ebay: 0,  web: 10, resellers: 10, referrals: 0, rings: 35,  revenue: 56000,  gm: 24500 },
-  { m: 'M2', etsy: 20, ebay: 2,  web: 20, resellers: 12, referrals: 1, rings: 55,  revenue: 88000,  gm: 38500 },
-  { m: 'M3', etsy: 23, ebay: 5,  web: 30, resellers: 15, referrals: 2, rings: 75,  revenue: 120000, gm: 52500 },
-  { m: 'M4', etsy: 25, ebay: 10, web: 40, resellers: 20, referrals: 5, rings: 100, revenue: 160000, gm: 70000 },
+  { m: 'M1', etsy: 15, ebay: 0,  web: 10, resellers: 10, referrals: 0, rings: 35,  revenue: 56000,  gm: 24500, adSpend: 7800,  opsSpend: 5000, totalSpend: 12800, contribution: 11700 },
+  { m: 'M2', etsy: 20, ebay: 2,  web: 20, resellers: 12, referrals: 1, rings: 55,  revenue: 88000,  gm: 38500, adSpend: 10200, opsSpend: 6000, totalSpend: 16200, contribution: 22300 },
+  { m: 'M3', etsy: 23, ebay: 5,  web: 30, resellers: 15, referrals: 2, rings: 75,  revenue: 120000, gm: 52500, adSpend: 12500, opsSpend: 7000, totalSpend: 19500, contribution: 33000 },
+  { m: 'M4', etsy: 25, ebay: 10, web: 40, resellers: 20, referrals: 5, rings: 100, revenue: 160000, gm: 70000, adSpend: 14500, opsSpend: 8000, totalSpend: 22500, contribution: 47500 },
 ];
 
-// Three-year jewelry-expansion projection
+// 3-year outlook — Y1 = 1,065 rings; Y2 = 1,600 rings; Y3 = 2,720 rings
+// ASP $1,600 · GM/ring $700 · jewelry-expansion GM assumed 40%
 const THREE_YEAR = [
-  { y: 'Y1', rings: 1065, ringRev: 1704000, jewelryRev: 50000,   total: 1750000, gm: 765000  },
-  { y: 'Y2', rings: 1440, ringRev: 2304000, jewelryRev: 500000,  total: 2800000, gm: 1210000 },
-  { y: 'Y3', rings: 1800, ringRev: 2880000, jewelryRev: 1250000, total: 4130000, gm: 1760000 },
+  { y: 'Y1', rings: 1065, ringRev: 1704000, jewelryRev: 50000,    total: 1754000, gm: 765500,  opContrib: 490000  },
+  { y: 'Y2', rings: 1600, ringRev: 2560000, jewelryRev: 500000,   total: 3060000, gm: 1320000, opContrib: 770000  },
+  { y: 'Y3', rings: 2720, ringRev: 4352000, jewelryRev: 1250000,  total: 5602000, gm: 2404000, opContrib: 1310000 },
 ];
 
 // Investor return scenarios at 6.25% ownership ($100K @ $1.5M pre-money)
@@ -864,41 +921,34 @@ const Economics = () => {
   return (
     <Section id="economics" label="Unit Economics" withDivider
       title="$1,600 selling price. $700 stays as gross margin."
-      intro="Direct sourcing, no showroom, no broker layer. Same lab-grown stone class as the retail comparison — at a price the customer feels good about and a margin we can compound.">
+      intro="">
       <div className="grid lg:grid-cols-2 gap-5 mb-6">
-        {/* Price comparison */}
+        {/* Numeric breakdown */}
         <Card>
-          <div className="text-[11.5px] uppercase tracking-[0.12em] mb-3" style={{ color: C.textMute }}>~2.5ct lab oval / round · F/VS1 · IGI · 14K</div>
+          <div className="text-[11.5px] uppercase tracking-[0.12em] mb-4" style={{ color: C.textMute }}>Per-ring breakdown</div>
           <div className="space-y-3">
-            <div>
-              <div className="flex items-baseline justify-between mb-1">
-                <span className="text-[12.5px]" style={{ color: C.textMute }}>Traditional retail (Grown Brilliance)</span>
-                <span className="text-[20px] font-semibold line-through" style={{ color: C.textDim }}>$3,885</span>
+            {[...UNIT_ECON, { name: 'Gross profit', value: gm, color: C.accent, hi: true }].map((e, i) => (
+              <div key={i}>
+                <div className="flex items-baseline justify-between mb-1">
+                  <span className={'text-[13px] ' + (e.hi ? 'font-semibold' : '')} style={{ color: e.hi ? C.accent : C.text }}>{e.name}</span>
+                  <span className={'font-semibold ' + (e.hi ? 'text-[24px]' : 'text-[16px]')} style={{ color: e.hi ? C.accent : C.text, fontFamily: e.hi ? '"Cormorant Garamond","Playfair Display",Georgia,serif' : 'inherit' }}>${e.value}</span>
+                </div>
+                <div className="h-1 rounded-full" style={{ background: 'linear-gradient(90deg,' + e.color + 'CC,' + e.color + ')', width: Math.round((e.value / ringPrice) * 100) + '%', opacity: e.hi ? 1 : 0.75 }} />
               </div>
-              <div className="h-1.5 rounded-full" style={{ background: 'linear-gradient(90deg,' + C.danger + '88, ' + C.danger + ')' }} />
-            </div>
-            <div>
-              <div className="flex items-baseline justify-between mb-1">
-                <span className="text-[12.5px] font-medium" style={{ color: C.accent }}>The Local Jewel (avg)</span>
-                <span className="text-[28px] font-semibold" style={{ color: C.accent, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>${ringPrice.toLocaleString()}</span>
-              </div>
-              <div className="h-1.5 rounded-full" style={{ background: 'linear-gradient(90deg,' + C.accent + '88, ' + C.accent + ')', width: Math.round((ringPrice / 3885) * 100) + '%' }} />
+            ))}
+            <div className="pt-3 mt-2 flex items-baseline justify-between" style={{ borderTop: '1px solid ' + C.border }}>
+              <span className="text-[12.5px] uppercase tracking-[0.12em]" style={{ color: C.textMute }}>Sale price</span>
+              <span className="text-[22px] font-semibold" style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>${ringPrice.toLocaleString()}</span>
             </div>
           </div>
           <div className="mt-5 px-4 py-3 rounded-[12px] flex items-center justify-between"
             style={{ background: 'rgba(123,196,168,0.10)', border: '1px solid rgba(123,196,168,0.25)' }}>
-            <div>
-              <div className="text-[11px] uppercase tracking-[0.12em]" style={{ color: C.accent2 }}>Customer saves</div>
-              <div className="text-[22px] font-semibold" style={{ color: C.accent2, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>$2,285</div>
-            </div>
-            <div className="text-right">
-              <div className="text-[11px] uppercase tracking-[0.12em]" style={{ color: C.accent }}>We keep</div>
-              <div className="text-[22px] font-semibold" style={{ color: C.accent, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>{gmPct}% GM</div>
-            </div>
+            <span className="text-[12.5px]" style={{ color: C.text }}>Gross margin %</span>
+            <span className="text-[22px] font-semibold" style={{ color: C.accent2, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>{gmPct}%</span>
           </div>
         </Card>
 
-        {/* COGS donut */}
+        {/* Donut */}
         <Card testid="economics-donut">
           <div className="text-[14px] font-semibold mb-2" style={{ color: C.text }}>Where each $1,600 ring goes</div>
           <div style={{ width: '100%', height: 240 }}>
@@ -913,7 +963,7 @@ const Economics = () => {
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5">
+          <div className="mt-2 grid grid-cols-1 gap-x-3 gap-y-1.5">
             {[...UNIT_ECON, { name: 'Gross profit', value: gm, color: C.accent }].map((e, i) => (
               <div key={i} className="flex items-center justify-between text-[12px]">
                 <span className="inline-flex items-center gap-2" style={{ color: C.textMute }}>
@@ -1325,12 +1375,115 @@ const Ask = () => (
 const FourMonthRamp = () => (
   <Section id="ramp" label="The 4-Month Plan" withDivider
     title="From 6 rings/month to 100, in four months."
-    intro="The full month-by-month sales mix backing the run-rate. Built around channels that are already working — Etsy first, paid social second, resellers third.">
+    intro="The month-by-month plan backing the run-rate. Sales mix on the left, ad spend in the middle, and the resulting revenue / gross margin / contribution on the right.">
+
+    {/* THREE SIDE-BY-SIDE TABLES */}
+    <div className="grid lg:grid-cols-3 gap-4 mb-5">
+      {/* Sales table */}
+      <Card testid="ramp-sales-table">
+        <div className="text-[11.5px] uppercase tracking-[0.12em] mb-3" style={{ color: C.accent }}>Rings sold (by channel)</div>
+        <div className="overflow-x-auto -mx-2">
+          <table className="w-full text-[12px]">
+            <thead>
+              <tr style={{ borderBottom: '1px solid ' + C.border }}>
+                <th className="text-left py-2 px-2 text-[10px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}></th>
+                {RAMP_DATA.map(r => <th key={r.m} className="text-right py-2 px-1 text-[10px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>{r.m}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ['Etsy', 'etsy'], ['Web (Meta/TT/Google)', 'web'], ['Resellers', 'resellers'], ['eBay', 'ebay'], ['Referrals', 'referrals'],
+              ].map(([label, key]) => (
+                <tr key={key} style={{ borderBottom: '1px solid ' + C.border }}>
+                  <td className="py-2 px-2" style={{ color: C.textMute }}>{label}</td>
+                  {RAMP_DATA.map(r => <td key={r.m} className="py-2 px-1 text-right" style={{ color: C.text }}>{r[key]}</td>)}
+                </tr>
+              ))}
+              <tr>
+                <td className="py-2.5 px-2 font-semibold" style={{ color: C.accent }}>Total rings</td>
+                {RAMP_DATA.map(r => <td key={r.m} className="py-2.5 px-1 text-right font-semibold" style={{ color: C.accent }}>{r.rings}</td>)}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      {/* Ad spend table */}
+      <Card testid="ramp-spend-table">
+        <div className="text-[11.5px] uppercase tracking-[0.12em] mb-3" style={{ color: C.accent }}>Ad spend (by channel)</div>
+        <div className="overflow-x-auto -mx-2">
+          <table className="w-full text-[12px]">
+            <thead>
+              <tr style={{ borderBottom: '1px solid ' + C.border }}>
+                <th className="text-left py-2 px-2 text-[10px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}></th>
+                {RAMP_DATA.map(r => <th key={r.m} className="text-right py-2 px-1 text-[10px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>{r.m}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ['Etsy',   [3000, 3000, 3000, 3000]],
+                ['Meta',   [1500, 2500, 3500, 4500]],
+                ['TikTok', [1500, 2000, 2500, 3000]],
+                ['Google', [900, 1500, 2000, 2500]],
+                ['eBay',   [900, 1200, 1500, 1500]],
+              ].map(([label, vals]) => (
+                <tr key={label} style={{ borderBottom: '1px solid ' + C.border }}>
+                  <td className="py-2 px-2" style={{ color: C.textMute }}>{label}</td>
+                  {vals.map((v, i) => <td key={i} className="py-2 px-1 text-right" style={{ color: C.text }}>${(v / 1000).toFixed(1)}k</td>)}
+                </tr>
+              ))}
+              <tr>
+                <td className="py-2.5 px-2 font-semibold" style={{ color: C.accent }}>Total</td>
+                {RAMP_DATA.map(r => <td key={r.m} className="py-2.5 px-1 text-right font-semibold" style={{ color: C.accent }}>${(r.adSpend / 1000).toFixed(1)}k</td>)}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      {/* Revenue / GM / Contribution */}
+      <Card testid="ramp-financials-table">
+        <div className="text-[11.5px] uppercase tracking-[0.12em] mb-3" style={{ color: C.accent }}>Revenue · GM · Contribution</div>
+        <div className="overflow-x-auto -mx-2">
+          <table className="w-full text-[12px]">
+            <thead>
+              <tr style={{ borderBottom: '1px solid ' + C.border }}>
+                <th className="text-left py-2 px-2 text-[10px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}></th>
+                {RAMP_DATA.map(r => <th key={r.m} className="text-right py-2 px-1 text-[10px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>{r.m}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              <tr style={{ borderBottom: '1px solid ' + C.border }}>
+                <td className="py-2 px-2" style={{ color: C.textMute }}>Revenue</td>
+                {RAMP_DATA.map(r => <td key={r.m} className="py-2 px-1 text-right" style={{ color: C.text }}>${(r.revenue / 1000).toFixed(0)}k</td>)}
+              </tr>
+              <tr style={{ borderBottom: '1px solid ' + C.border }}>
+                <td className="py-2 px-2" style={{ color: C.textMute }}>Gross margin</td>
+                {RAMP_DATA.map(r => <td key={r.m} className="py-2 px-1 text-right" style={{ color: C.accent2 }}>${(r.gm / 1000).toFixed(1)}k</td>)}
+              </tr>
+              <tr style={{ borderBottom: '1px solid ' + C.border }}>
+                <td className="py-2 px-2" style={{ color: C.textMute }}>− Ads</td>
+                {RAMP_DATA.map(r => <td key={r.m} className="py-2 px-1 text-right" style={{ color: C.textDim }}>${(r.adSpend / 1000).toFixed(1)}k</td>)}
+              </tr>
+              <tr style={{ borderBottom: '1px solid ' + C.border }}>
+                <td className="py-2 px-2" style={{ color: C.textMute }}>− Ops</td>
+                {RAMP_DATA.map(r => <td key={r.m} className="py-2 px-1 text-right" style={{ color: C.textDim }}>${(r.opsSpend / 1000).toFixed(1)}k</td>)}
+              </tr>
+              <tr>
+                <td className="py-2.5 px-2 font-semibold" style={{ color: C.accent }}>Net contribution</td>
+                {RAMP_DATA.map(r => <td key={r.m} className="py-2.5 px-1 text-right font-semibold" style={{ color: C.accent }}>${(r.contribution / 1000).toFixed(1)}k</td>)}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+
+    {/* Visuals — GM vs Contribution */}
     <div className="grid lg:grid-cols-2 gap-5 mb-5">
-      {/* Stacked bar — rings by channel */}
-      <Card testid="ramp-chart">
+      <Card testid="ramp-chart-rings">
         <div className="text-[14px] font-semibold mb-2" style={{ color: C.text }}>Rings sold by channel</div>
-        <div style={{ width: '100%', height: 280 }}>
+        <div style={{ width: '100%', height: 260 }}>
           <ResponsiveContainer>
             <BarChart data={RAMP_DATA} margin={{ top: 6, right: 6, bottom: 0, left: -16 }}>
               <CartesianGrid strokeDasharray="3 4" stroke={C.border} vertical={false} />
@@ -1339,7 +1492,7 @@ const FourMonthRamp = () => (
               <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(212,175,55,0.06)' }} />
               <Legend wrapperStyle={{ fontSize: 11, color: C.textMute, paddingTop: 6 }} />
               <Bar dataKey="etsy" stackId="r" name="Etsy" fill="#D4AF37" />
-              <Bar dataKey="web" stackId="r" name="Web (Meta/TikTok/Google)" fill="#7BC4A8" />
+              <Bar dataKey="web" stackId="r" name="Web" fill="#7BC4A8" />
               <Bar dataKey="resellers" stackId="r" name="Resellers" fill="#C58E5A" />
               <Bar dataKey="ebay" stackId="r" name="eBay" fill="#A88FC9" />
               <Bar dataKey="referrals" stackId="r" name="Referrals" fill="#6B95A8" radius={[6, 6, 0, 0]} />
@@ -1348,29 +1501,19 @@ const FourMonthRamp = () => (
         </div>
       </Card>
 
-      {/* Revenue + GM line */}
-      <Card>
-        <div className="text-[14px] font-semibold mb-2" style={{ color: C.text }}>Revenue & gross margin by month</div>
-        <div style={{ width: '100%', height: 280 }}>
+      <Card testid="ramp-chart-contribution">
+        <div className="text-[14px] font-semibold mb-2" style={{ color: C.text }}>Gross margin vs net contribution</div>
+        <div style={{ width: '100%', height: 260 }}>
           <ResponsiveContainer>
-            <AreaChart data={RAMP_DATA} margin={{ top: 6, right: 6, bottom: 0, left: -8 }}>
-              <defs>
-                <linearGradient id="gRev" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={C.accent} stopOpacity={0.6} />
-                  <stop offset="100%" stopColor={C.accent} stopOpacity={0.02} />
-                </linearGradient>
-                <linearGradient id="gGm" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={C.accent2} stopOpacity={0.55} />
-                  <stop offset="100%" stopColor={C.accent2} stopOpacity={0.02} />
-                </linearGradient>
-              </defs>
+            <BarChart data={RAMP_DATA} margin={{ top: 6, right: 6, bottom: 0, left: -8 }}>
               <CartesianGrid strokeDasharray="3 4" stroke={C.border} vertical={false} />
               <XAxis dataKey="m" stroke={C.textMute} tick={{ fontSize: 11 }} />
               <YAxis stroke={C.textMute} tick={{ fontSize: 11 }} tickFormatter={(v) => '$' + Math.round(v / 1000) + 'k'} />
-              <Tooltip content={<ChartTooltip />} cursor={{ stroke: C.border }} />
-              <Area type="monotone" dataKey="revenue" name="Revenue" stroke={C.accent} strokeWidth={2} fill="url(#gRev)" />
-              <Area type="monotone" dataKey="gm" name="Gross margin" stroke={C.accent2} strokeWidth={2} fill="url(#gGm)" />
-            </AreaChart>
+              <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(212,175,55,0.06)' }} />
+              <Legend wrapperStyle={{ fontSize: 11, color: C.textMute, paddingTop: 6 }} />
+              <Bar dataKey="contribution" name="Net contribution" stackId="a" fill={C.accent} />
+              <Bar dataKey="totalSpend" name="Cost (ads + ops)" stackId="a" fill="#6B95A8" radius={[6, 6, 0, 0]} />
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </Card>
@@ -1379,11 +1522,18 @@ const FourMonthRamp = () => (
     {/* 4-month totals */}
     <Card>
       <div className="text-[11.5px] uppercase tracking-[0.12em] mb-3" style={{ color: C.accent }}>4-month deployment totals</div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <Stat value="265" label="Rings shipped" accent />
         <Stat value="$424K" label="Revenue" />
         <Stat value="$185.5K" label="Gross margin" />
-        <Stat value="$45K" label="Ad budget deployed" sub="$7.8K → $14.5K/mo" />
+        <Stat value="$114.5K" label="Net contribution" sub="GM − ads − ops" />
+        <Stat value="$45K" label="Ad budget" sub="$7.8k M1 → $14.5k M4" />
+      </div>
+      <div className="mt-4 rounded-[12px] p-4 flex items-center gap-3" style={{ background: 'rgba(123,196,168,0.08)', border: '1px solid rgba(123,196,168,0.25)' }}>
+        <Box size={15} style={{ color: C.accent2 }} />
+        <span className="text-[13px] leading-[1.5]" style={{ color: C.text }}>
+          Plus <strong>$20-25K rolling reseller inventory</strong> — working capital, not burn. Stays in the business as funded stock across 4 active resellers.
+        </span>
       </div>
     </Card>
   </Section>
@@ -1392,6 +1542,8 @@ const FourMonthRamp = () => (
 /* ─────────────────────────────────────────────────────────
    THREE-YEAR PROJECTION
    ───────────────────────────────────────────────────────── */
+const fmtM = (n) => '$' + (n / 1000000).toFixed(2) + 'M';
+const fmtK = (n) => '$' + Math.round(n / 1000) + 'K';
 const ThreeYearProjection = () => (
   <Section id="projection" label="3-Year Outlook" withDivider
     title="Engagement rings are the wedge. Jewelry expansion compounds the LTV."
@@ -1412,36 +1564,193 @@ const ThreeYearProjection = () => (
       </div>
     </Card>
 
+    {/* Per-year bubble cards */}
     <div className="mt-5 grid lg:grid-cols-3 gap-3">
       {THREE_YEAR.map((y, i) => (
         <Card key={i}>
-          <div className="flex items-baseline justify-between mb-2">
+          <div className="flex items-baseline justify-between mb-3">
             <span className="text-[12px] uppercase tracking-[0.14em]" style={{ color: C.accent }}>{y.y}</span>
             <span className="text-[11px]" style={{ color: C.textDim }}>{y.rings.toLocaleString()} rings</span>
           </div>
-          <div className="text-[26px] font-semibold tracking-[-0.01em]" style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>
-            ${(y.total / 1000000).toFixed(2)}M
+          <div className="text-[32px] font-semibold tracking-[-0.01em] leading-none" style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>
+            {fmtM(y.total)}
           </div>
           <div className="text-[12px] mb-3" style={{ color: C.textMute }}>Total revenue</div>
           <div className="grid grid-cols-2 gap-2 text-[12.5px]">
             <div>
               <div className="text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Ring rev</div>
-              <div style={{ color: C.text }}>${(y.ringRev / 1000).toLocaleString()}K</div>
+              <div style={{ color: C.text }}>{fmtM(y.ringRev)}</div>
+            </div>
+            <div>
+              <div className="text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Jewelry</div>
+              <div style={{ color: C.accent2 }}>{y.jewelryRev >= 1000000 ? fmtM(y.jewelryRev) : fmtK(y.jewelryRev)}</div>
             </div>
             <div>
               <div className="text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>GM</div>
-              <div style={{ color: C.accent2 }}>${(y.gm / 1000).toLocaleString()}K</div>
+              <div style={{ color: C.accent }}>{fmtM(y.gm)}</div>
+            </div>
+            <div>
+              <div className="text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Op. contrib</div>
+              <div style={{ color: C.accent }}>{fmtM(y.opContrib)}</div>
             </div>
           </div>
         </Card>
       ))}
     </div>
 
+    {/* Full table */}
+    <Card className="mt-5" testid="projection-table">
+      <div className="text-[11.5px] uppercase tracking-[0.12em] mb-3" style={{ color: C.accent }}>Three-year financial summary</div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr style={{ borderBottom: '1px solid ' + C.border }}>
+              <th className="text-left py-2 px-2 text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Year</th>
+              <th className="text-right py-2 px-2 text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Rings</th>
+              <th className="text-right py-2 px-2 text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Ring revenue</th>
+              <th className="text-right py-2 px-2 text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Expansion revenue</th>
+              <th className="text-right py-2 px-2 text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Total revenue</th>
+              <th className="text-right py-2 px-2 text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Gross margin</th>
+              <th className="text-right py-2 px-2 text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Op. contribution</th>
+            </tr>
+          </thead>
+          <tbody>
+            {THREE_YEAR.map((y) => (
+              <tr key={y.y} style={{ borderBottom: '1px solid ' + C.border }}>
+                <td className="py-3 px-2 font-semibold" style={{ color: C.accent }}>{y.y}</td>
+                <td className="py-3 px-2 text-right" style={{ color: C.text }}>{y.rings.toLocaleString()}</td>
+                <td className="py-3 px-2 text-right" style={{ color: C.text }}>{fmtM(y.ringRev)}</td>
+                <td className="py-3 px-2 text-right" style={{ color: C.text }}>{y.jewelryRev >= 1000000 ? fmtM(y.jewelryRev) : fmtK(y.jewelryRev)}</td>
+                <td className="py-3 px-2 text-right font-semibold" style={{ color: C.text }}>{fmtM(y.total)}</td>
+                <td className="py-3 px-2 text-right" style={{ color: C.accent2 }}>{fmtM(y.gm)}</td>
+                <td className="py-3 px-2 text-right font-semibold" style={{ color: C.accent }}>{fmtM(y.opContrib)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+
     <div className="mt-5 px-5 py-4 rounded-[14px] flex items-center gap-3"
       style={{ background: 'rgba(123,196,168,0.08)', border: '1px solid rgba(123,196,168,0.25)' }}>
       <TrendingUp size={16} style={{ color: C.accent2 }} />
       <span className="text-[13.5px] leading-[1.5]" style={{ color: C.text }}>
-        From <strong>$1.75M</strong> in Year 1 to <strong>$4.13M</strong> in Year 3 — a <strong>2.36×</strong> revenue compound with the same founder, same model, expanded SKUs.
+        From <strong>$1.75M</strong> in Year 1 to <strong>$5.60M</strong> in Year 3 — a <strong>3.2×</strong> revenue compound with the same founder, same model, expanded SKUs.
+      </span>
+    </div>
+  </Section>
+);
+
+/* ─────────────────────────────────────────────────────────
+   LIFETIME VALUE
+   ───────────────────────────────────────────────────────── */
+const CUSTOMER_LTV = [
+  { type: 'Engagement Ring',                 rev: 1600, gm: 700,  note: 'First purchase' },
+  { type: 'Wedding Bands (couple)',          rev: 1000, gm: 450,  note: '3-12 mo later' },
+  { type: 'Future Jewelry (1-2 items)',      rev: 1200, gm: 480,  note: 'Gifting / occasions' },
+  { type: 'Anniversary Jewelry',             rev: 2000, gm: 800,  note: 'Year 3+' },
+  { type: 'Referral (new customer / 2 yrs)', rev: 1800, gm: 720,  note: 'Word-of-mouth' },
+];
+const CUSTOMER_LTV_TOTAL = CUSTOMER_LTV.reduce((s, x) => ({ rev: s.rev + x.rev, gm: s.gm + x.gm }), { rev: 0, gm: 0 });
+
+const LifetimeValue = () => (
+  <Section id="ltv" label="Lifetime Value" withDivider
+    title="The first ring is just the start of the customer relationship."
+    intro="Customers come for the engagement ring — they come back for the wedding bands, the anniversary, the gifts. The reseller network compounds the same effect with funded inventory.">
+
+    {/* Two-column: Customer LTV (left) · Reseller LTV (right) */}
+    <div className="grid lg:grid-cols-2 gap-5">
+      {/* Customer LTV */}
+      <Card testid="ltv-customer">
+        <div className="flex items-center gap-2 mb-3">
+          <Users size={15} style={{ color: C.accent }} />
+          <span className="text-[12px] font-semibold uppercase tracking-[0.14em]" style={{ color: C.accent }}>Customer LTV</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-[12.5px]">
+            <thead>
+              <tr style={{ borderBottom: '1px solid ' + C.border }}>
+                <th className="text-left py-2 px-1.5 text-[10px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Purchase</th>
+                <th className="text-right py-2 px-1.5 text-[10px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Revenue</th>
+                <th className="text-right py-2 px-1.5 text-[10px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>GM</th>
+              </tr>
+            </thead>
+            <tbody>
+              {CUSTOMER_LTV.map((row, i) => (
+                <tr key={i} style={{ borderBottom: '1px solid ' + C.border }}>
+                  <td className="py-2 px-1.5">
+                    <div style={{ color: C.text }}>{row.type}</div>
+                    <div className="text-[10.5px]" style={{ color: C.textDim }}>{row.note}</div>
+                  </td>
+                  <td className="py-2 px-1.5 text-right" style={{ color: C.text }}>${row.rev.toLocaleString()}</td>
+                  <td className="py-2 px-1.5 text-right" style={{ color: C.accent2 }}>${row.gm.toLocaleString()}</td>
+                </tr>
+              ))}
+              <tr>
+                <td className="py-2.5 px-1.5 font-semibold" style={{ color: C.accent }}>Total LTV</td>
+                <td className="py-2.5 px-1.5 text-right font-semibold" style={{ color: C.accent }}>${CUSTOMER_LTV_TOTAL.rev.toLocaleString()}</td>
+                <td className="py-2.5 px-1.5 text-right font-semibold" style={{ color: C.accent }}>${CUSTOMER_LTV_TOTAL.gm.toLocaleString()}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-4 rounded-[12px] p-3.5" style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.25)' }}>
+          <div className="text-[11px] uppercase tracking-[0.12em] mb-1" style={{ color: C.accent }}>Base case (ring + 1-2 follow-ups)</div>
+          <div className="text-[13.5px]" style={{ color: C.text }}>
+            ~<strong>$2,800</strong> revenue · ~<strong>$1,326</strong> gross margin per customer.
+          </div>
+        </div>
+      </Card>
+
+      {/* Reseller LTV */}
+      <Card testid="ltv-reseller">
+        <div className="flex items-center gap-2 mb-3">
+          <Box size={15} style={{ color: C.accent2 }} />
+          <span className="text-[12px] font-semibold uppercase tracking-[0.14em]" style={{ color: C.accent2 }}>Reseller LTV</span>
+        </div>
+        <div className="space-y-2.5">
+          {[
+            ['Sales per reseller / month', '2'],
+            ['Active duration', '18 months'],
+            ['Total customers acquired', '36'],
+            ['GM per customer (base)', '$1,326'],
+          ].map(([k, v]) => (
+            <div key={k} className="flex justify-between text-[13px]" style={{ borderBottom: '1px solid ' + C.border, paddingBottom: 8 }}>
+              <span style={{ color: C.textMute }}>{k}</span>
+              <span style={{ color: C.text }}>{v}</span>
+            </div>
+          ))}
+          <div className="rounded-[12px] p-4 mt-2" style={{ background: 'rgba(123,196,168,0.10)', border: '1px solid rgba(123,196,168,0.3)' }}>
+            <div className="text-[11px] uppercase tracking-[0.12em] mb-1" style={{ color: C.accent2 }}>LTV per reseller</div>
+            <div className="text-[28px] font-semibold tracking-[-0.01em]" style={{ color: C.accent2, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>$47,736</div>
+            <div className="text-[11.5px] mt-1" style={{ color: C.textMute }}>36 customers × $1,326 GM each</div>
+          </div>
+        </div>
+
+        {/* Network effect */}
+        <div className="mt-5">
+          <div className="text-[11px] uppercase tracking-[0.12em] mb-2" style={{ color: C.accent }}>Network effect</div>
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="rounded-[12px] p-3.5" style={{ background: C.bgAlt, border: '1px solid ' + C.border }}>
+              <div className="text-[11px]" style={{ color: C.textMute }}>20 resellers</div>
+              <div className="text-[20px] font-semibold mt-0.5" style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>$954,720</div>
+              <div className="text-[10.5px] mt-0.5" style={{ color: C.textDim }}>Total GM</div>
+            </div>
+            <div className="rounded-[12px] p-3.5" style={{ background: 'rgba(212,175,55,0.10)', border: '1px solid rgba(212,175,55,0.3)' }}>
+              <div className="text-[11px]" style={{ color: C.accent }}>40 resellers</div>
+              <div className="text-[20px] font-semibold mt-0.5" style={{ color: C.accent, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>$1.91M</div>
+              <div className="text-[10.5px] mt-0.5" style={{ color: C.textDim }}>Total GM</div>
+            </div>
+          </div>
+        </div>
+      </Card>
+    </div>
+
+    <div className="mt-5 px-5 py-4 rounded-[14px] flex items-center gap-3"
+      style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.25)' }}>
+      <Lightbulb size={16} style={{ color: C.accent }} />
+      <span className="text-[13.5px] leading-[1.5]" style={{ color: C.text }}>
+        Every reseller funded with $800 of inventory returns <strong>~$47,736 in lifetime gross margin</strong>. The $25K reseller-inventory line in the Use of Funds isn't a cost — it's seed capital for a recurring network.
       </span>
     </div>
   </Section>
