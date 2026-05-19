@@ -94,9 +94,9 @@ Planned hires (tied directly to revenue activities, not overhead):
 G. THE FUNDRAISE — TERMS
 ══════════════════════════════════════════════════════════════
 - Raise: $100,000
-- Instrument: Equity
-- Suggested valuation: $1.5M pre-money / $1.6M post-money
-- Investor ownership at $100K: 6.25%
+- Instrument: Equity (NOT debt, NOT gross-margin share)
+- Valuation: $1.2M pre-money / $1.3M post-money
+- Investor ownership at $100K: 7.69%  (100 / (1,200 + 100) = 7.69%)
 - Deployment window: 4 months
 - Target by Month 4: 100 engagement rings/month run-rate
 
@@ -106,17 +106,27 @@ Use of funds:
 - $20,000 → operations / employees / AI / execution
 - $10,000 → buffer
 
-Valuation comparison (for context):
-- $100K at $1.25M pre → 7.41% ownership
-- $100K at $1.50M pre → 6.25% ownership (recommended)
-- $100K at $2.00M pre → 4.76% ownership
+Investor returns come from TWO components:
 
-Investor return projection (at 6.25%):
-- If TLJ later valued at $2M → investor stake $125K → 1.25x
-- At $3M → $187,500 → 1.88x
-- At $5M → $312,500 → 3.13x
-- At $10M → $625,000 → 6.25x
-Returns are not scheduled repayments; they come from increase in company value. Founder does not want to use gross-margin share for repayments.
+1) MONTHLY INCOME (recurring) — 7.69% of operating profit, distributed monthly
+   Each month the business is operating-profitable, the investor receives 7.69% of that
+   month's operating contribution as cash distribution. Like a monthly income stream.
+   Projected at 7.69% of op-contribution:
+   - Y1 op-contribution $490K → investor receives $37,681/yr  (~$3,140/mo avg)
+   - Y2 op-contribution $770K → investor receives $59,213/yr  (~$4,934/mo avg)
+   - Y3 op-contribution $1.31M → investor receives $100,739/yr  (~$8,395/mo avg)
+   - 3-year total monthly distributions: ~$197,633
+
+2) GROWING VALUATION (capital appreciation) — the 7.69% stake grows with the company
+   - If TLJ valued at $2M  → stake = $153,800  → 1.54×
+   - If TLJ valued at $3M  → stake = $230,700  → 2.31×
+   - If TLJ valued at $5M  → stake = $384,500  → 3.85×  (achievable end of Y1)
+   - If TLJ valued at $10M → stake = $769,200  → 7.69×  (Y2 territory)
+
+Illustrative 3-year combined return at $5M valuation:
+   $197,633 (monthly income) + $384,500 (equity) = $582,133 on $100K = 5.82×
+
+Equity is held — there is no clock. Investor can hold past Y3+.
 
 ══════════════════════════════════════════════════════════════
 H. MONTH 1 PAID ADS PLAN (post-funding)

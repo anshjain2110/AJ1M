@@ -13,6 +13,7 @@ import {
   CheckCircle2, AlertTriangle, Lightbulb, Layers, Rocket, LogOut,
   Smartphone, MapPin, Image as ImageIcon, ArrowBigUp, ArrowBigDown, Share2, MessageSquare,
   Calendar, TrendingDown, Send, X, Bot, MessageCircle as ChatIcon, Loader2,
+  Banknote,
 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
@@ -1473,13 +1474,33 @@ const Ask = () => (
         style={{ background: 'radial-gradient(circle, rgba(212,175,55,0.16), transparent 70%)' }} />
       <div className="relative">
         <div className="text-[11.5px] uppercase tracking-[0.16em] mb-3" style={{ color: C.accent }}>What we're looking for</div>
-        <p className="text-[17px] sm:text-[19px] leading-[1.55] max-w-3xl mb-7" style={{ color: C.text }}>
-          Working-capital partner who understands that the business is already profitable and the goal is consistent compounding — not a moonshot. Structure can be a loan, a line of credit, or a revenue-share arrangement, depending on fit.
+        <p className="text-[17px] sm:text-[19px] leading-[1.55] max-w-3xl mb-5" style={{ color: C.text }}>
+          <strong>$100K for 7.69% equity</strong> at a <strong>$1.2M pre-money</strong> valuation. The business is already profitable — this capital is to compound an existing engine, not to find one.
         </p>
+
+        {/* Deal terms strip */}
+        <div className="grid sm:grid-cols-4 gap-3 mb-6">
+          <div className="rounded-[12px] p-3.5" style={{ background: 'rgba(212,175,55,0.10)', border: '1px solid rgba(212,175,55,0.28)' }}>
+            <div className="text-[10.5px] uppercase tracking-[0.12em]" style={{ color: C.accent }}>Investment</div>
+            <div className="text-[22px] font-semibold mt-1 tracking-[-0.01em]" style={{ color: C.accent, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>$100K</div>
+          </div>
+          <div className="rounded-[12px] p-3.5" style={{ background: C.bgAlt, border: '1px solid ' + C.border }}>
+            <div className="text-[10.5px] uppercase tracking-[0.12em]" style={{ color: C.textMute }}>Pre-money</div>
+            <div className="text-[22px] font-semibold mt-1 tracking-[-0.01em]" style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>$1.2M</div>
+          </div>
+          <div className="rounded-[12px] p-3.5" style={{ background: C.bgAlt, border: '1px solid ' + C.border }}>
+            <div className="text-[10.5px] uppercase tracking-[0.12em]" style={{ color: C.textMute }}>Ownership</div>
+            <div className="text-[22px] font-semibold mt-1 tracking-[-0.01em]" style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>7.69%</div>
+          </div>
+          <div className="rounded-[12px] p-3.5" style={{ background: 'rgba(123,196,168,0.10)', border: '1px solid rgba(123,196,168,0.28)' }}>
+            <div className="text-[10.5px] uppercase tracking-[0.12em]" style={{ color: C.accent2 }}>Returns</div>
+            <div className="text-[15px] font-semibold mt-1 leading-tight" style={{ color: C.accent2 }}>Monthly profit share<br/>+ growing equity</div>
+          </div>
+        </div>
 
         <div className="grid sm:grid-cols-3 gap-3 mb-7">
           {[
-            { icon: Award, t: 'Profitable today', s: '$250K FY · 50% GM' },
+            { icon: Award, t: 'Profitable today', s: '$250K FY · 70.9% GM' },
             { icon: Shield, t: 'Zero inventory risk', s: 'Approve-before-cut model' },
             { icon: TrendingUp, t: 'KPI-disciplined', s: 'CPL · ROAS · turn-time tracked' },
           ].map((b, i) => {
@@ -1911,57 +1932,171 @@ const LifetimeValue = () => (
 
 /* ─────────────────────────────────────────────────────────
    INVESTOR RETURNS FRAMING
+   $100K at $1.2M pre-money → 100 / (1200 + 100) = 7.69% ownership.
+   Returns to investor have TWO components:
+     1) Monthly income — 7.69% of operating contribution, distributed monthly
+     2) Capital appreciation — 7.69% of the company's growing valuation
    ───────────────────────────────────────────────────────── */
-const InvestorReturns = () => (
-  <Section id="returns" label="Investor Returns" withDivider
-    title="$100K at $1.5M pre-money = 6.25% ownership."
-    intro="Returns come from increase in company value — not gross-margin share or scheduled repayments. Here's what 6.25% looks like at different exit / valuation events.">
-    <Card>
-      <div className="grid sm:grid-cols-4 gap-3 mb-5">
-        <Stat value="$100K" label="Investment" accent />
-        <Stat value="$1.5M" label="Pre-money valuation" />
-        <Stat value="6.25%" label="Investor ownership" />
-        <Stat value="Equity" label="Instrument" sub="Not debt, not gross-margin share" />
+const OWNERSHIP_PCT = 0.0769;        // 7.69%
+const INVESTMENT = 100000;            // $100K
+
+// Per-year investor income calculations (7.69% of operating contribution)
+const INCOME_YEARS = THREE_YEAR.map((y) => {
+  const annual = Math.round(y.opContrib * OWNERSHIP_PCT);
+  const monthly = Math.round(annual / 12);
+  return { year: y.y, opContrib: y.opContrib, annual, monthly };
+});
+const TOTAL_3YR_INCOME = INCOME_YEARS.reduce((s, x) => s + x.annual, 0);
+
+const InvestorReturns = () => {
+  const finalEquityValue = Math.round(5000000 * OWNERSHIP_PCT); // illustrative @ $5M valuation
+  const totalReturn = TOTAL_3YR_INCOME + finalEquityValue;
+  const totalMultiple = (totalReturn / INVESTMENT).toFixed(2);
+
+  return (
+    <Section id="returns" label="Investor Returns" withDivider
+      title="$100K at a $1.2M valuation = 7.69% ownership."
+      intro="Returns come from two places: a monthly share of operating profit (think of it like recurring income) and the growing value of the equity stake itself.">
+
+      {/* Headline stats */}
+      <Card className="mb-5">
+        <div className="grid sm:grid-cols-4 gap-3">
+          <Stat value="$100K" label="Investment" accent />
+          <Stat value="$1.2M" label="Pre-money valuation" />
+          <Stat value="7.69%" label="Investor ownership" sub="100 / (1,200 + 100)" />
+          <Stat value="Equity" label="Instrument" sub="Income + appreciation" />
+        </div>
+      </Card>
+
+      {/* Two-pillar layout: monthly income + valuation growth */}
+      <div className="grid lg:grid-cols-2 gap-5">
+
+        {/* Pillar 1: Monthly Income */}
+        <Card testid="investor-monthly-income">
+          <div className="flex items-center gap-2 mb-2">
+            <Banknote size={16} style={{ color: C.accent2 }} />
+            <div className="text-[11.5px] uppercase tracking-[0.14em]" style={{ color: C.accent2 }}>1. Monthly Income</div>
+          </div>
+          <div className="text-[18px] font-semibold leading-[1.3] mb-1" style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>
+            7.69% of operating profit, distributed monthly.
+          </div>
+          <p className="text-[12.5px] leading-[1.55] mb-4" style={{ color: C.textMute }}>
+            As soon as the business is operating-profitable each month, the investor receives <strong>7.69% of that month's operating contribution</strong> — pro-rata, in cash. This is recurring income, not deferred to an exit.
+          </p>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-[13px]">
+              <thead>
+                <tr style={{ borderBottom: '1px solid ' + C.border }}>
+                  <th className="text-left py-2 px-2 text-[10.5px] uppercase tracking-[0.12em]" style={{ color: C.textDim }}>Year</th>
+                  <th className="text-right py-2 px-2 text-[10.5px] uppercase tracking-[0.12em]" style={{ color: C.textDim }}>Op. profit</th>
+                  <th className="text-right py-2 px-2 text-[10.5px] uppercase tracking-[0.12em]" style={{ color: C.textDim }}>Investor / mo</th>
+                  <th className="text-right py-2 px-2 text-[10.5px] uppercase tracking-[0.12em]" style={{ color: C.accent2 }}>Investor / yr</th>
+                </tr>
+              </thead>
+              <tbody>
+                {INCOME_YEARS.map((y, i) => (
+                  <tr key={i} style={{ borderBottom: '1px solid ' + C.border }}>
+                    <td className="py-2.5 px-2 font-semibold" style={{ color: C.text }}>{y.year}</td>
+                    <td className="py-2.5 px-2 text-right" style={{ color: C.textMute }}>${(y.opContrib / 1000).toFixed(0)}K</td>
+                    <td className="py-2.5 px-2 text-right font-semibold" style={{ color: C.text }}>${y.monthly.toLocaleString()}</td>
+                    <td className="py-2.5 px-2 text-right font-semibold" style={{ color: C.accent2, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif', fontSize: 16 }}>${y.annual.toLocaleString()}</td>
+                  </tr>
+                ))}
+                <tr>
+                  <td className="py-2.5 px-2 font-semibold" style={{ color: C.text }}>3-yr total</td>
+                  <td className="py-2.5 px-2 text-right" style={{ color: C.textDim }}>—</td>
+                  <td className="py-2.5 px-2 text-right" style={{ color: C.textDim }}>—</td>
+                  <td className="py-2.5 px-2 text-right font-semibold" style={{ color: C.accent2, fontSize: 18, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>${TOTAL_3YR_INCOME.toLocaleString()}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4 rounded-[12px] p-3.5" style={{ background: 'rgba(123,196,168,0.10)', border: '1px solid rgba(123,196,168,0.3)' }}>
+            <div className="text-[11px] uppercase tracking-[0.12em] mb-1" style={{ color: C.accent2 }}>Year-3 monthly run-rate</div>
+            <div className="text-[26px] font-semibold tracking-[-0.01em] leading-none" style={{ color: C.accent2, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>
+              ${INCOME_YEARS[2].monthly.toLocaleString()}<span className="text-[14px] font-normal" style={{ color: C.textMute }}> / month</span>
+            </div>
+            <div className="text-[11.5px] mt-1" style={{ color: C.textMute }}>7.69% of Y3 op-contribution (${(INCOME_YEARS[2].opContrib / 1000000).toFixed(2)}M) — paid out monthly.</div>
+          </div>
+        </Card>
+
+        {/* Pillar 2: Growing Valuation */}
+        <Card testid="investor-valuation-growth">
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingUp size={16} style={{ color: C.accent }} />
+            <div className="text-[11.5px] uppercase tracking-[0.14em]" style={{ color: C.accent }}>2. Growing Valuation</div>
+          </div>
+          <div className="text-[18px] font-semibold leading-[1.3] mb-1" style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>
+            The 7.69% stake grows with the company.
+          </div>
+          <p className="text-[12.5px] leading-[1.55] mb-4" style={{ color: C.textMute }}>
+            On top of the monthly income, the equity itself appreciates. Here's what the 7.69% stake is worth at common DTC valuation outcomes.
+          </p>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-[13px]">
+              <thead>
+                <tr style={{ borderBottom: '1px solid ' + C.border }}>
+                  <th className="text-left py-2 px-2 text-[10.5px] uppercase tracking-[0.12em]" style={{ color: C.textDim }}>TLJ valued at</th>
+                  <th className="text-right py-2 px-2 text-[10.5px] uppercase tracking-[0.12em]" style={{ color: C.textDim }}>Stake worth</th>
+                  <th className="text-right py-2 px-2 text-[10.5px] uppercase tracking-[0.12em]" style={{ color: C.accent }}>Multiple</th>
+                </tr>
+              </thead>
+              <tbody>
+                {RETURN_SCENARIOS.map((s, i) => (
+                  <tr key={i} style={{ borderBottom: '1px solid ' + C.border }}>
+                    <td className="py-2.5 px-2" style={{ color: C.text }}>${(s.fcv / 1000000).toFixed(0)}M</td>
+                    <td className="py-2.5 px-2 text-right font-semibold" style={{ color: C.text }}>${s.stake.toLocaleString()}</td>
+                    <td className="py-2.5 px-2 text-right font-semibold" style={{ color: s.mult >= 3 ? C.accent : C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif', fontSize: 16 }}>{s.mult.toFixed(2)}×</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-2.5">
+            <div className="rounded-[12px] p-3" style={{ background: C.bgAlt, border: '1px solid ' + C.border }}>
+              <div className="text-[10.5px] uppercase tracking-[0.12em] mb-0.5" style={{ color: C.accent }}>Path to $5M</div>
+              <div className="text-[11.5px] leading-[1.45]" style={{ color: C.textMute }}>End of Y1 at ~$1.75M revenue + jewelry — 3× revenue multiple for high-margin DTC.</div>
+            </div>
+            <div className="rounded-[12px] p-3" style={{ background: C.bgAlt, border: '1px solid ' + C.border }}>
+              <div className="text-[10.5px] uppercase tracking-[0.12em] mb-0.5" style={{ color: C.accent }}>Path to $10M</div>
+              <div className="text-[11.5px] leading-[1.45]" style={{ color: C.textMute }}>Tracks with Y2 ($3.06M revenue / $1.32M GM). No clock — held through Y3+.</div>
+            </div>
+          </div>
+        </Card>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-[13px]" style={{ color: C.text }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid ' + C.border }}>
-              <th className="text-left py-2 px-2 text-[11px] uppercase tracking-[0.12em]" style={{ color: C.textMute }}>If TLJ is valued at</th>
-              <th className="text-right py-2 px-2 text-[11px] uppercase tracking-[0.12em]" style={{ color: C.textMute }}>Investor stake worth</th>
-              <th className="text-right py-2 px-2 text-[11px] uppercase tracking-[0.12em]" style={{ color: C.textMute }}>Return multiple</th>
-            </tr>
-          </thead>
-          <tbody>
-            {RETURN_SCENARIOS.map((s, i) => (
-              <tr key={i} style={{ borderBottom: '1px solid ' + C.border }}>
-                <td className="py-3 px-2" style={{ color: C.text }}>${(s.fcv / 1000000).toFixed(0)}M</td>
-                <td className="py-3 px-2 text-right font-semibold" style={{ color: C.text }}>${s.stake.toLocaleString()}</td>
-                <td className="py-3 px-2 text-right font-semibold" style={{ color: s.mult >= 3 ? C.accent : C.accent2, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif', fontSize: 18 }}>{s.mult.toFixed(2)}×</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="mt-5 grid sm:grid-cols-2 gap-3">
-        <div className="rounded-[12px] p-4" style={{ background: C.bgAlt, border: '1px solid ' + C.border }}>
-          <div className="text-[11.5px] uppercase tracking-[0.12em] mb-1" style={{ color: C.accent }}>Path to $5M</div>
-          <p className="text-[12.5px] leading-[1.5]" style={{ color: C.textMute }}>
-            Achievable by end of Year 1 at the projected $1.75M revenue + jewelry expansion — common 3× revenue multiple for high-margin DTC.
-          </p>
+      {/* Combined return summary */}
+      <Card className="mt-5" testid="investor-total-return">
+        <div className="text-[11.5px] uppercase tracking-[0.14em] mb-3" style={{ color: C.accent }}>Combined 3-year picture (illustrative @ $5M valuation)</div>
+        <div className="grid sm:grid-cols-4 gap-3">
+          <div className="rounded-[12px] p-3.5" style={{ background: 'rgba(123,196,168,0.10)', border: '1px solid rgba(123,196,168,0.28)' }}>
+            <div className="text-[10.5px] uppercase tracking-[0.12em]" style={{ color: C.accent2 }}>Monthly income (3 yr)</div>
+            <div className="text-[22px] font-semibold mt-1 tracking-[-0.01em]" style={{ color: C.accent2, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>${TOTAL_3YR_INCOME.toLocaleString()}</div>
+          </div>
+          <div className="rounded-[12px] p-3.5" style={{ background: 'rgba(212,175,55,0.10)', border: '1px solid rgba(212,175,55,0.28)' }}>
+            <div className="text-[10.5px] uppercase tracking-[0.12em]" style={{ color: C.accent }}>Equity @ $5M</div>
+            <div className="text-[22px] font-semibold mt-1 tracking-[-0.01em]" style={{ color: C.accent, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>${finalEquityValue.toLocaleString()}</div>
+          </div>
+          <div className="rounded-[12px] p-3.5" style={{ background: C.bgAlt, border: '1px solid ' + C.border }}>
+            <div className="text-[10.5px] uppercase tracking-[0.12em]" style={{ color: C.textMute }}>Total return</div>
+            <div className="text-[22px] font-semibold mt-1 tracking-[-0.01em]" style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>${totalReturn.toLocaleString()}</div>
+          </div>
+          <div className="rounded-[12px] p-3.5" style={{ background: C.bgAlt, border: '1px solid ' + C.accent }}>
+            <div className="text-[10.5px] uppercase tracking-[0.12em]" style={{ color: C.accent }}>On $100K</div>
+            <div className="text-[28px] font-semibold mt-1 tracking-[-0.01em] leading-none" style={{ color: C.accent, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>{totalMultiple}×</div>
+          </div>
         </div>
-        <div className="rounded-[12px] p-4" style={{ background: C.bgAlt, border: '1px solid ' + C.border }}>
-          <div className="text-[11.5px] uppercase tracking-[0.12em] mb-1" style={{ color: C.accent }}>Path to $10M</div>
-          <p className="text-[12.5px] leading-[1.5]" style={{ color: C.textMute }}>
-            Tracks with Year 2 ($2.8M revenue / $1.21M GM). Equity is held — there's no clock — investor can hold through Year 3 / $4.13M and beyond.
-          </p>
+        <div className="mt-3 text-[11.5px] leading-[1.55]" style={{ color: C.textDim }}>
+          Equity figure uses an illustrative $5M valuation — achievable by end of Y1. Monthly distributions begin in the first operating-profitable month and scale with op-contribution. Investor holds equity, so upside continues past Y3.
         </div>
-      </div>
-    </Card>
-  </Section>
-);
+      </Card>
+    </Section>
+  );
+};
 
 /* ─────────────────────────────────────────────────────────
    AI CHAT WIDGET — investor Q&A
