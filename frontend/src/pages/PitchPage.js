@@ -205,7 +205,7 @@ export default function PitchPage() {
   // Scroll spy
   useEffect(() => {
     if (verified !== true) return;
-    const ids = ['hero', 'opportunity', 'problem', 'founder', 'solution', 'traction', 'economics', 'ramp', 'projection', 'ltv', 'returns', 'channels', 'reviews', 'tech', 'content', 'bottleneck', 'use-of-funds', 'ask'];
+    const ids = ['hero', 'opportunity', 'problem', 'founder', 'social-proof', 'solution', 'traction', 'economics', 'ramp', 'projection', 'ltv', 'use-of-funds', 'returns', 'channels', 'tech', 'content', 'bottleneck', 'ask'];
     const onScroll = () => {
       for (const id of ids) {
         const el = document.getElementById(id);
@@ -236,19 +236,19 @@ export default function PitchPage() {
       <Opportunity />
       <Problem />
       <Founder />
+      <Reviews />
       <Solution />
       <Traction />
       <Economics />
       <FourMonthRamp />
       <ThreeYearProjection />
       <LifetimeValue />
+      <UseOfFunds />
       <InvestorReturns />
       <Channels />
-      <Reviews />
       <Tech />
       <Content />
       <Bottleneck />
-      <UseOfFunds />
       <Ask />
 
       <Footer />
@@ -906,12 +906,25 @@ const THREE_YEAR = [
   { y: 'Y3', rings: 2720, ringRev: 4352000, jewelryRev: 1250000,  total: 5602000, gm: 2404000, opContrib: 1310000 },
 ];
 
-// Investor return scenarios at 6.25% ownership ($100K @ $1.5M pre-money)
+// Investor return scenarios at 7.69% ownership ($100K @ $1.2M pre-money)
 const RETURN_SCENARIOS = [
-  { fcv: 2000000,  stake: 125000,  mult: 1.25 },
-  { fcv: 3000000,  stake: 187500,  mult: 1.88 },
-  { fcv: 5000000,  stake: 312500,  mult: 3.13 },
-  { fcv: 10000000, stake: 625000,  mult: 6.25 },
+  { fcv: 2000000,  stake: 153800,  mult: 1.54 },
+  { fcv: 3000000,  stake: 230700,  mult: 2.31 },
+  { fcv: 5000000,  stake: 384500,  mult: 3.85 },
+  { fcv: 10000000, stake: 769200,  mult: 7.69 },
+];
+
+// Per-bucket monthly use-of-funds spend (the hover tooltip data)
+const USE_OF_FUNDS_MONTHLY = {
+  'Paid Ads':                [{ m: 'M1', v: 7800 }, { m: 'M2', v: 10200 }, { m: 'M3', v: 12500 }, { m: 'M4', v: 14500 }],
+  'Operations / Employees / AI / Execution': [{ m: 'M1', v: 5000 }, { m: 'M2', v: 6000 }, { m: 'M3', v: 7000 }, { m: 'M4', v: 8000 }],
+};
+
+const USE_OF_FUNDS_V2 = [
+  { name: 'Paid Ads', amount: 45000, pct: 45, color: '#D4AF37', detail: 'Across Meta · Etsy · TikTok · Google · eBay. Re-allocated quarterly to top-performing channels by ROAS.' },
+  { name: 'Reseller rolling inventory', amount: 25000, pct: 25, color: '#C58E5A', detail: 'Working capital, not burn. Rotates back into liquid stock as resellers sell.' },
+  { name: 'Operations / Employees / AI / Execution', amount: 20000, pct: 20, color: '#A88F6B', detail: 'Listings, follow-ups, marketing, ops. Grows from ~$5K/mo to ~$8K/mo across the deployment window.' },
+  { name: 'Buffer', amount: 10000, pct: 10, color: '#6B4F33', detail: 'Contingency reserve for stone-price spikes, marketplace fee changes, or seasonal cash gaps.' },
 ];
 const Economics = () => {
   const ringPrice = 1600;
@@ -1051,7 +1064,7 @@ const Channels = () => (
    9. REVIEWS
    ───────────────────────────────────────────────────────── */
 const Reviews = () => (
-  <Section id="reviews" label="Social Proof" withDivider
+  <Section id="social-proof" label="Social Proof" withDivider
     title="Five stars, every single time."
     intro="The customer experience is the moat. Every ring ships with renders-before-pay, photos at every milestone, and a real human reply within hours.">
     <div className="flex items-center gap-2 mb-6">
@@ -1260,54 +1273,194 @@ const Bottleneck = () => (
 /* ─────────────────────────────────────────────────────────
    13. USE OF FUNDS
    ───────────────────────────────────────────────────────── */
-const UseOfFunds = () => (
-  <Section id="use-of-funds" label="Use of Funds" withDivider
-    title="Where the capital goes — and the KPI it has to hit."
-    intro="Every dollar maps to a measurable outcome. We track CPL, ROAS, conversion rate, and reseller turn — and re-allocate quarterly.">
-    <div className="grid lg:grid-cols-5 gap-5">
-      {/* Pie chart */}
-      <Card className="lg:col-span-2" testid="use-of-funds-chart">
-        <div className="text-[14px] font-semibold mb-2" style={{ color: C.text }}>Allocation</div>
-        <div style={{ width: '100%', height: 260 }}>
-          <ResponsiveContainer>
-            <PieChart>
-              <Pie data={USE_OF_FUNDS} dataKey="pct" innerRadius={60} outerRadius={100} paddingAngle={2}>
-                {USE_OF_FUNDS.map((u, i) => <Cell key={i} fill={u.color} stroke="none" />)}
-              </Pie>
-              <Tooltip content={<ChartTooltip suffix="%" />} />
-            </PieChart>
-          </ResponsiveContainer>
+const UseOfFunds = () => {
+  const [hover, setHover] = useState(null);
+  const total = USE_OF_FUNDS_V2.reduce((s, x) => s + x.amount, 0);
+  // 25K reseller / 800 per ring = 31.25 rings (round to 31)
+  const rollingRings = Math.floor(25000 / 800);
+
+  return (
+    <Section id="use-of-funds" label="Use of Funds" withDivider
+      title="$100K, deployed deliberately."
+      intro="$25K of this stays as working capital in reseller inventory — not burn — and rotates back into liquid stock as resellers sell.">
+
+      <div className="grid lg:grid-cols-[1.05fr_1.4fr] gap-5">
+        {/* Donut */}
+        <Card testid="use-of-funds-donut">
+          <div style={{ width: '100%', height: 320 }}>
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie data={USE_OF_FUNDS_V2} dataKey="amount" innerRadius={75} outerRadius={120} paddingAngle={2}
+                  onMouseEnter={(_, i) => setHover(i)}
+                  onMouseLeave={() => setHover(null)}>
+                  {USE_OF_FUNDS_V2.map((u, i) => (
+                    <Cell key={i} fill={u.color} stroke="none" opacity={hover === null || hover === i ? 1 : 0.45} />
+                  ))}
+                </Pie>
+                <Tooltip content={<ChartTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="mt-2 text-center">
+            <div className="text-[10.5px] uppercase tracking-[0.16em]" style={{ color: C.textDim }}>Total · ${(total / 1000)}K</div>
+          </div>
+        </Card>
+
+        {/* 4 line items */}
+        <div className="space-y-3">
+          {USE_OF_FUNDS_V2.map((u, i) => (
+            <UseOfFundsRow
+              key={i} idx={i} u={u} hover={hover} setHover={setHover}
+              monthly={USE_OF_FUNDS_MONTHLY[u.name]}
+              rollingRings={u.name === 'Reseller rolling inventory' ? rollingRings : null}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Month-wise spend table */}
+      <Card className="mt-5" testid="use-of-funds-monthly-table">
+        <div className="text-[11.5px] uppercase tracking-[0.12em] mb-3" style={{ color: C.accent }}>Monthly deployment plan</div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-[12.5px]">
+            <thead>
+              <tr style={{ borderBottom: '1px solid ' + C.border }}>
+                <th className="text-left py-2 px-2 text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Bucket</th>
+                <th className="text-right py-2 px-2 text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>M1</th>
+                <th className="text-right py-2 px-2 text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>M2</th>
+                <th className="text-right py-2 px-2 text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>M3</th>
+                <th className="text-right py-2 px-2 text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>M4</th>
+                <th className="text-right py-2 px-2 text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.accent }}>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style={{ borderBottom: '1px solid ' + C.border }}>
+                <td className="py-2.5 px-2 flex items-center gap-2" style={{ color: C.text }}>
+                  <span className="w-2 h-2 rounded-sm" style={{ background: '#D4AF37' }} />Paid Ads
+                </td>
+                <td className="py-2.5 px-2 text-right" style={{ color: C.text }}>$7.8K</td>
+                <td className="py-2.5 px-2 text-right" style={{ color: C.text }}>$10.2K</td>
+                <td className="py-2.5 px-2 text-right" style={{ color: C.text }}>$12.5K</td>
+                <td className="py-2.5 px-2 text-right" style={{ color: C.text }}>$14.5K</td>
+                <td className="py-2.5 px-2 text-right font-semibold" style={{ color: C.accent }}>$45K</td>
+              </tr>
+              <tr style={{ borderBottom: '1px solid ' + C.border }}>
+                <td className="py-2.5 px-2 flex items-center gap-2" style={{ color: C.text }}>
+                  <span className="w-2 h-2 rounded-sm" style={{ background: '#C58E5A' }} />Reseller rolling inventory
+                </td>
+                <td className="py-2.5 px-2 text-right" style={{ color: C.text }}>$25K</td>
+                <td className="py-2.5 px-2 text-right" style={{ color: C.textDim }}>rolls</td>
+                <td className="py-2.5 px-2 text-right" style={{ color: C.textDim }}>rolls</td>
+                <td className="py-2.5 px-2 text-right" style={{ color: C.textDim }}>rolls</td>
+                <td className="py-2.5 px-2 text-right font-semibold" style={{ color: C.accent }}>$25K</td>
+              </tr>
+              <tr style={{ borderBottom: '1px solid ' + C.border }}>
+                <td className="py-2.5 px-2 flex items-center gap-2" style={{ color: C.text }}>
+                  <span className="w-2 h-2 rounded-sm" style={{ background: '#A88F6B' }} />Operations / Employees / AI
+                </td>
+                <td className="py-2.5 px-2 text-right" style={{ color: C.text }}>$5.0K</td>
+                <td className="py-2.5 px-2 text-right" style={{ color: C.text }}>$6.0K</td>
+                <td className="py-2.5 px-2 text-right" style={{ color: C.text }}>$7.0K</td>
+                <td className="py-2.5 px-2 text-right" style={{ color: C.text }}>$8.0K</td>
+                <td className="py-2.5 px-2 text-right font-semibold" style={{ color: C.accent }}>$26K</td>
+              </tr>
+              <tr style={{ borderBottom: '1px solid ' + C.border }}>
+                <td className="py-2.5 px-2 flex items-center gap-2" style={{ color: C.text }}>
+                  <span className="w-2 h-2 rounded-sm" style={{ background: '#6B4F33' }} />Buffer
+                </td>
+                <td className="py-2.5 px-2 text-right" style={{ color: C.textDim }}>—</td>
+                <td className="py-2.5 px-2 text-right" style={{ color: C.textDim }}>—</td>
+                <td className="py-2.5 px-2 text-right" style={{ color: C.textDim }}>—</td>
+                <td className="py-2.5 px-2 text-right" style={{ color: C.textDim }}>reserve</td>
+                <td className="py-2.5 px-2 text-right font-semibold" style={{ color: C.accent }}>$10K</td>
+              </tr>
+              <tr>
+                <td className="py-2.5 px-2 font-semibold" style={{ color: C.text }}>Total deployed (M1-M4)</td>
+                <td className="py-2.5 px-2 text-right font-semibold" style={{ color: C.text }}>$37.8K</td>
+                <td className="py-2.5 px-2 text-right font-semibold" style={{ color: C.text }}>$16.2K</td>
+                <td className="py-2.5 px-2 text-right font-semibold" style={{ color: C.text }}>$19.5K</td>
+                <td className="py-2.5 px-2 text-right font-semibold" style={{ color: C.text }}>$32.5K</td>
+                <td className="py-2.5 px-2 text-right font-semibold" style={{ color: C.accent, fontSize: 14, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>$106K*</td>
+              </tr>
+            </tbody>
+          </table>
+          <div className="text-[10.5px] mt-2" style={{ color: C.textDim }}>* M1 includes the full $25K reseller-inventory load that recycles across months. Buffer ($10K) sits in reserve.</div>
         </div>
       </Card>
+    </Section>
+  );
+};
 
-      {/* Breakdown rows */}
-      <div className="lg:col-span-3 space-y-2.5">
-        {USE_OF_FUNDS.map((u, i) => (
-          <Card key={i}>
-            <div className="flex items-start gap-3">
-              <div className="w-1.5 h-12 rounded-full flex-shrink-0" style={{ background: u.color }} />
-              <div className="flex-1">
-                <div className="flex items-baseline justify-between mb-0.5 gap-3">
-                  <span className="text-[14.5px] font-semibold" style={{ color: C.text }}>{u.name}</span>
-                  <span className="text-[20px] font-semibold flex-shrink-0" style={{ color: u.color, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>{u.pct}%</span>
-                </div>
-                <p className="text-[12.5px] leading-[1.5]" style={{ color: C.textMute }}>{u.detail}</p>
-              </div>
-            </div>
-          </Card>
-        ))}
+// Individual hover-aware row for the use-of-funds breakdown
+const UseOfFundsRow = ({ idx, u, hover, setHover, monthly, rollingRings }) => {
+  const isHover = hover === idx;
+  return (
+    <div
+      data-testid={'use-of-funds-row-' + idx}
+      onMouseEnter={() => setHover(idx)}
+      onMouseLeave={() => setHover(null)}
+      className="relative rounded-[14px] p-4 transition-all duration-200 cursor-default"
+      style={{
+        background: C.surface,
+        border: '1px solid ' + (isHover ? u.color : C.border),
+        boxShadow: isHover ? '0 8px 24px ' + u.color + '22' : 'none',
+      }}
+    >
+      <div className="flex items-baseline justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: u.color }} />
+          <span className="text-[13.5px] font-semibold" style={{ color: C.text }}>{u.name}</span>
+        </div>
+        <div className="text-right flex-shrink-0">
+          <div className="text-[20px] font-semibold leading-none" style={{ color: u.color, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>${(u.amount / 1000)}K</div>
+          <div className="text-[10.5px] mt-1" style={{ color: C.textDim }}>{u.pct}%</div>
+        </div>
       </div>
-    </div>
 
-    {/* Plan-to-100 callout */}
-    <div className="mt-7 grid grid-cols-2 sm:grid-cols-4 gap-3">
-      <Stat value="100/mo" label="Ring target" accent sub="Run-rate goal" />
-      <Stat value="$150/day" label="Ad spend" sub="5 channels" />
-      <Stat value="8 rings" label="Reseller stock" sub="2 per reseller × 4" />
-      <Stat value="1–2 FT" label="New hires" sub="Listings + ops" />
+      {/* Progress bar */}
+      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(244,236,221,0.06)' }}>
+        <div className="h-full transition-all duration-500" style={{ width: u.pct + '%', background: 'linear-gradient(90deg,' + u.color + 'DD,' + u.color + ')' }} />
+      </div>
+
+      <p className="text-[11.5px] leading-[1.45] mt-2.5" style={{ color: C.textMute }}>{u.detail}</p>
+
+      {/* Hover reveal — shown inline (no overlay, predictable on mobile) */}
+      {isHover && (monthly || rollingRings != null) && (
+        <div className="mt-3 pt-3" style={{ borderTop: '1px solid ' + C.border }}>
+          {monthly && (
+            <>
+              <div className="text-[10.5px] uppercase tracking-[0.12em] mb-1.5" style={{ color: u.color }}>Monthly breakdown</div>
+              <div className="grid grid-cols-4 gap-2">
+                {monthly.map((m) => (
+                  <div key={m.m} className="text-center rounded-[8px] py-2 px-1" style={{ background: C.bgAlt, border: '1px solid ' + C.border }}>
+                    <div className="text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>{m.m}</div>
+                    <div className="text-[13px] font-semibold mt-0.5" style={{ color: C.text }}>${(m.v / 1000).toFixed(1)}K</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+          {rollingRings != null && (
+            <>
+              <div className="text-[10.5px] uppercase tracking-[0.12em] mb-1.5" style={{ color: u.color }}>How the math works</div>
+              <div className="rounded-[10px] p-3 text-[12.5px] leading-[1.5]" style={{ background: C.bgAlt, border: '1px solid ' + C.border, color: C.text }}>
+                <div className="flex items-center justify-between"><span style={{ color: C.textMute }}>Inventory budget</span><span>$25,000</span></div>
+                <div className="flex items-center justify-between"><span style={{ color: C.textMute }}>÷ Cost per ring</span><span>$800</span></div>
+                <div className="flex items-center justify-between mt-1.5 pt-1.5" style={{ borderTop: '1px solid ' + C.border }}>
+                  <span style={{ color: u.color, fontWeight: 600 }}>Rolling rings in circulation</span>
+                  <span style={{ color: u.color, fontSize: 18, fontWeight: 600, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>{rollingRings} rings</span>
+                </div>
+                <div className="text-[11px] mt-1.5" style={{ color: C.textDim }}>
+                  Distributed across 4 resellers ({Math.floor(rollingRings / 4)}-{Math.ceil(rollingRings / 4)} rings each). As each ring sells, the cash recycles to fund the next.
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
-  </Section>
-);
+  );
+};
 
 /* ─────────────────────────────────────────────────────────
    14. ASK
