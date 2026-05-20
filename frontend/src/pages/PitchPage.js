@@ -756,10 +756,9 @@ const Solution = () => (
     <div className="relative max-w-4xl mx-auto text-center px-2 sm:px-6 mb-10 sm:mb-14">
       <div aria-hidden="true" className="absolute -top-6 left-1/2 -translate-x-1/2 text-[120px] leading-none font-semibold opacity-[0.10] select-none"
         style={{ color: C.accent, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>"</div>
-      <p className="relative text-[28px] sm:text-[40px] lg:text-[46px] leading-[1.15] tracking-[-0.015em]"
+      <p className="relative text-[22px] sm:text-[30px] lg:text-[34px] leading-[1.3] tracking-[-0.01em]"
         style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif', fontStyle: 'italic' }}>
-        A custom-only, tech-led brand built directly on top of the
-        <span style={{ color: C.accent, fontStyle: 'italic' }}> diamond supply chain</span>.
+        For couples buying engagement rings, <span style={{ color: C.accent, fontStyle: 'italic' }}>TheLocalJewel</span> offers custom lab-grown diamond rings with <span style={{ color: C.accent, fontStyle: 'italic' }}>better pricing, faster fulfillment, and personal guidance</span> by sourcing directly and operating without traditional showroom overhead.
       </p>
       <div className="mt-5 flex items-center justify-center gap-3" style={{ color: C.textDim }}>
         <div className="h-px w-10" style={{ background: C.accent, opacity: 0.5 }} />
