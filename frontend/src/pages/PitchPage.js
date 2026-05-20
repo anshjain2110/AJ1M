@@ -228,6 +228,7 @@ export default function PitchPage() {
       <Hero />
       <Opportunity />
       <Problem />
+      <TargetCustomer />
       <Founder />
       <Reviews />
       <Solution />
@@ -255,15 +256,16 @@ const TopNav = ({ active, onLogout }) => {
   const items = [
     { id: 'opportunity', label: 'Opportunity' },
     { id: 'problem', label: 'Problem' },
+    { id: 'target-customer', label: 'Customer' },
     { id: 'founder', label: 'Founder' },
     { id: 'traction', label: 'Traction' },
     { id: 'economics', label: 'Economics' },
-    { id: 'ramp', label: '4-Mo Ramp' },
-    { id: 'projection', label: '3-Yr Outlook' },
+    { id: 'ramp', label: 'Ramp' },
+    { id: 'projection', label: 'Outlook' },
     { id: 'ltv', label: 'LTV' },
     { id: 'returns', label: 'Returns' },
-    { id: 'use-of-funds', label: 'Use of Funds' },
-    { id: 'ask', label: 'The Ask' },
+    { id: 'use-of-funds', label: 'Funds' },
+    { id: 'ask', label: 'Ask' },
   ];
   const scrollTo = (id) => {
     const el = document.getElementById(id);
@@ -283,11 +285,11 @@ const TopNav = ({ active, onLogout }) => {
             <div className="text-[9.5px] uppercase tracking-[0.16em] mt-0.5" style={{ color: C.textDim }}>Investor brief · Confidential</div>
           </div>
         </button>
-        <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center overflow-hidden">
+        <nav className="hidden lg:flex items-center gap-0.5 flex-1 justify-center overflow-hidden whitespace-nowrap">
           {items.map(it => (
             <button key={it.id} onClick={() => scrollTo(it.id)}
               data-testid={'navitem-' + it.id}
-              className="px-2.5 py-1.5 rounded-full text-[12px] transition-colors"
+              className="px-2 py-1.5 rounded-full text-[11.5px] transition-colors whitespace-nowrap"
               style={{
                 color: active === it.id ? C.accent : C.textMute,
                 background: active === it.id ? 'rgba(212,175,55,0.10)' : 'transparent',
@@ -682,6 +684,62 @@ const Problem = () => (
         These are not cherry-picked — every thread above is a top result for "custom engagement ring" or "ring shopping" on Reddit.
       </div>
     </Card>
+  </Section>
+);
+
+/* ─────────────────────────────────────────────────────────
+   3.5  TARGET CUSTOMER (profile table)
+   ───────────────────────────────────────────────────────── */
+const TARGET_CUSTOMER_ROWS = [
+  { attr: 'Age',                 target: '24–38' },
+  { attr: 'Life stage',          target: 'Recently engaged, planning to propose, or actively ring shopping' },
+  { attr: 'Location',            target: 'United States — online-first with Florida / NY / major-metro reach' },
+  { attr: 'Budget',              target: '~$1,500 – $4,000' },
+  { attr: 'Product need',        target: 'Custom lab-grown engagement ring' },
+  { attr: 'Buying behavior',     target: 'Research-heavy, compares prices, asks questions, wants guidance' },
+  { attr: 'Main concern',        target: '"Am I overpaying?" · "Can I trust this jeweler?"' },
+  { attr: 'Acquisition channels',target: 'Instagram · TikTok · Etsy · eBay · Google · referrals · resellers' },
+  { attr: 'Decision driver',     target: 'Better price · trust · customization · fast fulfillment · personal guidance' },
+];
+
+const TargetCustomer = () => (
+  <Section id="target-customer" label="Target Customer" withDivider
+    title="Value-conscious couples buying high-intent custom engagement rings."
+    intro="TheLocalJewel targets modern couples who want a beautiful, custom lab-grown diamond engagement ring — without paying traditional retail markups.">
+    <Card testid="target-customer-table">
+      <div className="text-[10.5px] uppercase tracking-[0.16em] mb-4" style={{ color: C.accent }}>Primary Customer Profile</div>
+
+      {/* Table header */}
+      <div className="hidden sm:grid sm:grid-cols-[260px_1fr] gap-6 pb-3 mb-1" style={{ borderBottom: '1px solid ' + C.border }}>
+        <div className="text-[10.5px] uppercase tracking-[0.16em]" style={{ color: C.textDim }}>Attribute</div>
+        <div className="text-[10.5px] uppercase tracking-[0.16em]" style={{ color: C.textDim }}>Target</div>
+      </div>
+
+      <div>
+        {TARGET_CUSTOMER_ROWS.map((row, i) => (
+          <div key={i}
+            data-testid={'target-customer-row-' + i}
+            className="grid sm:grid-cols-[260px_1fr] gap-2 sm:gap-6 py-4 transition-colors"
+            style={{ borderBottom: i === TARGET_CUSTOMER_ROWS.length - 1 ? 'none' : '1px solid ' + C.border }}>
+            <div className="text-[14px] sm:text-[15px] font-semibold tracking-[-0.005em]"
+              style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>
+              {row.attr}
+            </div>
+            <div className="text-[13.5px] sm:text-[14px] leading-[1.55]" style={{ color: C.textMute }}>
+              {row.target}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+
+    {/* Scroll-hint accent matching the source */}
+    <div className="mt-6 flex items-center justify-center">
+      <div className="w-9 h-9 rounded-full flex items-center justify-center"
+        style={{ background: 'rgba(212,175,55,0.10)', border: '1px solid rgba(212,175,55,0.3)' }}>
+        <ArrowDown size={14} style={{ color: C.accent }} />
+      </div>
+    </div>
   </Section>
 );
 
