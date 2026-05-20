@@ -703,9 +703,46 @@ const TARGET_CUSTOMER_ROWS = [
 ];
 
 const TargetCustomer = () => (
-  <Section id="target-customer" label="Target Customer" withDivider
-    title="Value-conscious couples buying high-intent custom engagement rings."
-    intro="TheLocalJewel targets modern couples who want a beautiful, custom lab-grown diamond engagement ring — without paying traditional retail markups.">
+  <Section id="target-customer" label="Target Customer" withDivider>
+    {/* Title + intro + customer photo side-by-side */}
+    <div className="grid lg:grid-cols-[1.15fr_1fr] gap-7 lg:gap-10 items-center mb-7">
+      <div>
+        <h2 className="text-[34px] sm:text-[40px] lg:text-[44px] leading-[1.1] tracking-[-0.015em] mb-4"
+          style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>
+          Value-conscious couples buying <span style={{ color: C.accent, fontStyle: 'italic' }}>high-intent</span> custom engagement rings.
+        </h2>
+        <p className="text-[15px] sm:text-[16px] leading-[1.6] max-w-xl" style={{ color: C.textMute }}>
+          TheLocalJewel targets modern couples who want a beautiful, custom lab-grown diamond engagement ring — without paying traditional retail markups.
+        </p>
+      </div>
+
+      {/* Customer moment photo */}
+      <div className="relative" data-testid="target-customer-photo">
+        <div aria-hidden="true" className="absolute -inset-3 rounded-[22px] -z-0"
+          style={{ background: 'radial-gradient(ellipse at 50% 40%, rgba(212,175,55,0.18), transparent 70%)', filter: 'blur(8px)' }} />
+        <div className="relative rounded-[18px] overflow-hidden"
+          style={{ border: '1px solid ' + C.border, background: C.bgAlt, boxShadow: '0 18px 48px rgba(0,0,0,0.35)' }}>
+          <img
+            src="/pitch-customer-winterpark.jpeg"
+            alt="A happy Winter Park, FL customer receiving his custom IGI-certified lab-grown engagement ring at TheLocalJewel"
+            className="w-full h-auto block select-none"
+            draggable="false"
+            style={{ aspectRatio: '4/5', objectFit: 'cover' }}
+          />
+          {/* caption overlay */}
+          <div className="absolute left-0 right-0 bottom-0 px-4 py-3 flex items-center justify-between"
+            style={{ background: 'linear-gradient(180deg, transparent, rgba(10,31,26,0.92))' }}>
+            <div>
+              <div className="text-[10.5px] uppercase tracking-[0.16em] mb-0.5" style={{ color: C.accent }}>Real customer · just picked up</div>
+              <div className="text-[12.5px]" style={{ color: C.text }}>Winter Park, FL · custom lab-grown ring + IGI certificate</div>
+            </div>
+            <Diamond size={16} style={{ color: C.accent }} />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Profile table */}
     <Card testid="target-customer-table">
       <div className="text-[10.5px] uppercase tracking-[0.16em] mb-4" style={{ color: C.accent }}>Primary Customer Profile</div>
 
