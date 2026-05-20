@@ -109,7 +109,7 @@ const useCountUp = (to, ms = 1200) => {
 /* ─────────────────────────────────────────────────────────
    DATA
    ───────────────────────────────────────────────────────── */
-// Updated market-share series — 2025 crossover at ~70%
+// Updated market-share series - 2025 crossover at ~70%
 const MARKET_SHARE_DATA = [
   { year: '2019', lab: 4, natural: 96 },
   { year: '2020', lab: 8, natural: 92 },
@@ -141,7 +141,7 @@ const USE_OF_FUNDS = [
   { name: 'Paid Ads (Meta / Google / TikTok / Etsy / eBay)', pct: 35, color: '#D4AF37', detail: '$150/day across 5 channels, KPI-tracked' },
   { name: 'Reseller Inventory', pct: 22, color: '#7BC4A8', detail: '8 stock engagement rings for 4 active resellers' },
   { name: 'Order Fulfillment Float', pct: 20, color: '#C58E5A', detail: 'Stones, CAD, setting, production, insured shipping' },
-  { name: 'Team Hiring (1–2 FT)', pct: 15, color: '#A88FC9', detail: 'Listings, follow-ups, marketing, ops' },
+  { name: 'Team Hiring (1-2 FT)', pct: 15, color: '#A88FC9', detail: 'Listings, follow-ups, marketing, ops' },
   { name: 'Tech & Automation', pct: 8, color: '#6B95A8', detail: 'AI tooling, internal workflows, AJHQ.live & TLJ.com' },
 ];
 
@@ -385,7 +385,7 @@ const Hero = () => {
           </div>
         </div>
 
-        {/* Mobile logo strip — small, centered, between description and stats wouldn't crowd things; placed at the very bottom of hero */}
+        {/* Mobile logo strip. Small, centered, between description and stats wouldn't crowd things; placed at the very bottom of hero */}
         <div className="lg:hidden mt-12 flex flex-col items-center" data-testid="pitch-hero-logo-mobile">
           <img src="/tlj-logo-light.png" alt="The Local Jewel" className="w-44 h-auto opacity-95"
             style={{ filter: 'drop-shadow(0 10px 24px rgba(0,0,0,0.4))' }} />
@@ -409,12 +409,12 @@ const Hero = () => {
 const Opportunity = () => (
   <Section id="opportunity" label="The Opportunity" withDivider
     title="Lab-grown diamonds now own 70% of the U.S. engagement ring market."
-    intro="Five years ago, lab-grown was a curiosity. By 2025 it's the default for new buyers — and it's compressing retail margins at every traditional jeweler. The window to build the trusted, custom-first brand of this transition is open right now.">
+    intro="Five years ago, lab-grown was a curiosity. By 2025 it's the default for new buyers, and it's compressing retail margins at every traditional jeweler. The window to build the trusted, custom-first brand of this transition is open right now.">
     <div className="grid lg:grid-cols-5 gap-5 sm:gap-7">
       <Card className="lg:col-span-3" testid="opportunity-chart">
         <div className="flex items-baseline justify-between mb-3">
           <div className="text-[14px] font-semibold" style={{ color: C.text }}>U.S. engagement ring market share</div>
-          <div className="text-[11px] uppercase tracking-[0.12em]" style={{ color: C.textDim }}>2019 — 2026E</div>
+          <div className="text-[11px] uppercase tracking-[0.12em]" style={{ color: C.textDim }}>2019 to 2026E</div>
         </div>
         <div style={{ width: '100%', height: 280 }}>
           <ResponsiveContainer>
@@ -466,15 +466,15 @@ const Opportunity = () => (
    3. PROBLEM (from PDF)
    ───────────────────────────────────────────────────────── */
 const PROBLEMS = [
-  { icon: DollarSign, title: 'Overpriced retail margins', body: 'Showroom overhead, commissions, middlemen, and brand markups make rings cost more than they need to. A 2.5ct lab oval at Grown Brilliance retails for $3,885 — the same stone, hand-set, ships from us at half the price.' },
-  { icon: AlertTriangle, title: '"Custom" feels expensive', body: 'Buyers assume custom is a luxury-only category. The Reddit comments tell the story — "Custom jewelry is expensive." We change that perception with transparent pricing and 3D renders before any commitment.' },
-  { icon: Lightbulb, title: 'Buyers don\'t know what they\'re paying for', body: 'Most engagement-ring buyers can\'t evaluate cut, color, clarity, certification, or true vs marked-up pricing. Our process bakes education into the funnel — they leave knowing more than the jeweler they walked away from.' },
+  { icon: DollarSign, title: 'Overpriced retail margins', body: 'Showroom overhead, commissions, middlemen, and brand markups make rings cost more than they need to. A 2.5ct lab oval at Grown Brilliance retails for $3,885. The same stone, hand-set, ships from us at half the price.' },
+  { icon: AlertTriangle, title: '"Custom" feels expensive', body: 'Buyers assume custom is a luxury-only category. The Reddit comments tell the story - "Custom jewelry is expensive." We change that perception with transparent pricing and 3D renders before any commitment.' },
+  { icon: Lightbulb, title: 'Buyers don\'t know what they\'re paying for', body: 'Most engagement-ring buyers can\'t evaluate cut, color, clarity, certification, or true vs marked-up pricing. Our process bakes education into the funnel. They leave knowing more than the jeweler they walked away from.' },
 ];
 const REDDIT_QUOTES = [
-  { sub: 'EngagementRingDesigns', author: 'u/throwaway-bride', time: '8mo', upvotes: 247, comments: 20, q: 'Custom ring question — is the budget reasonable?', preview: "Trying to get a custom oval ring made and the quotes are wildly different. Am I being unreasonable expecting under $3k?" },
-  { sub: 'jewelry', author: 'u/Jvonkid', time: '2y', upvotes: 1340, comments: 312, q: 'Custom jewelry is expensive. You\'re not just paying for materials and labour…', preview: "Most people don't realise how much markup gets added between the supplier and the showroom — the price you see is rarely the price it costs to make.", scoreColor: '#0079D3' },
+  { sub: 'EngagementRingDesigns', author: 'u/throwaway-bride', time: '8mo', upvotes: 247, comments: 20, q: 'Custom ring question. Is the budget reasonable?', preview: "Trying to get a custom oval ring made and the quotes are wildly different. Am I being unreasonable expecting under $3k?" },
+  { sub: 'jewelry', author: 'u/Jvonkid', time: '2y', upvotes: 1340, comments: 312, q: 'Custom jewelry is expensive. You\'re not just paying for materials and labour…', preview: "Most people don't realise how much markup gets added between the supplier and the showroom. The price you see is rarely the price it costs to make.", scoreColor: '#0079D3' },
   { sub: 'EngagementRings', author: 'u/anon_user', time: '2y', upvotes: 89, comments: 47, q: 'Custom engagement rings priced out way above budget…', preview: "Went in thinking I'd spend $2-3k. Every custom quote came back $5k+. What am I missing?" },
-  { sub: 'Diamonds', author: 'u/KindaDumbGal', time: '4mo', upvotes: 512, comments: 124, q: 'What do you wish you knew before going engagement ring shopping?', preview: "Genuinely curious — I have no idea what cut/color/clarity actually means in dollar terms. How do you avoid getting taken for a ride?" },
+  { sub: 'Diamonds', author: 'u/KindaDumbGal', time: '4mo', upvotes: 512, comments: 124, q: 'What do you wish you knew before going engagement ring shopping?', preview: "Genuinely curious. I have no idea what cut/color/clarity actually means in dollar terms. How do you avoid getting taken for a ride?" },
 ];
 
 const Problem = () => (
@@ -508,7 +508,7 @@ const Problem = () => (
         Same category. Same certification. Half the price.
       </h3>
       <p className="text-[13px] leading-[1.55] mb-6 max-w-2xl" style={{ color: C.textMute }}>
-        Comparable lab-grown solitaire engagement rings, IGI-certified, 14K gold — pulled from each brand's site this week.
+        Comparable lab-grown solitaire engagement rings, IGI-certified, 14K gold. Pulled from each brand's site this week.
       </p>
 
       <div className="grid md:grid-cols-[1fr_auto_1fr] gap-4 md:gap-6 items-stretch">
@@ -519,7 +519,7 @@ const Problem = () => (
             <span className="text-[9.5px] uppercase tracking-[0.14em] px-1.5 py-0.5 rounded" style={{ background: 'rgba(255,122,110,0.12)', color: C.danger, border: '1px solid rgba(255,122,110,0.25)' }}>Grown Brilliance</span>
           </div>
           <div className="rounded-[10px] overflow-hidden mb-3" style={{ border: '1px solid ' + C.border, background: '#fff' }}>
-            <img src="/pitch-gb-screenshot.png" alt="Grown Brilliance — Gala 3ctw round lab-grown solitaire" className="w-full h-auto block" />
+            <img src="/pitch-gb-screenshot.png" alt="Grown Brilliance. Gala 3ctw round lab-grown solitaire" className="w-full h-auto block" />
           </div>
           <div className="text-[13px] font-medium leading-[1.4] mb-2.5" style={{ color: C.text }}>
             Gala 3 ctw Round Lab Solitaire
@@ -551,7 +551,7 @@ const Problem = () => (
             <span className="text-[9.5px] uppercase tracking-[0.14em] px-1.5 py-0.5 rounded" style={{ background: 'rgba(212,175,55,0.12)', color: C.accent, border: '1px solid rgba(212,175,55,0.3)' }}>thelocaljewel.com</span>
           </div>
           <div className="rounded-[10px] overflow-hidden mb-3" style={{ border: '1px solid ' + C.border, background: '#fff' }}>
-            <img src="/pitch-tlj-screenshot.png" alt="The Local Jewel — 2.43 carat oval lab-grown solitaire" className="w-full h-auto block" />
+            <img src="/pitch-tlj-screenshot.png" alt="The Local Jewel - 2.43 carat oval lab-grown solitaire" className="w-full h-auto block" />
           </div>
           <div className="text-[13px] font-medium leading-[1.4] mb-2.5" style={{ color: C.text }}>
             2.43 ct Oval Lab Solitaire · Hidden Halo
@@ -574,7 +574,7 @@ const Problem = () => (
         <div className="flex items-center gap-2 text-center sm:text-left">
           <Sparkles size={15} style={{ color: C.accent2 }} />
           <div className="text-[13.5px] leading-[1.4]" style={{ color: C.text }}>
-            Same lab-grown stone class. Same IGI certification. <strong>$2,435 lower</strong> at The Local Jewel — and we still ship at <strong>50% gross margin</strong>.
+            Same lab-grown stone class. Same IGI certification. <strong>$2,435 lower</strong> at The Local Jewel, and we still ship at <strong>50% gross margin</strong>.
           </div>
         </div>
         <div className="flex items-center gap-3 text-right flex-shrink-0">
@@ -604,7 +604,7 @@ const Problem = () => (
               What buyers are saying on Reddit
             </div>
             <div className="text-[11px] mt-0.5" style={{ color: C.textDim }}>
-              Live discussions across r/EngagementRings, r/jewelry, r/Diamonds — refreshed weekly
+              Live discussions across r/EngagementRings, r/jewelry, r/Diamonds. Refreshed weekly
             </div>
           </div>
         </div>
@@ -633,7 +633,7 @@ const Problem = () => (
               }}
             >
               <div className="flex">
-                {/* Left rail — upvote */}
+                {/* Left rail. Upvote */}
                 <div className="flex flex-col items-center px-2 py-3 flex-shrink-0"
                   style={{ background: '#F6F7F8', borderRight: '1px solid rgba(0,0,0,0.08)', minWidth: 38 }}>
                   <ArrowBigUp size={18} style={{ color: '#FF4500' }} fill="#FF4500" />
@@ -681,7 +681,7 @@ const Problem = () => (
       {/* footnote */}
       <div className="mt-4 flex items-center gap-1.5 text-[11px]" style={{ color: C.textDim }}>
         <Lightbulb size={11} style={{ color: C.accent }} />
-        These are not cherry-picked — every thread above is a top result for "custom engagement ring" or "ring shopping" on Reddit.
+        These are not cherry-picked. Every thread above is a top result for "custom engagement ring" or "ring shopping" on Reddit.
       </div>
     </Card>
   </Section>
@@ -691,10 +691,10 @@ const Problem = () => (
    3.5  TARGET CUSTOMER (profile table)
    ───────────────────────────────────────────────────────── */
 const TARGET_CUSTOMER_ROWS = [
-  { attr: 'Age',                 target: '24–38' },
+  { attr: 'Age',                 target: '24-38' },
   { attr: 'Life stage',          target: 'Recently engaged, planning to propose, or actively ring shopping' },
-  { attr: 'Location',            target: 'United States — online-first with Florida / NY / major-metro reach' },
-  { attr: 'Budget',              target: '~$1,500 – $4,000' },
+  { attr: 'Location',            target: 'United States. Online-first with Florida / NY / major-metro reach' },
+  { attr: 'Budget',              target: '~$1,500 - $4,000' },
   { attr: 'Product need',        target: 'Custom lab-grown engagement ring' },
   { attr: 'Buying behavior',     target: 'Research-heavy, compares prices, asks questions, wants guidance' },
   { attr: 'Main concern',        target: '"Am I overpaying?" · "Can I trust this jeweler?"' },
@@ -712,7 +712,7 @@ const TargetCustomer = () => (
           Value-conscious couples buying <span style={{ color: C.accent, fontStyle: 'italic' }}>high-intent</span> custom engagement rings.
         </h2>
         <p className="text-[15px] sm:text-[16px] leading-[1.6] max-w-xl" style={{ color: C.textMute }}>
-          TheLocalJewel targets modern couples who want a beautiful, custom lab-grown diamond engagement ring — without paying traditional retail markups.
+          TheLocalJewel targets modern couples who want a beautiful, custom lab-grown diamond engagement ring. Without paying traditional retail markups.
         </p>
       </div>
 
@@ -820,7 +820,7 @@ const Founder = () => (
       >
         <img
           src="/pitch-founder-ansh.png"
-          alt="Ansh Jain — Founder of The Local Jewel"
+          alt="Ansh Jain, Founder of The Local Jewel"
           data-testid="founder-photo"
           className="w-full h-full object-cover"
         />
@@ -840,9 +840,9 @@ const Founder = () => (
    5. SOLUTION  (display-quote treatment + 4 numbered pillars)
    ───────────────────────────────────────────────────────── */
 const SOLUTION_PILLARS = [
-  { num: '01', title: 'Wholesale-First Sourcing',     body: 'Five years inside the loose-diamond supply chain — direct vendor relationships replace the layers of middlemen baked into retail pricing.' },
+  { num: '01', title: 'Wholesale-First Sourcing',     body: 'Five years inside the loose-diamond supply chain. Direct vendor relationships replace the layers of middlemen baked into retail pricing.' },
   { num: '02', title: 'Digital-Native Distribution',  body: 'Customers find us on Etsy, eBay, social, paid ads, and reseller partners. Zero showroom rent. Zero geographic ceiling.' },
-  { num: '03', title: 'Custom, No Retail Markup',     body: 'Renders before payment, IGI-certified stones, personal guidance — the boutique experience without the boutique overhead.' },
+  { num: '03', title: 'Custom, No Retail Markup',     body: 'Renders before payment, IGI-certified stones, personal guidance. The boutique experience without the boutique overhead.' },
   { num: '04', title: 'Lean, Tech-Led Operations',    body: 'A founder-built platform handles listings, leads, follow-ups, fulfillment, and analytics. Headcount stays flat as volume scales.' },
 ];
 const Solution = () => (
@@ -862,7 +862,7 @@ const Solution = () => (
       </div>
     </div>
 
-    {/* Numbered horizontal grid — sleek single row */}
+    {/* Numbered horizontal grid. Sleek single row */}
     <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4" data-testid="solution-pillars">
       {SOLUTION_PILLARS.map((s, i) => (
         <div key={i} data-testid={'solution-pillar-' + s.num}
@@ -891,7 +891,7 @@ const Solution = () => (
    ───────────────────────────────────────────────────────── */
 const Traction = () => (
   <Section id="traction" label="Where We Are Today" withDivider
-    title="$300K in trailing sales — and the channels are already firing.">
+    title="$300K in trailing sales, and the channels are already firing.">
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
       <Stat value="$300K" label="Total revenue" sub="Apr 2025 → Apr 2026" accent />
       <Stat value="6 / 30" label="Avg / best month" sub="Rings shipped" />
@@ -915,17 +915,17 @@ const Traction = () => (
           <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(212,175,55,0.10)', color: C.accent, border: '1px solid rgba(212,175,55,0.3)' }}>Top channel</span>
         </div>
 
-        {/* Real Etsy dashboard screenshot — proof, not numbers we typed */}
+        {/* Real Etsy dashboard screenshot. Proof, not numbers we typed */}
         <div className="rounded-[12px] overflow-hidden mb-3"
           style={{ background: '#fafafa', border: '1px solid ' + C.border, padding: '14px 18px' }}>
-          <img src="/pitch-marketplace-roas.png" alt="Etsy promoted-listings dashboard — 57.2K views · 1,214 clicks · 9 orders · $15,742 revenue · $418 spend · 37.6× ROAS"
+          <img src="/pitch-marketplace-roas.png" alt="Etsy promoted-listings dashboard - 57.2K views · 1,214 clicks · 9 orders · $15,742 revenue · $418 spend · 37.6× ROAS"
             data-testid="traction-marketplace-screenshot"
             className="w-full h-auto block select-none" draggable="false"
             style={{ maxHeight: 200, objectFit: 'contain' }} />
         </div>
 
         <p className="text-[12px] leading-[1.5]" style={{ color: C.textMute }}>
-          Pulled directly from the Etsy seller dashboard. <strong style={{ color: C.text }}>$418</strong> in spend returned <strong style={{ color: C.accent }}>$15,742</strong> — every $1 returned $37.60.
+          Pulled directly from the Etsy seller dashboard. <strong style={{ color: C.text }}>$418</strong> in spend returned <strong style={{ color: C.accent }}>$15,742</strong>. Every $1 returned $37.60.
         </p>
       </Card>
 
@@ -992,7 +992,7 @@ const UNIT_ECON = [
   { name: 'Shipping (insured)', value: 25, color: '#A88FC9' },
 ];
 
-// 4-month ramp — adds month-by-month ad spend, ops, contribution
+// 4-month ramp. Adds month-by-month ad spend, ops, contribution
 const RAMP_DATA = [
   { m: 'M1', etsy: 15, ebay: 0,  web: 10, resellers: 10, referrals: 0, rings: 35,  revenue: 56000,  gm: 24500, adSpend: 7800,  opsSpend: 5000, totalSpend: 12800, contribution: 11700 },
   { m: 'M2', etsy: 20, ebay: 2,  web: 20, resellers: 12, referrals: 1, rings: 55,  revenue: 88000,  gm: 38500, adSpend: 10200, opsSpend: 6000, totalSpend: 16200, contribution: 22300 },
@@ -1000,7 +1000,7 @@ const RAMP_DATA = [
   { m: 'M4', etsy: 25, ebay: 10, web: 40, resellers: 20, referrals: 5, rings: 100, revenue: 160000, gm: 70000, adSpend: 14500, opsSpend: 8000, totalSpend: 22500, contribution: 47500 },
 ];
 
-// 3-year outlook — Y1 = 1,065 rings; Y2 = 1,600 rings; Y3 = 2,720 rings
+// 3-year outlook. Y1 = 1,065 rings; Y2 = 1,600 rings; Y3 = 2,720 rings
 // ASP $1,600 · GM/ring $700 · jewelry-expansion GM assumed 40%
 const THREE_YEAR = [
   { y: 'Y1', rings: 1065, ringRev: 1704000, jewelryRev: 50000,    total: 1754000, gm: 765500,  opContrib: 490000  },
@@ -1153,7 +1153,7 @@ const Reviews = () => (
    ───────────────────────────────────────────────────────── */
 const Tech = () => (
   <Section id="tech" label="Tech Stack" withDivider
-    title="Two custom platforms — one for the team, one for the customer."
+    title="Two custom platforms. One for the team, one for the customer."
     intro="Everything below the surface is built in-house. No off-the-shelf templates, no third-party CRMs to outgrow.">
     <div className="grid lg:grid-cols-2 gap-5" data-testid="tech-platforms">
 
@@ -1167,14 +1167,14 @@ const Tech = () => (
         </div>
         <div className="rounded-[12px] overflow-hidden mb-4"
           style={{ border: '1px solid ' + C.border, background: '#fff' }}>
-          <img src="/pitch-ajhq-screenshot.png" alt="Internal operations dashboard — pricing, listings, content, production"
+          <img src="/pitch-ajhq-screenshot.png" alt="Internal operations dashboard. Pricing, listings, content, production"
             data-testid="tech-internal-screenshot"
             className="w-full h-auto block select-none" draggable="false"
             style={{ aspectRatio: '16/10', objectFit: 'cover', objectPosition: 'left top' }} />
         </div>
         <div className="text-[15px] font-semibold mb-1" style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>The operating system</div>
         <p className="text-[12.5px] leading-[1.5]" style={{ color: C.textMute }}>
-          Pricing engine, listing builder, content generator, and production tracker — purpose-built for jewelry workflows.
+          Pricing engine, listing builder, content generator, and production tracker. Purpose-built for jewelry workflows.
         </p>
       </Card>
 
@@ -1188,14 +1188,14 @@ const Tech = () => (
         </div>
         <div className="rounded-[12px] overflow-hidden mb-4"
           style={{ border: '1px solid ' + C.border, background: '#fff' }}>
-          <img src="/pitch-tlj-landing.png" alt="thelocaljewel.com — landing page with savings comparison"
+          <img src="/pitch-tlj-landing.png" alt="thelocaljewel.com. Landing page with savings comparison"
             data-testid="tech-external-screenshot"
             className="w-full h-auto block select-none" draggable="false"
             style={{ aspectRatio: '16/10', objectFit: 'cover', objectPosition: 'center top' }} />
         </div>
         <div className="text-[15px] font-semibold mb-1" style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>thelocaljewel.com</div>
         <p className="text-[12.5px] leading-[1.5]" style={{ color: C.textMute }}>
-          The customer journey — lead-gen wizard, savings comparison, and project gallery — all under one custom storefront.
+          The customer journey. Lead-gen wizard, savings comparison, and project gallery. All under one custom storefront.
         </p>
       </Card>
     </div>
@@ -1208,7 +1208,7 @@ const Tech = () => (
 const Bottleneck = () => (
   <Section id="bottleneck" label="Why Funding Now" withDivider
     title="The business works. The bottleneck is working capital."
-    intro="Every system we need is already in place — sourcing, marketplaces, resellers, ad creatives, automation, and a clear sales process. The growth governor is cash flow, not strategy.">
+    intro="Every system we need is already in place. Sourcing, marketplaces, resellers, ad creatives, automation, and a clear sales process. The growth governor is cash flow, not strategy.">
     <div className="grid lg:grid-cols-2 gap-5">
       <Card>
         <div className="flex items-center gap-2 mb-3">
@@ -1216,10 +1216,10 @@ const Bottleneck = () => (
           <span className="text-[12px] font-semibold uppercase tracking-[0.12em]" style={{ color: C.warn }}>What's limiting us today</span>
         </div>
         <ul className="space-y-2.5 text-[13.5px] leading-[1.55]" style={{ color: C.textMute }}>
-          <li>• Each order requires <strong style={{ color: C.text }}>upfront cash</strong> for stones, settings, CAD, production, shipping — before customer pays final.</li>
-          <li>• Ad spend can't scale beyond test-budget without working capital — losing volume against competitors who outspend us.</li>
+          <li>• Each order requires <strong style={{ color: C.text }}>upfront cash</strong> for stones, settings, CAD, production, shipping. Before customer pays final.</li>
+          <li>• Ad spend can't scale beyond test-budget without working capital. Losing volume against competitors who outspend us.</li>
           <li>• Resellers convert faster with <strong style={{ color: C.text }}>ready-to-show inventory</strong>; today they wait on custom orders.</li>
-          <li>• Founder is execution bottleneck on listings, follow-ups, and ops — need 1-2 hires.</li>
+          <li>• Founder is execution bottleneck on listings, follow-ups, and ops. Need 1-2 hires.</li>
         </ul>
       </Card>
       <Card>
@@ -1229,9 +1229,9 @@ const Bottleneck = () => (
         </div>
         <ul className="space-y-2.5 text-[13.5px] leading-[1.55]" style={{ color: C.textMute }}>
           <li>• Consistent <strong style={{ color: C.text }}>$150/day across 5 ad platforms</strong>, with KPI tracking and re-allocation to top performers.</li>
-          <li>• <strong style={{ color: C.text }}>8 stock engagement rings</strong> distributed across 4 resellers — every reseller gets sellable inventory.</li>
+          <li>• <strong style={{ color: C.text }}>8 stock engagement rings</strong> distributed across 4 resellers. Every reseller gets sellable inventory.</li>
           <li>• Cash buffer for upfront fulfillment costs, so ad-driven orders ship without delay.</li>
-          <li>• <strong style={{ color: C.text }}>1–2 full-time hires</strong> on listings, follow-ups, marketing — unlocks 100 rings/month.</li>
+          <li>• <strong style={{ color: C.text }}>1-2 full-time hires</strong> on listings, follow-ups, marketing. Unlocks 100 rings/month.</li>
         </ul>
       </Card>
     </div>
@@ -1244,7 +1244,7 @@ const Bottleneck = () => (
       </div>
       <p className="text-[18px] sm:text-[22px] leading-[1.35] max-w-3xl mx-auto"
         style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>
-        Move from steady early sales to a consistent <em style={{ color: C.accent }}>100 rings / month</em> — using the engine that's already built.
+        Move from steady early sales to a consistent <em style={{ color: C.accent }}>100 rings / month</em>. Using the engine that's already built.
       </p>
     </div>
   </Section>
@@ -1262,7 +1262,7 @@ const UseOfFunds = () => {
   return (
     <Section id="use-of-funds" label="Use of Funds" withDivider
       title="$100K, deployed deliberately."
-      intro="$25K of this stays as working capital in reseller inventory — not burn — and rotates back into liquid stock as resellers sell.">
+      intro="$25K of this stays as working capital in reseller inventory (not burn), and rotates back into liquid stock as resellers sell.">
 
       <div className="grid lg:grid-cols-[1.05fr_1.4fr] gap-5">
         {/* Donut */}
@@ -1348,9 +1348,9 @@ const UseOfFunds = () => {
                 <td className="py-2.5 px-2 flex items-center gap-2" style={{ color: C.text }}>
                   <span className="w-2 h-2 rounded-sm" style={{ background: '#6B4F33' }} />Buffer
                 </td>
-                <td className="py-2.5 px-2 text-right" style={{ color: C.textDim }}>—</td>
-                <td className="py-2.5 px-2 text-right" style={{ color: C.textDim }}>—</td>
-                <td className="py-2.5 px-2 text-right" style={{ color: C.textDim }}>—</td>
+                <td className="py-2.5 px-2 text-right" style={{ color: C.textDim }}>-</td>
+                <td className="py-2.5 px-2 text-right" style={{ color: C.textDim }}>-</td>
+                <td className="py-2.5 px-2 text-right" style={{ color: C.textDim }}>-</td>
                 <td className="py-2.5 px-2 text-right" style={{ color: C.textDim }}>reserve</td>
                 <td className="py-2.5 px-2 text-right font-semibold" style={{ color: C.accent }}>$10K</td>
               </tr>
@@ -1404,7 +1404,7 @@ const UseOfFundsRow = ({ idx, u, hover, setHover, monthly, rollingRings }) => {
 
       <p className="text-[11.5px] leading-[1.45] mt-2.5" style={{ color: C.textMute }}>{u.detail}</p>
 
-      {/* Hover reveal — shown inline (no overlay, predictable on mobile) */}
+      {/* Hover reveal. Shown inline (no overlay, predictable on mobile) */}
       {isHover && (monthly || rollingRings != null) && (
         <div className="mt-3 pt-3" style={{ borderTop: '1px solid ' + C.border }}>
           {monthly && (
@@ -1454,7 +1454,7 @@ const Ask = () => (
       <div className="relative">
         <div className="text-[11.5px] uppercase tracking-[0.16em] mb-3" style={{ color: C.accent }}>What we're looking for</div>
         <p className="text-[17px] sm:text-[19px] leading-[1.55] max-w-3xl mb-5" style={{ color: C.text }}>
-          <strong>$100K for 7.69% equity</strong> at a <strong>$1.2M pre-money</strong> valuation. The business is already profitable — this capital is to compound an existing engine, not to find one.
+          <strong>$100K for 7.69% equity</strong> at a <strong>$1.2M pre-money</strong> valuation. The business is already profitable. This capital is to compound an existing engine, not to find one.
         </p>
 
         {/* Deal terms strip */}
@@ -1475,29 +1475,6 @@ const Ask = () => (
             <div className="text-[10.5px] uppercase tracking-[0.12em]" style={{ color: C.accent2 }}>Returns</div>
             <div className="text-[15px] font-semibold mt-1 leading-tight" style={{ color: C.accent2 }}>Monthly profit share<br/>+ growing equity</div>
           </div>
-        </div>
-
-        <div className="grid sm:grid-cols-3 gap-3 mb-7">
-          {[
-            { icon: Award, t: 'Profitable today', s: '$250K FY · 70.9% GM' },
-            { icon: Shield, t: 'Zero inventory risk', s: 'Approve-before-cut model' },
-            { icon: TrendingUp, t: 'KPI-disciplined', s: 'CPL · ROAS · turn-time tracked' },
-          ].map((b, i) => {
-            const Icon = b.icon;
-            return (
-              <div key={i} className="rounded-[12px] p-4 flex items-start gap-3"
-                style={{ background: C.bgAlt, border: '1px solid ' + C.border }}>
-                <div className="w-9 h-9 rounded-[10px] flex items-center justify-center flex-shrink-0"
-                  style={{ background: 'rgba(212,175,55,0.10)', border: '1px solid rgba(212,175,55,0.3)' }}>
-                  <Icon size={15} style={{ color: C.accent }} />
-                </div>
-                <div>
-                  <div className="text-[13.5px] font-semibold" style={{ color: C.text }}>{b.t}</div>
-                  <div className="text-[11.5px] mt-0.5" style={{ color: C.textMute }}>{b.s}</div>
-                </div>
-              </div>
-            );
-          })}
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -1632,7 +1609,7 @@ const FourMonthRamp = () => (
       </Card>
     </div>
 
-    {/* Visuals — GM vs Contribution */}
+    {/* Visuals. GM vs Contribution */}
     <div className="grid lg:grid-cols-2 gap-5 mb-5">
       <Card testid="ramp-chart-rings">
         <div className="text-[14px] font-semibold mb-2" style={{ color: C.text }}>Rings sold by channel</div>
@@ -1685,7 +1662,7 @@ const FourMonthRamp = () => (
       <div className="mt-4 rounded-[12px] p-4 flex items-center gap-3" style={{ background: 'rgba(123,196,168,0.08)', border: '1px solid rgba(123,196,168,0.25)' }}>
         <Box size={15} style={{ color: C.accent2 }} />
         <span className="text-[13px] leading-[1.5]" style={{ color: C.text }}>
-          Plus <strong>$20-25K rolling reseller inventory</strong> — working capital, not burn. Stays in the business as funded stock across 4 active resellers.
+          Plus <strong>$20-25K rolling reseller inventory</strong>. Working capital, not burn. Stays in the business as funded stock across 4 active resellers.
         </span>
       </div>
     </Card>
@@ -1700,7 +1677,7 @@ const fmtK = (n) => '$' + Math.round(n / 1000) + 'K';
 const ThreeYearProjection = () => (
   <Section id="projection" label="3-Year Outlook" withDivider
     title="Engagement rings are the wedge. Jewelry expansion compounds the LTV."
-    intro="Engagement rings are the customer-acquisition wedge. Wedding bands, anniversary jewelry, studs, and tennis bracelets unlock real lifetime value — and the reseller network becomes a recurring distribution channel.">
+    intro="Engagement rings are the customer-acquisition wedge. Wedding bands, anniversary jewelry, studs, and tennis bracelets unlock real lifetime value, and the reseller network becomes a recurring distribution channel.">
     <Card testid="projection-chart">
       <div style={{ width: '100%', height: 320 }}>
         <ResponsiveContainer>
@@ -1788,7 +1765,7 @@ const ThreeYearProjection = () => (
       style={{ background: 'rgba(123,196,168,0.08)', border: '1px solid rgba(123,196,168,0.25)' }}>
       <TrendingUp size={16} style={{ color: C.accent2 }} />
       <span className="text-[13.5px] leading-[1.5]" style={{ color: C.text }}>
-        From <strong>$1.75M</strong> in Year 1 to <strong>$5.60M</strong> in Year 3 — a <strong>3.2×</strong> revenue compound with the same founder, same model, expanded SKUs.
+        From <strong>$1.75M</strong> in Year 1 to <strong>$5.60M</strong> in Year 3. A <strong>3.2×</strong> revenue compound with the same founder, same model, expanded SKUs.
       </span>
     </div>
   </Section>
@@ -1809,7 +1786,7 @@ const CUSTOMER_LTV_TOTAL = CUSTOMER_LTV.reduce((s, x) => ({ rev: s.rev + x.rev, 
 const LifetimeValue = () => (
   <Section id="ltv" label="Lifetime Value" withDivider
     title="The first ring is just the start of the customer relationship."
-    intro="Customers come for the engagement ring — they come back for the wedding bands, the anniversary, the gifts. The reseller network compounds the same effect with funded inventory.">
+    intro="Customers come for the engagement ring. They come back for the wedding bands, the anniversary, the gifts. The reseller network compounds the same effect with funded inventory.">
 
     {/* Two-column: Customer LTV (left) · Reseller LTV (right) */}
     <div className="grid lg:grid-cols-2 gap-5">
@@ -1903,7 +1880,7 @@ const LifetimeValue = () => (
       style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.25)' }}>
       <Lightbulb size={16} style={{ color: C.accent }} />
       <span className="text-[13.5px] leading-[1.5]" style={{ color: C.text }}>
-        Every reseller funded with $800 of inventory returns <strong>~$47,736 in lifetime gross margin</strong>. The $25K reseller-inventory line in the Use of Funds isn't a cost — it's seed capital for a recurring network.
+        Every reseller funded with $800 of inventory returns <strong>~$47,736 in lifetime gross margin</strong>. The $25K reseller-inventory line in the Use of Funds isn't a cost. It's seed capital for a recurring network.
       </span>
     </div>
   </Section>
@@ -1913,8 +1890,8 @@ const LifetimeValue = () => (
    INVESTOR RETURNS FRAMING
    $100K at $1.2M pre-money → 100 / (1200 + 100) = 7.69% ownership.
    Returns to investor have TWO components:
-     1) Monthly income — 7.69% of operating contribution, distributed monthly
-     2) Capital appreciation — 7.69% of the company's growing valuation
+     1) Monthly income - 7.69% of operating contribution, distributed monthly
+     2) Capital appreciation - 7.69% of the company's growing valuation
    ───────────────────────────────────────────────────────── */
 const OWNERSHIP_PCT = 0.0769;        // 7.69%
 const INVESTMENT = 100000;            // $100K
@@ -1960,7 +1937,7 @@ const InvestorReturns = () => {
             7.69% of operating profit, distributed monthly.
           </div>
           <p className="text-[12.5px] leading-[1.55] mb-4" style={{ color: C.textMute }}>
-            As soon as the business is operating-profitable each month, the investor receives <strong>7.69% of that month's operating contribution</strong> — pro-rata, in cash. This is recurring income, not deferred to an exit.
+            As soon as the business is operating-profitable each month, the investor receives <strong>7.69% of that month's operating contribution</strong>. Pro-rata, in cash. This is recurring income, not deferred to an exit.
           </p>
 
           <div className="overflow-x-auto">
@@ -1984,8 +1961,8 @@ const InvestorReturns = () => {
                 ))}
                 <tr>
                   <td className="py-2.5 px-2 font-semibold" style={{ color: C.text }}>3-yr total</td>
-                  <td className="py-2.5 px-2 text-right" style={{ color: C.textDim }}>—</td>
-                  <td className="py-2.5 px-2 text-right" style={{ color: C.textDim }}>—</td>
+                  <td className="py-2.5 px-2 text-right" style={{ color: C.textDim }}>-</td>
+                  <td className="py-2.5 px-2 text-right" style={{ color: C.textDim }}>-</td>
                   <td className="py-2.5 px-2 text-right font-semibold" style={{ color: C.accent2, fontSize: 18, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>${TOTAL_3YR_INCOME.toLocaleString()}</td>
                 </tr>
               </tbody>
@@ -1997,7 +1974,7 @@ const InvestorReturns = () => {
             <div className="text-[26px] font-semibold tracking-[-0.01em] leading-none" style={{ color: C.accent2, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>
               ${INCOME_YEARS[2].monthly.toLocaleString()}<span className="text-[14px] font-normal" style={{ color: C.textMute }}> / month</span>
             </div>
-            <div className="text-[11.5px] mt-1" style={{ color: C.textMute }}>7.69% of Y3 op-contribution (${(INCOME_YEARS[2].opContrib / 1000000).toFixed(2)}M) — paid out monthly.</div>
+            <div className="text-[11.5px] mt-1" style={{ color: C.textMute }}>7.69% of Y3 op-contribution (${(INCOME_YEARS[2].opContrib / 1000000).toFixed(2)}M). Paid out monthly.</div>
           </div>
         </Card>
 
@@ -2038,11 +2015,11 @@ const InvestorReturns = () => {
           <div className="mt-4 grid grid-cols-2 gap-2.5">
             <div className="rounded-[12px] p-3" style={{ background: C.bgAlt, border: '1px solid ' + C.border }}>
               <div className="text-[10.5px] uppercase tracking-[0.12em] mb-0.5" style={{ color: C.accent }}>Path to $5M</div>
-              <div className="text-[11.5px] leading-[1.45]" style={{ color: C.textMute }}>End of Y1 at ~$1.75M revenue + jewelry — 3× revenue multiple for high-margin DTC.</div>
+              <div className="text-[11.5px] leading-[1.45]" style={{ color: C.textMute }}>End of Y1 at ~$1.75M revenue + jewelry - 3× revenue multiple for high-margin DTC.</div>
             </div>
             <div className="rounded-[12px] p-3" style={{ background: C.bgAlt, border: '1px solid ' + C.border }}>
               <div className="text-[10.5px] uppercase tracking-[0.12em] mb-0.5" style={{ color: C.accent }}>Path to $10M</div>
-              <div className="text-[11.5px] leading-[1.45]" style={{ color: C.textMute }}>Tracks with Y2 ($3.06M revenue / $1.32M GM). No clock — held through Y3+.</div>
+              <div className="text-[11.5px] leading-[1.45]" style={{ color: C.textMute }}>Tracks with Y2 ($3.06M revenue / $1.32M GM). No clock. Held through Y3+.</div>
             </div>
           </div>
         </Card>
@@ -2070,7 +2047,7 @@ const InvestorReturns = () => {
           </div>
         </div>
         <div className="mt-3 text-[11.5px] leading-[1.55]" style={{ color: C.textDim }}>
-          Equity figure uses an illustrative $5M valuation — achievable by end of Y1. Monthly distributions begin in the first operating-profitable month and scale with op-contribution. Investor holds equity, so upside continues past Y3.
+          Equity figure uses an illustrative $5M valuation. Achievable by end of Y1. Monthly distributions begin in the first operating-profitable month and scale with op-contribution. Investor holds equity, so upside continues past Y3.
         </div>
       </Card>
     </Section>
@@ -2078,7 +2055,7 @@ const InvestorReturns = () => {
 };
 
 /* ─────────────────────────────────────────────────────────
-   AI CHAT WIDGET — investor Q&A
+   AI CHAT WIDGET. Investor Q&A
    ───────────────────────────────────────────────────────── */
 const SAMPLE_QUESTIONS = [
   'What\'s the current vs target run rate?',
@@ -2091,7 +2068,7 @@ const SAMPLE_QUESTIONS = [
 const ChatWidget = () => {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: "Hi — I'm The Local Jewel's investor-brief assistant. Ask me about traction, unit economics, the 4-month plan, the use of funds, or anything else from the deck." },
+    { role: 'assistant', content: "Hi. I'm The Local Jewel's investor-brief assistant. Ask me about traction, unit economics, the 4-month plan, the use of funds, or anything else from the deck." },
   ]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -2119,7 +2096,7 @@ const ChatWidget = () => {
       }, { timeout: 60000 });
       setMessages(m => [...m, { role: 'assistant', content: res.data.reply }]);
     } catch (e) {
-      setMessages(m => [...m, { role: 'assistant', content: 'Sorry — I hit an error. Try again in a moment, or contact ansh@thelocaljewel.com directly.' }]);
+      setMessages(m => [...m, { role: 'assistant', content: 'Sorry. I hit an error. Try again in a moment, or contact ansh@thelocaljewel.com directly.' }]);
     } finally {
       setSending(false);
     }
@@ -2249,7 +2226,7 @@ const Footer = () => (
     <div className="max-w-6xl mx-auto px-5 sm:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11.5px]">
       <div className="flex items-center gap-2" data-testid="pitch-footer-logo">
         <img src="/tlj-logomark.png" alt="The Local Jewel" className="w-5 h-5 object-contain opacity-90" draggable="false" />
-        <span>The Local Jewel — Custom diamond jewelry, Orlando, FL · IGI / GIA certified</span>
+        <span>The Local Jewel · Custom diamond jewelry, Orlando, FL · IGI / GIA certified</span>
       </div>
       <div>© {new Date().getFullYear()} · Confidential · Do not share without consent</div>
     </div>
