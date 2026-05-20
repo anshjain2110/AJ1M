@@ -121,14 +121,6 @@ const MARKET_SHARE_DATA = [
   { year: '2026E', lab: 78, natural: 22 },
 ];
 
-const SALES_CHANNELS = [
-  { name: 'Etsy', value: 45, color: '#D4AF37' },
-  { name: 'Direct / Lead Gen', value: 30, color: '#7BC4A8' },
-  { name: 'Resellers', value: 18, color: '#C58E5A' },
-  { name: 'eBay', value: 5, color: '#A88FC9' },
-  { name: 'TikTok / Organic', value: 2, color: '#6B95A8' },
-];
-
 // Trailing-12 monthly distribution (Apr 2025 → Apr 2026, sums to ~$300K)
 const REVENUE_HISTORY = [
   { m: 'Apr', revenue: 17000, orders: 10 },
@@ -246,9 +238,7 @@ export default function PitchPage() {
       <LifetimeValue />
       <UseOfFunds />
       <InvestorReturns />
-      <Channels />
       <Tech />
-      <Content />
       <Bottleneck />
       <Ask />
 
@@ -285,10 +275,9 @@ const TopNav = ({ active, onLogout }) => {
       borderBottom: '1px solid ' + C.border,
     }} data-testid="pitch-topnav">
       <div className="max-w-6xl mx-auto px-5 sm:px-8 py-3 flex items-center justify-between gap-4">
-        <button onClick={() => scrollTo('hero')} className="flex items-center gap-2.5 flex-shrink-0">
-          <div className="w-8 h-8 rounded-[8px] flex items-center justify-center" style={{ background: C.accent, color: C.bg }}>
-            <Diamond size={15} strokeWidth={2.5} />
-          </div>
+        <button onClick={() => scrollTo('hero')} className="flex items-center gap-2.5 flex-shrink-0" data-testid="pitch-topnav-logo">
+          <img src="/tlj-logomark.png" alt="The Local Jewel" className="w-8 h-8 object-contain select-none" draggable="false"
+            style={{ filter: 'drop-shadow(0 0 8px rgba(212,175,55,0.25))' }} />
           <div className="text-left">
             <div className="text-[14px] font-semibold leading-none" style={{ color: C.text }}>The Local Jewel</div>
             <div className="text-[9.5px] uppercase tracking-[0.16em] mt-0.5" style={{ color: C.textDim }}>Investor brief · Confidential</div>
@@ -753,36 +742,52 @@ const Founder = () => (
 );
 
 /* ─────────────────────────────────────────────────────────
-   5. SOLUTION
+   5. SOLUTION  (display-quote treatment + 4 numbered pillars)
    ───────────────────────────────────────────────────────── */
 const SOLUTION_PILLARS = [
-  { icon: Diamond, title: 'Wholesale Advantage', body: 'Five years of loose-diamond experience gives access to better sourcing, pricing, and product value.' },
-  { icon: Smartphone, title: 'Digital-First Distribution', body: 'Customers come through Etsy, eBay, social media, paid ads, referrals, and reseller partners — not showrooms.' },
-  { icon: Layers, title: 'Custom Without Retail Markup', body: 'Customers get a personalized engagement-ring experience without the showroom-level overhead baked into traditional pricing.' },
-  { icon: Zap, title: 'Lean Operating Model', body: 'AI and automation support listings, content engine, lead tracking, customer follow-up, and fulfillment workflows.' },
+  { num: '01', title: 'Wholesale-First Sourcing',     body: 'Five years inside the loose-diamond supply chain — direct vendor relationships replace the layers of middlemen baked into retail pricing.' },
+  { num: '02', title: 'Digital-Native Distribution',  body: 'Customers find us on Etsy, eBay, social, paid ads, and reseller partners. Zero showroom rent. Zero geographic ceiling.' },
+  { num: '03', title: 'Custom, No Retail Markup',     body: 'Renders before payment, IGI-certified stones, personal guidance — the boutique experience without the boutique overhead.' },
+  { num: '04', title: 'Lean, Tech-Led Operations',    body: 'A founder-built platform handles listings, leads, follow-ups, fulfillment, and analytics. Headcount stays flat as volume scales.' },
 ];
 const Solution = () => (
-  <Section id="solution" label="The Solution" withDivider
-    title="A custom-only, tech-led brand built directly on top of the diamond supply chain."
-    intro="For couples buying engagement rings, The Local Jewel offers custom lab-grown diamond rings with better pricing, faster fulfillment, and personal guidance — by sourcing directly and operating without traditional showroom overhead.">
-    <div className="grid md:grid-cols-2 gap-4">
-      {SOLUTION_PILLARS.map((s, i) => {
-        const Icon = s.icon;
-        return (
-          <Card key={i}>
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-[10px] flex items-center justify-center flex-shrink-0"
-                style={{ background: 'rgba(123,196,168,0.10)', border: '1px solid rgba(123,196,168,0.3)' }}>
-                <Icon size={17} style={{ color: C.accent2 }} />
-              </div>
-              <div>
-                <h3 className="text-[17px] font-semibold mb-1" style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>{s.title}</h3>
-                <p className="text-[13.5px] leading-[1.55]" style={{ color: C.textMute }}>{s.body}</p>
-              </div>
+  <Section id="solution" label="The Solution" withDivider>
+    {/* Display-quote treatment */}
+    <div className="relative max-w-4xl mx-auto text-center px-2 sm:px-6 mb-10 sm:mb-14">
+      <div aria-hidden="true" className="absolute -top-6 left-1/2 -translate-x-1/2 text-[120px] leading-none font-semibold opacity-[0.10] select-none"
+        style={{ color: C.accent, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>"</div>
+      <p className="relative text-[28px] sm:text-[40px] lg:text-[46px] leading-[1.15] tracking-[-0.015em]"
+        style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif', fontStyle: 'italic' }}>
+        A custom-only, tech-led brand built directly on top of the
+        <span style={{ color: C.accent, fontStyle: 'italic' }}> diamond supply chain</span>.
+      </p>
+      <div className="mt-5 flex items-center justify-center gap-3" style={{ color: C.textDim }}>
+        <div className="h-px w-10" style={{ background: C.accent, opacity: 0.5 }} />
+        <span className="text-[10.5px] uppercase tracking-[0.28em]" style={{ color: C.accent }}>How it works</span>
+        <div className="h-px w-10" style={{ background: C.accent, opacity: 0.5 }} />
+      </div>
+    </div>
+
+    {/* Numbered horizontal grid — sleek single row */}
+    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4" data-testid="solution-pillars">
+      {SOLUTION_PILLARS.map((s, i) => (
+        <div key={i} data-testid={'solution-pillar-' + s.num}
+          className="relative rounded-[16px] p-5 sm:p-6 transition-all duration-300 hover:-translate-y-0.5"
+          style={{ background: C.bgAlt, border: '1px solid ' + C.border }}>
+          <div className="flex items-baseline justify-between mb-4">
+            <div className="text-[42px] font-semibold leading-none tracking-[-0.02em]"
+              style={{ color: C.accent, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif', opacity: 0.85 }}>
+              {s.num}
             </div>
-          </Card>
-        );
-      })}
+            <div className="h-px flex-1 ml-3" style={{ background: 'linear-gradient(90deg, ' + C.accent + '88, transparent)' }} />
+          </div>
+          <h3 className="text-[17px] sm:text-[18px] font-semibold mb-2 leading-[1.25]"
+            style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>
+            {s.title}
+          </h3>
+          <p className="text-[13px] leading-[1.55]" style={{ color: C.textMute }}>{s.body}</p>
+        </div>
+      ))}
     </div>
   </Section>
 );
@@ -815,17 +820,19 @@ const Traction = () => (
           </div>
           <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(212,175,55,0.10)', color: C.accent, border: '1px solid rgba(212,175,55,0.3)' }}>Top channel</span>
         </div>
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          <div><div className="text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Views</div><div className="text-[18px] font-semibold" style={{ color: C.text }}>57.2K</div></div>
-          <div><div className="text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Clicks</div><div className="text-[18px] font-semibold" style={{ color: C.text }}>1,214</div></div>
-          <div><div className="text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Orders</div><div className="text-[18px] font-semibold" style={{ color: C.text }}>9</div></div>
+
+        {/* Real Etsy dashboard screenshot — proof, not numbers we typed */}
+        <div className="rounded-[12px] overflow-hidden mb-3"
+          style={{ background: '#fafafa', border: '1px solid ' + C.border, padding: '14px 18px' }}>
+          <img src="/pitch-marketplace-roas.png" alt="Etsy promoted-listings dashboard — 57.2K views · 1,214 clicks · 9 orders · $15,742 revenue · $418 spend · 37.6× ROAS"
+            data-testid="traction-marketplace-screenshot"
+            className="w-full h-auto block select-none" draggable="false"
+            style={{ maxHeight: 200, objectFit: 'contain' }} />
         </div>
-        <div className="rounded-[10px] p-3 grid grid-cols-3 gap-2" style={{ background: C.bgAlt, border: '1px solid ' + C.border }}>
-          <div><div className="text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Revenue</div><div className="text-[16px] font-semibold" style={{ color: C.accent }}>$15,742</div></div>
-          <div><div className="text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>Spend</div><div className="text-[16px] font-semibold" style={{ color: C.text }}>$418.64</div></div>
-          <div><div className="text-[10.5px] uppercase tracking-[0.1em]" style={{ color: C.textDim }}>ROAS</div><div className="text-[16px] font-semibold" style={{ color: C.accent2 }}>37.6×</div></div>
-        </div>
-        <p className="text-[12px] mt-3 leading-[1.5]" style={{ color: C.textMute }}>Proven paid-acquisition channel — every $1 spent returned $37.60 in revenue.</p>
+
+        <p className="text-[12px] leading-[1.5]" style={{ color: C.textMute }}>
+          Pulled directly from the Etsy seller dashboard. <strong style={{ color: C.text }}>$418</strong> in spend returned <strong style={{ color: C.accent }}>$15,742</strong> — every $1 returned $37.60.
+        </p>
       </Card>
 
       <Card testid="traction-meta-ads">
@@ -1006,62 +1013,6 @@ const Economics = () => {
 };
 
 /* ─────────────────────────────────────────────────────────
-   8. CHANNELS
-   ───────────────────────────────────────────────────────── */
-const Channels = () => (
-  <Section id="channels" label="Sales Channels" withDivider
-    title="Four channels, none of them dependent on the others."
-    intro="The business doesn't live on a single platform. Etsy, our own lead-gen site, eBay, and word-of-mouth referrals each carry weight — and each can be scaled independently with capital.">
-    <div className="grid lg:grid-cols-2 gap-5">
-      <Card testid="channels-donut">
-        <div className="text-[14px] font-semibold mb-2" style={{ color: C.text }}>Revenue mix · last fiscal year</div>
-        <div style={{ width: '100%', height: 260 }}>
-          <ResponsiveContainer>
-            <PieChart>
-              <Pie data={SALES_CHANNELS} dataKey="value" innerRadius={55} outerRadius={100} paddingAngle={3}>
-                {SALES_CHANNELS.map((c, i) => <Cell key={i} fill={c.color} stroke="none" />)}
-              </Pie>
-              <Tooltip content={<ChartTooltip suffix="%" />} />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      </Card>
-
-      <div className="space-y-3">
-        {SALES_CHANNELS.map((c, i) => {
-          const meta = [
-            { icon: ShoppingBag, detail: 'Top listings ranked organically; review-flywheel kicks in at scale. 37.75× ROAS in our most recent test.' },
-            { icon: Globe, detail: 'Custom wizard + admin CRM. Highest LTV, highest GM per lead. Meta / Google / TikTok ads feed into this.' },
-            { icon: Users, detail: '4 active resellers on memo. 12 sales so far without funded inventory — funded inventory unlocks the next leg.' },
-            { icon: Box, detail: 'Two sales already without ads. Untapped — promoted listings + automated relisting coming in Month 1.' },
-            { icon: Smartphone, detail: 'Organic TikTok inquiries already happening. Founder-built content engine ready to scale.' },
-          ];
-          const m = meta[i] || { icon: ShoppingBag, detail: '' };
-          const Icon = m.icon;
-          return (
-            <Card key={i}>
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-[10px] flex items-center justify-center flex-shrink-0"
-                  style={{ background: c.color + '20', border: '1px solid ' + c.color + '50' }}>
-                  <Icon size={16} style={{ color: c.color }} />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-baseline justify-between gap-3 mb-0.5">
-                    <span className="text-[15px] font-semibold" style={{ color: C.text }}>{c.name}</span>
-                    <span className="text-[14px] font-semibold" style={{ color: c.color }}>{c.value}%</span>
-                  </div>
-                  <p className="text-[12.5px] leading-[1.5]" style={{ color: C.textMute }}>{m.detail}</p>
-                </div>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
-    </div>
-  </Section>
-);
-
-/* ─────────────────────────────────────────────────────────
    9. REVIEWS
    ───────────────────────────────────────────────────────── */
 const Reviews = () => (
@@ -1104,122 +1055,56 @@ const Reviews = () => (
 );
 
 /* ─────────────────────────────────────────────────────────
-   10. TECH (AJHQ.live + TheLocalJewel.com)
+   10. TECH (slim: internal HQ + external customer site)
    ───────────────────────────────────────────────────────── */
-const TECH_FEATURES = [
-  'Custom lead-gen wizard with conditional branching',
-  'Admin CRM — leads, orders, quotes, comments, stages',
-  '12-tab Advanced Analytics suite (funnel, friction, geo, attribution)',
-  'Project CMS with 3D-render gallery & SEO meta',
-  'Cloudflare R2 file/image storage',
-  'Customer OTP login + personal dashboard',
-  'Render-to-product showcase slideshow',
-  'Full event tracking (50+ custom events)',
-];
-
 const Tech = () => (
   <Section id="tech" label="Tech Stack" withDivider
-    title="A founder who built the storefront, the CRM, and the analytics suite."
-    intro="The platform isn't a Shopify template. The customer site, lead-gen wizard, admin CRM, project CMS, and analytics tooling are custom-built — which means every funnel decision, every UX experiment, and every margin lever is ours to pull.">
-    <div className="grid lg:grid-cols-2 gap-5">
-      {/* Visual placeholder for screenshots */}
+    title="Two custom platforms — one for the team, one for the customer."
+    intro="Everything below the surface is built in-house. No off-the-shelf templates, no third-party CRMs to outgrow.">
+    <div className="grid lg:grid-cols-2 gap-5" data-testid="tech-platforms">
+
+      {/* Internal HQ */}
       <Card>
-        <div className="rounded-[12px] aspect-[16/10] flex items-center justify-center mb-3"
-          style={{
-            background: 'linear-gradient(135deg, ' + C.surfaceAlt + ', ' + C.bgAlt + ')',
-            border: '1px dashed ' + C.border,
-            color: C.textDim,
-          }}>
-          <div className="text-center px-6">
-            <ImageIcon size={22} className="mx-auto mb-2 opacity-60" />
-            <div className="text-[12px]">Admin CRM / Analytics screenshots</div>
-            <div className="text-[10.5px] mt-1 opacity-70">Provide via admin → setting · 4 images recommended</div>
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-7 h-7 rounded-[8px] flex items-center justify-center" style={{ background: 'rgba(123,196,168,0.12)', border: '1px solid rgba(123,196,168,0.3)' }}>
+            <Layers size={13} style={{ color: C.accent2 }} />
           </div>
+          <span className="text-[10.5px] uppercase tracking-[0.16em]" style={{ color: C.accent2 }}>Internal · Operations</span>
         </div>
-        <div className="text-[12.5px] font-medium mb-1" style={{ color: C.text }}>AJHQ.live — internal operations</div>
+        <div className="rounded-[12px] overflow-hidden mb-4"
+          style={{ border: '1px solid ' + C.border, background: '#fff' }}>
+          <img src="/pitch-ajhq-screenshot.png" alt="Internal operations dashboard — pricing, listings, content, production"
+            data-testid="tech-internal-screenshot"
+            className="w-full h-auto block select-none" draggable="false"
+            style={{ aspectRatio: '16/10', objectFit: 'cover', objectPosition: 'left top' }} />
+        </div>
+        <div className="text-[15px] font-semibold mb-1" style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>The operating system</div>
         <p className="text-[12.5px] leading-[1.5]" style={{ color: C.textMute }}>
-          The founder's internal operating dashboard. Centralizes inventory, orders, supplier comms, and reseller distribution.
+          Pricing engine, listing builder, content generator, and production tracker — purpose-built for jewelry workflows.
         </p>
       </Card>
 
+      {/* External customer site */}
       <Card>
-        <div className="rounded-[12px] aspect-[16/10] flex items-center justify-center mb-3"
-          style={{
-            background: 'linear-gradient(135deg, ' + C.surfaceAlt + ', ' + C.bgAlt + ')',
-            border: '1px dashed ' + C.border,
-            color: C.textDim,
-          }}>
-          <div className="text-center px-6">
-            <ImageIcon size={22} className="mx-auto mb-2 opacity-60" />
-            <div className="text-[12px]">TheLocalJewel.com screenshots</div>
-            <div className="text-[10.5px] mt-1 opacity-70">Landing, wizard, project page, admin CRM</div>
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-7 h-7 rounded-[8px] flex items-center justify-center" style={{ background: 'rgba(212,175,55,0.12)', border: '1px solid rgba(212,175,55,0.3)' }}>
+            <Globe size={13} style={{ color: C.accent }} />
           </div>
+          <span className="text-[10.5px] uppercase tracking-[0.16em]" style={{ color: C.accent }}>External · Customer-facing</span>
         </div>
-        <div className="text-[12.5px] font-medium mb-1" style={{ color: C.text }}>TheLocalJewel.com — customer-facing</div>
+        <div className="rounded-[12px] overflow-hidden mb-4"
+          style={{ border: '1px solid ' + C.border, background: '#fff' }}>
+          <img src="/pitch-tlj-landing.png" alt="thelocaljewel.com — landing page with savings comparison"
+            data-testid="tech-external-screenshot"
+            className="w-full h-auto block select-none" draggable="false"
+            style={{ aspectRatio: '16/10', objectFit: 'cover', objectPosition: 'center top' }} />
+        </div>
+        <div className="text-[15px] font-semibold mb-1" style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>thelocaljewel.com</div>
         <p className="text-[12.5px] leading-[1.5]" style={{ color: C.textMute }}>
-          The full customer journey, from landing through quote to delivery — built in-house, deployed on Emergent's platform.
+          The customer journey — lead-gen wizard, savings comparison, and project gallery — all under one custom storefront.
         </p>
       </Card>
     </div>
-
-    <Card className="mt-5">
-      <div className="text-[11.5px] uppercase tracking-[0.12em] mb-3" style={{ color: C.accent }}>What's shipped today</div>
-      <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2.5">
-        {TECH_FEATURES.map((f, i) => (
-          <div key={i} className="flex items-start gap-2 text-[13.5px]" style={{ color: C.text }}>
-            <CheckCircle2 size={14} style={{ color: C.accent2, marginTop: 2 }} className="flex-shrink-0" />
-            <span>{f}</span>
-          </div>
-        ))}
-      </div>
-    </Card>
-  </Section>
-);
-
-/* ─────────────────────────────────────────────────────────
-   11. CONTENT
-   ───────────────────────────────────────────────────────── */
-const Content = () => (
-  <Section id="content" label="Content & Acquisition" withDivider
-    title="A creative engine that already proved itself at $25."
-    intro="A small test campaign of $25 generated 2 strong leads — at our current AOV that's a 65× ROAS proof point. The next $150/day will compound that signal across five channels.">
-    <div className="grid lg:grid-cols-3 gap-5 mb-6">
-      <Card>
-        <div className="text-[11.5px] uppercase tracking-[0.12em] mb-2" style={{ color: C.accent }}>$25 ad test</div>
-        <div className="text-[36px] font-semibold" style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>2 leads</div>
-        <p className="text-[12.5px] mt-1.5" style={{ color: C.textMute }}>Proven CPL of $12.50 against an AOV of ~$1,800.</p>
-      </Card>
-      <Card>
-        <div className="text-[11.5px] uppercase tracking-[0.12em] mb-2" style={{ color: C.accent }}>Target ad spend</div>
-        <div className="text-[36px] font-semibold" style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>$150/day</div>
-        <p className="text-[12.5px] mt-1.5" style={{ color: C.textMute }}>Split + tested across Meta, Google, TikTok, Etsy Ads, eBay Promoted.</p>
-      </Card>
-      <Card>
-        <div className="text-[11.5px] uppercase tracking-[0.12em] mb-2" style={{ color: C.accent }}>Founder content</div>
-        <div className="text-[36px] font-semibold" style={{ color: C.text, fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>200+</div>
-        <p className="text-[12.5px] mt-1.5" style={{ color: C.textMute }}>Reels, TikToks, and UGC-style edits already produced in-house.</p>
-      </Card>
-    </div>
-    <Card>
-      <div className="text-[11.5px] uppercase tracking-[0.12em] mb-3" style={{ color: C.textMute }}>Active channels</div>
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        {['Meta (FB + IG)', 'Google', 'TikTok', 'Etsy Ads', 'eBay Promoted'].map((ch, i) => (
-          <div key={i} className="rounded-[10px] px-3 py-2.5 text-center text-[13px] font-medium"
-            style={{ background: C.bgAlt, border: '1px solid ' + C.border, color: C.text }}>
-            {ch}
-          </div>
-        ))}
-      </div>
-
-      {/* Placeholder for content examples */}
-      <div className="mt-4 rounded-[12px] p-4 flex items-center gap-3"
-        style={{ background: 'rgba(212,175,55,0.06)', border: '1px dashed ' + C.border }}>
-        <ImageIcon size={18} style={{ color: C.accent }} />
-        <div className="text-[12.5px]" style={{ color: C.textMute }}>
-          <strong style={{ color: C.text }}>Content examples</strong> — share your top-performing Reels / TikToks (links or screenshots) and we'll embed them here in a swipeable carousel.
-        </div>
-      </div>
-    </Card>
   </Section>
 );
 
@@ -1721,7 +1606,7 @@ const fmtK = (n) => '$' + Math.round(n / 1000) + 'K';
 const ThreeYearProjection = () => (
   <Section id="projection" label="3-Year Outlook" withDivider
     title="Engagement rings are the wedge. Jewelry expansion compounds the LTV."
-    intro="Once we hit 100 rings/month, we open the second act: wedding bands, anniversary jewelry, lab-grown studs, tennis bracelets, necklaces — sold to the same customers we already converted.">
+    intro="Engagement rings are the customer-acquisition wedge. Wedding bands, anniversary jewelry, studs, and tennis bracelets unlock real lifetime value — and the reseller network becomes a recurring distribution channel.">
     <Card testid="projection-chart">
       <div style={{ width: '100%', height: 320 }}>
         <ResponsiveContainer>
@@ -2268,8 +2153,8 @@ const ChatWidget = () => {
 const Footer = () => (
   <footer className="border-t mt-6" style={{ borderColor: C.border, color: C.textDim }}>
     <div className="max-w-6xl mx-auto px-5 sm:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11.5px]">
-      <div className="flex items-center gap-2">
-        <Diamond size={11} style={{ color: C.accent }} />
+      <div className="flex items-center gap-2" data-testid="pitch-footer-logo">
+        <img src="/tlj-logomark.png" alt="The Local Jewel" className="w-5 h-5 object-contain opacity-90" draggable="false" />
         <span>The Local Jewel — Custom diamond jewelry, Orlando, FL · IGI / GIA certified</span>
       </div>
       <div>© {new Date().getFullYear()} · Confidential · Do not share without consent</div>
