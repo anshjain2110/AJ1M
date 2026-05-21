@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Package, Plus, LogOut, Clock, Loader2, ChevronDown, ChevronUp, Send, Gem, Truck, CheckCircle, PenTool, Factory, Image as ImageIcon, MessageCircle, ExternalLink } from 'lucide-react';
+import { FileText, Package, Plus, LogOut, Clock, Loader2, ChevronDown, ChevronUp, Send, Gem, Truck, CheckCircle, PenTool, Factory, Image as ImageIcon, MessageCircle, ExternalLink, Check } from 'lucide-react';
 import axios from 'axios';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -81,6 +81,26 @@ export default function DashboardPage() {
       setLeadDetail(res.data);
     } catch (e) { console.error(e); }
     setSendingComment(false);
+  };
+
+  const [approving, setApproving] = useState(false);
+  const approveAndMoveToProduction = async () => {
+    if (!expandedLead || approving) return;
+    if (!window.confirm('Approve this design and move to production? This will lock the current renders and start fabrication.')) return;
+    setApproving(true);
+    try {
+      await axios.post(`${BACKEND_URL}/api/me/leads/${expandedLead}/approve`, {}, { headers });
+      const [d, l] = await Promise.all([
+        axios.get(`${BACKEND_URL}/api/me/leads/${expandedLead}`, { headers }),
+        axios.get(`${BACKEND_URL}/api/me/leads`, { headers }),
+      ]);
+      setLeadDetail(d.data);
+      setLeads(l.data.leads || []);
+    } catch (e) {
+      alert('Could not approve right now. Please try again or contact us.');
+      console.error(e);
+    }
+    setApproving(false);
   };
 
   const handleLogout = () => { localStorage.removeItem('tlj_token'); localStorage.removeItem('tlj_user'); navigate('/'); };
@@ -229,7 +249,6 @@ export default function DashboardPage() {
                                   <span className="text-[18px] font-semibold" style={{ color: 'var(--lj-text)' }}>${q.total?.toLocaleString()}</span>
                                   {q.notes && <p className="text-[13px] mt-0.5" style={{ color: 'var(--lj-muted)' }}>{q.notes}</p>}
                                 </div>
-                                <span className="px-2 py-0.5 rounded-full text-[11px] font-medium capitalize" style={{ background: 'rgba(15,94,76,0.08)', color: 'var(--lj-accent)' }}>{q.status}</span>
                               </div>
                             ))}
                           </div>
@@ -273,6 +292,35 @@ export default function DashboardPage() {
                                 </a>
                               ))}
                             </div>
+
+                            {/* Approve & move to production */}
+                            {(detail.lead.order_stage || 'design_quotation') === 'design_quotation' && (
+                              <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--lj-border)' }}>
+                                <p className="text-[13px] mb-3 leading-[1.5]" style={{ color: 'var(--lj-muted)' }}>
+                                  Happy with these renders? Approve to lock the design and we'll move your ring into production.
+                                </p>
+                                <button
+                                  onClick={approveAndMoveToProduction}
+                                  disabled={approving}
+                                  data-testid="approve-and-produce-button"
+                                  className="w-full min-h-[46px] px-5 rounded-[12px] font-medium text-[15px] flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.99] disabled:opacity-60"
+                                  style={{ background: 'var(--lj-accent)', color: '#FFFFFF' }}>
+                                  {approving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                                  {approving ? 'Sending to production...' : 'Approve & move to production'}
+                                </button>
+                                <p className="mt-2 text-[11.5px] text-center" style={{ color: 'var(--lj-muted)' }}>
+                                  This locks the current design. Want a change? Send a comment below instead.
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Already approved indicator */}
+                            {detail.lead.order_stage && detail.lead.order_stage !== 'design_quotation' && (
+                              <div className="mt-4 px-3 py-2.5 rounded-[10px] flex items-center gap-2" style={{ background: 'rgba(15,94,76,0.06)', border: '1px solid rgba(15,94,76,0.18)' }}>
+                                <Check size={15} style={{ color: 'var(--lj-accent)' }} />
+                                <span className="text-[13px]" style={{ color: 'var(--lj-text)' }}>You approved this design. It's in production.</span>
+                              </div>
+                            )}
                           </div>
                         )}
 

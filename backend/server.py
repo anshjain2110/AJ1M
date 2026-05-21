@@ -600,6 +600,7 @@ async def submit_lead(req: LeadSubmitRequest, request: Request):
         "budget": req.answers.get("budget"), "has_inspiration": req.answers.get("has_inspiration"),
         "inspiration_links": req.answers.get("inspiration_links", []),
         "inspiration_files": req.answers.get("inspiration_files", []),
+        "inspiration_notes": req.answers.get("inspiration_notes", ""),
         "sms_opt_in": req.sms_opt_in or False,
         "attribution": {**req.attribution, "ip_address": client_ip},
         "status": "new",
@@ -826,6 +827,40 @@ async def add_customer_comment(lead_id: str, req: CommentCreate, user=Depends(ge
     comment = {"text": req.text, "author": user.get("first_name", "Customer"), "role": "customer", "created_at": datetime.now(timezone.utc)}
     await db.leads.update_one({"lead_id": lead_id}, {"$push": {"comments": comment}})
     return {"status": "added", "comment": serialize_doc(comment)}
+
+@app.post("/api/me/leads/{lead_id}/approve")
+async def customer_approve_design(lead_id: str, user=Depends(get_current_user)):
+    """Customer approves the CAD/renders and moves the order into production.
+    Accepts any draft/sent quotes on the lead and bumps lead order_stage to in_production."""
+    lead = await db.leads.find_one({"lead_id": lead_id, "user_id": user["user_id"]})
+    if not lead:
+        raise HTTPException(404, "Lead not found")
+    if not lead.get("cad_renders"):
+        raise HTTPException(400, "No renders to approve yet")
+    if lead.get("order_stage") and lead["order_stage"] != "design_quotation":
+        return {"status": "already_in_production", "order_stage": lead["order_stage"]}
+
+    now = datetime.now(timezone.utc)
+    # Mark all pending quotes accepted
+    await db.quotes.update_many(
+        {"lead_id": lead_id, "status": {"$in": ["draft", "sent", "viewed", None]}},
+        {"$set": {"status": "accepted", "accepted_at": now, "updated_at": now}},
+    )
+    # Move stage to in_production and log a system comment
+    sys_comment = {
+        "text": "Customer approved the design. Moved to production.",
+        "author": user.get("first_name", "Customer"),
+        "role": "system",
+        "created_at": now,
+    }
+    await db.leads.update_one(
+        {"lead_id": lead_id},
+        {
+            "$set": {"order_stage": "in_production", "approved_at": now, "updated_at": now},
+            "$push": {"comments": sys_comment},
+        },
+    )
+    return {"status": "approved", "order_stage": "in_production"}
 
 @app.get("/api/me/orders")
 async def get_my_orders(user=Depends(get_current_user)):

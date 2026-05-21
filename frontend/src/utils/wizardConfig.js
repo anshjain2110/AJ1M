@@ -101,10 +101,16 @@ export const RING_SIZES = [
 // Branching logic: determines the flow of screens based on answers
 export function getScreenFlow(answers) {
   const flow = ['landing']; // Screen 0
-  flow.push('how_it_works'); // Interstitial — explains the 3-step process
+  flow.push('how_it_works'); // Interstitial, explains the 3-step process
   flow.push('product_type'); // Screen 1
   
   const product = answers.product_type;
+  
+  // Inspiration — moved up: right after "what are you shopping for"
+  flow.push('has_inspiration');
+  if (answers.has_inspiration === 'yes') {
+    flow.push('inspiration_upload');
+  }
   
   // Screen 2: Setting Style (Engagement Ring or Wedding Bands only)
   if (product === 'engagement_ring' || product === 'wedding_bands') {
@@ -121,10 +127,7 @@ export function getScreenFlow(answers) {
   // Screen 5: Carat Size
   flow.push('carat_range');
   
-  // Screen 6: Priority
-  flow.push('priority');
-  
-  // Screen 7: Metal Preference (skip for Loose Diamond AND Tennis Bracelet — already asked in bracelet specifics)
+  // Screen 7: Metal Preference (skip for Loose Diamond AND Tennis Bracelet, already asked in bracelet specifics)
   if (product !== 'loose_diamond' && product !== 'tennis_bracelet') {
     flow.push('metal');
   }
@@ -137,15 +140,6 @@ export function getScreenFlow(answers) {
       flow.push('ring_size');
     }
   }
-  
-  // Screen 10: Inspiration
-  flow.push('has_inspiration');
-  if (answers.has_inspiration === 'yes') {
-    flow.push('inspiration_upload');
-  }
-  
-  // Screen 11: Value Reveal
-  flow.push('value_reveal');
   
   // Screen 12: Contact
   flow.push('contact');

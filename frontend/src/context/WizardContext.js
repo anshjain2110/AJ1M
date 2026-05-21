@@ -21,6 +21,7 @@ const initialState = {
   submitResult: null,
   uploadedFiles: [],
   inspirationLinks: [],
+  inspirationNotes: '',
   isAdvancing: false,
 };
 
@@ -78,6 +79,8 @@ function wizardReducer(state, action) {
       return { ...state, uploadedFiles: state.uploadedFiles.filter((_, i) => i !== action.index) };
     case 'SET_INSPIRATION_LINKS':
       return { ...state, inspirationLinks: action.links };
+    case 'SET_INSPIRATION_NOTES':
+      return { ...state, inspirationNotes: action.notes };
     case 'RESET':
       localStorage.removeItem(STORAGE_KEY);
       return { ...initialState, anonymousId: getAnonymousId(), sessionId: getSessionId() };
@@ -123,6 +126,7 @@ export function WizardProvider({ children }) {
             frozenStepTotal: parsed.frozenStepTotal,
             uploadedFiles: parsed.uploadedFiles || [],
             inspirationLinks: parsed.inspirationLinks || [],
+            inspirationNotes: parsed.inspirationNotes || '',
           }});
         }
       }
@@ -154,9 +158,10 @@ export function WizardProvider({ children }) {
       frozenStepTotal: state.frozenStepTotal,
       uploadedFiles: state.uploadedFiles,
       inspirationLinks: state.inspirationLinks,
+      inspirationNotes: state.inspirationNotes,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
-  }, [state.currentScreen, state.answers, state.leadId, state.frozenStepTotal, state.uploadedFiles, state.inspirationLinks]);
+  }, [state.currentScreen, state.answers, state.leadId, state.frozenStepTotal, state.uploadedFiles, state.inspirationLinks, state.inspirationNotes]);
 
   // Track step views and timing when screen changes
   useEffect(() => {
@@ -274,6 +279,7 @@ export function WizardProvider({ children }) {
         ...s.answers,
         inspiration_files: s.uploadedFiles,
         inspiration_links: s.inspirationLinks,
+        inspiration_notes: s.inspirationNotes,
       };
       
       const res = await axios.post(`${BACKEND_URL}/api/leads/submit`, {

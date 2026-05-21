@@ -9,7 +9,6 @@ import DiamondShapeScreen from '../components/wizard/DiamondShapeScreen';
 import BraceletScreen from '../components/wizard/screens/BraceletScreen';
 import RingSizeScreen from '../components/wizard/screens/RingSizeScreen';
 import InspirationScreen from '../components/wizard/screens/InspirationScreen';
-import ValueRevealScreen from '../components/wizard/screens/ValueRevealScreen';
 import ContactScreen from '../components/wizard/screens/ContactScreen';
 import ThankYouScreen from '../components/wizard/screens/ThankYouScreen';
 import {
@@ -19,7 +18,6 @@ import {
   SETTING_STYLES,
   DIAMOND_SHAPES,
   CARAT_RANGES,
-  PRIORITIES,
   METALS,
   BUDGETS,
 } from '../utils/wizardConfig';
@@ -96,16 +94,9 @@ export default function WizardPage() {
         );
       
       case 'priority':
-        return (
-          <SingleSelectScreen
-            screenId="priority"
-            title="If you had to prioritize one thing..."
-            subtitle="What matters most to you?"
-            options={PRIORITIES}
-            field="priority"
-            showDesc={true}
-          />
-        );
+      case 'value_reveal':
+        // Deprecated screens, kept here as no-op so old saved sessions don't crash. They are no longer in the flow.
+        return <LandingScreen />;
       
       case 'metal':
         return (
@@ -159,9 +150,6 @@ export default function WizardPage() {
       
       case 'inspiration_upload':
         return <InspirationScreen />;
-      
-      case 'value_reveal':
-        return <ValueRevealScreen />;
       
       case 'contact':
         return <ContactScreen />;
