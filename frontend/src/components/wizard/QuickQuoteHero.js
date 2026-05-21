@@ -9,7 +9,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
 // Phone animation sequence: inspiration → designing → renders → real video → final spec card
 const PHONE_STAGES = [
-  { kind: 'inspiration', src: '/hero-inspiration-1.png', label: 'You shared inspiration' },
+  { kind: 'imessage',    src: '/hero-inspiration-ring.jpeg', label: 'You shared inspiration' },
   { kind: 'designing',   src: null,                       label: 'Rendering in 3D...' },
   { kind: 'render',      src: '/hero-render-3.jpeg',      label: 'Render 1 of 3' },
   { kind: 'render',      src: '/hero-render-1.jpeg',      label: 'Render 2 of 3' },
@@ -48,6 +48,7 @@ export default function QuickQuoteHero() {
       stage.kind === 'final'      ? 4800 :
       stage.kind === 'video'      ? 5200 :
       stage.kind === 'designing'  ? 1700 :
+      stage.kind === 'imessage'   ? 4200 :
       stage.kind === 'inspiration'? 3000 :
                                     2400;
     const t = setTimeout(() => setStageIdx(i => (i + 1) % PHONE_STAGES.length), delay);
@@ -330,6 +331,10 @@ const PhoneScreen = ({ stage }) => {
     );
   }
 
+  if (stage.kind === 'imessage') {
+    return <IMessageScreen src={stage.src} />;
+  }
+
   if (stage.kind === 'inspiration') {
     return (
       <div className="w-full h-full flex flex-col" style={{ background: '#F5F5F7' }}>
@@ -471,3 +476,87 @@ const PhoneScreen = ({ stage }) => {
     </div>
   );
 };
+
+/* ──────────── iMessage Chat Screen (native-looking) ──────────── */
+const IMessageScreen = ({ src }) => (
+  <div className="w-full h-full flex flex-col" style={{ background: '#FFFFFF' }}>
+    {/* status bar */}
+    <div className="w-full pt-12 pb-1 px-4 flex items-center justify-between text-[10.5px] font-semibold" style={{ color: '#1a1a1c' }}>
+      <span>9:41</span>
+      <span style={{ fontSize: 9 }}>●●●●●</span>
+    </div>
+
+    {/* iMessage header bar (contact name + back) */}
+    <div className="px-3 pb-2 pt-1 flex items-center justify-between"
+      style={{ background: 'rgba(244,244,247,0.85)', backdropFilter: 'blur(20px)', borderBottom: '0.5px solid rgba(0,0,0,0.08)' }}>
+      <div className="text-[14px] font-semibold leading-none" style={{ color: '#007AFF' }}>‹</div>
+      <div className="flex flex-col items-center -mt-1">
+        <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold mb-0.5"
+          style={{ background: 'linear-gradient(135deg, #B8B8BC 0%, #9A9A9F 100%)', color: '#FFFFFF' }}>
+          MS
+        </div>
+        <div className="text-[9.5px] leading-none flex items-center gap-1" style={{ color: '#1a1a1c' }}>
+          Mark <span style={{ color: '#9CA3AF', fontSize: 8 }}>›</span>
+        </div>
+      </div>
+      <div className="text-[12px]" style={{ color: '#007AFF' }}>⋯</div>
+    </div>
+
+    {/* Date stamp */}
+    <div className="px-3 pt-2 pb-1 text-center">
+      <span className="text-[9.5px]" style={{ color: '#9CA3AF' }}>
+        <strong style={{ color: '#6b7280' }}>iMessage</strong> · Today 9:38 AM
+      </span>
+    </div>
+
+    {/* Message bubbles */}
+    <div className="flex-1 px-3 pb-3 flex flex-col gap-1.5 overflow-hidden">
+      {/* Customer bubble (left/grey) */}
+      <div className="max-w-[88%] self-start">
+        <div className="px-3 py-1.5 rounded-[16px] text-[11px] leading-[1.35]"
+          style={{ background: '#E9E9EB', color: '#1a1a1c', borderBottomLeftRadius: 4 }}>
+          Hey - this is along the lines of what I'm looking for 💍
+        </div>
+      </div>
+
+      {/* Shared image — fills most of the chat */}
+      <div className="max-w-[78%] self-start">
+        <div className="rounded-[14px] overflow-hidden shadow-sm"
+          style={{ background: '#FFFFFF', border: '0.5px solid #E5E7EB' }}>
+          <img src={src} alt="Customer inspiration ring" className="w-full h-auto block" draggable="false" />
+        </div>
+      </div>
+
+      {/* Customer follow-up */}
+      <div className="max-w-[88%] self-start">
+        <div className="px-3 py-1.5 rounded-[16px] text-[11px] leading-[1.35]"
+          style={{ background: '#E9E9EB', color: '#1a1a1c', borderBottomLeftRadius: 4 }}>
+          Can you make this for me?
+        </div>
+      </div>
+
+      {/* TLJ reply (right/blue iMessage) */}
+      <div className="max-w-[82%] self-end mt-0.5">
+        <div className="px-3 py-1.5 rounded-[16px] text-[11px] leading-[1.35]"
+          style={{ background: '#0B93F6', color: '#FFFFFF', borderBottomRightRadius: 4 }}>
+          Absolutely. Sending 3D renders in 24h 🤝
+        </div>
+        <div className="text-[8.5px] text-right mt-0.5 pr-1" style={{ color: '#9CA3AF' }}>
+          Delivered
+        </div>
+      </div>
+    </div>
+
+    {/* iMessage input bar (decorative) */}
+    <div className="px-3 pb-3 pt-1 flex items-center gap-2"
+      style={{ background: 'rgba(244,244,247,0.85)', backdropFilter: 'blur(20px)', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+      <div className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-semibold flex-shrink-0"
+        style={{ background: '#E5E7EB', color: '#6b7280' }}>+</div>
+      <div className="flex-1 h-6 rounded-full px-3 flex items-center text-[9.5px]"
+        style={{ background: '#FFFFFF', border: '0.5px solid #D1D5DB', color: '#9CA3AF' }}>
+        iMessage
+      </div>
+      <div className="text-[10px]" style={{ color: '#9CA3AF' }}>🎤</div>
+    </div>
+  </div>
+);
