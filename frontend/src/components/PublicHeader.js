@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Phone, User } from 'lucide-react';
+import { Phone, User, Image as ImageIcon } from 'lucide-react';
 
 // Shared lightweight header for standalone public pages (Projects, etc.)
 // Mimics WizardShell's visual style but is router-aware, with no wizard state.
@@ -20,10 +20,11 @@ export default function PublicHeader() {
         <button
           onClick={() => navigate('/projects')}
           data-testid="public-header-projects"
-          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-colors duration-300 hover:bg-[#F0F0EE]"
+          className="flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-colors duration-300 hover:bg-[#F0F0EE]"
           style={{ color: 'var(--lj-accent)' }}
         >
-          Projects
+          <ImageIcon size={16} />
+          <span className="hidden sm:inline">Projects</span>
         </button>
         <a
           href="tel:+15857108292"

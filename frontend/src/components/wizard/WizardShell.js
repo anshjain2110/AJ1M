@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Phone, User } from 'lucide-react';
+import { ArrowLeft, Phone, User, Image as ImageIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useWizard } from '../../context/WizardContext';
 import { getCurrentStepNumber } from '../../utils/wizardConfig';
@@ -38,10 +38,11 @@ export default function WizardShell({ children, showBack = true, showProgress = 
             <button
               onClick={() => navigate('/projects')}
               data-testid="header-projects-link"
-              className="hidden sm:inline-flex items-center px-3 py-2 rounded-full text-sm font-medium transition-colors duration-300 hover:bg-[#F0F0EE]"
+              className="flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-colors duration-300 hover:bg-[#F0F0EE]"
               style={{ color: 'var(--lj-accent)' }}
             >
-              Projects
+              <ImageIcon size={16} />
+              <span className="hidden sm:inline">Projects</span>
             </button>
           )}
           <a href="tel:+15857108292" data-testid="landing-click-to-call-button" className="flex items-center gap-2 px-3 py-2 rounded-full text-sm transition-colors duration-300 hover:bg-[#F0F0EE]" style={{ color: 'var(--lj-accent)' }}>
