@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <sitemap>
-    <loc>https://thelocaljewel.com/api/sitemap.xml</loc>
-  </sitemap>
-</sitemapindex>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<url><loc>https://www.thelocaljewel.com/</loc><lastmod>2026-05-21</lastmod><changefreq>weekly</changefreq><priority>1.00</priority></url>
+<url><loc>https://www.thelocaljewel.com/projects</loc><lastmod>2026-05-21</lastmod><changefreq>weekly</changefreq><priority>0.90</priority></url>
+<url><loc>https://www.thelocaljewel.com/login</loc><lastmod>2026-05-21</lastmod><changefreq>monthly</changefreq><priority>0.30</priority></url>
+<url><loc>https://www.thelocaljewel.com/projects/4-41-carat-radiant-hidden-halo-engagement-ring</loc><lastmod>2026-05-16</lastmod><changefreq>monthly</changefreq><priority>0.80</priority></url>
+<url><loc>https://www.thelocaljewel.com/projects/3-40-carat-oval-side-stone-engagement-ring</loc><lastmod>2026-05-16</lastmod><changefreq>monthly</changefreq><priority>0.80</priority></url>
+<url><loc>https://www.thelocaljewel.com/projects/5-carat-oval-solitaire-engagement-ring</loc><lastmod>2026-05-16</lastmod><changefreq>monthly</changefreq><priority>0.80</priority></url>
+</urlset>

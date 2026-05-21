@@ -1337,6 +1337,7 @@ async def admin_create_project(req: ProjectPayload, admin=Depends(require_admin)
     doc["created_at"] = now
     doc["updated_at"] = now
     await db.projects.insert_one(doc)
+    await _regen_sitemap_safe()
     return _project_public_view({k: v for k, v in doc.items() if k != "_id"})
 
 @router.put("/projects/{project_id}")
@@ -1353,6 +1354,7 @@ async def admin_update_project(project_id: str, req: ProjectPayload, admin=Depen
     update["updated_at"] = datetime.now(timezone.utc)
     await db.projects.update_one({"project_id": project_id}, {"$set": update})
     doc = await db.projects.find_one({"project_id": project_id}, {"_id": 0})
+    await _regen_sitemap_safe()
     return _project_public_view(doc)
 
 @router.delete("/projects/{project_id}")
@@ -1360,7 +1362,19 @@ async def admin_delete_project(project_id: str, admin=Depends(require_admin)):
     result = await db.projects.delete_one({"project_id": project_id})
     if result.deleted_count == 0:
         raise HTTPException(404, "Project not found")
+    await _regen_sitemap_safe()
     return {"status": "deleted"}
+
+
+async def _regen_sitemap_safe():
+    """Best-effort static sitemap regen after a project mutation. Imported lazily to
+    avoid circular import with server.py at module load."""
+    try:
+        from server import regenerate_static_sitemap
+        await regenerate_static_sitemap()
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"sitemap regen after project change failed: {e}")
 
 
 # ── Admin: Projects Automation API Key (rotation) ───────────────────────

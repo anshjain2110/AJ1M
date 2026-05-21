@@ -97,6 +97,11 @@ async def lifespan(app: FastAPI):
     await db.projects.create_index("tags")
     await db.projects.create_index([("published", 1), ("featured", -1), ("position", 1)])
     await db.users.update_many({"phone": ""}, {"$unset": {"phone": ""}})
+    # Refresh static sitemap on every startup so production deploys always have fresh URLs
+    try:
+        await regenerate_static_sitemap()
+    except Exception as e:
+        logger.error(f"sitemap regen on startup failed: {e}")
     yield
     client.close()
 
@@ -1240,30 +1245,23 @@ async def pitch_chat(req: PitchChatRequest):
 
 from fastapi.responses import Response
 
-@app.get("/sitemap.xml", include_in_schema=False)
-@app.get("/api/sitemap.xml", include_in_schema=False)
-async def sitemap_xml(request: Request):
-    """Dynamic sitemap for Google Search Console. Includes static pages + all published projects."""
-    host = request.headers.get("x-forwarded-host") or request.headers.get("host") or "thelocaljewel.com"
-    scheme = request.headers.get("x-forwarded-proto") or "https"
-    base = f"{scheme}://{host}"
+SITE_BASE_URL = os.environ.get("SITE_BASE_URL", "https://www.thelocaljewel.com").rstrip("/")
+SITEMAP_STATIC_PATH = "/app/frontend/public/sitemap.xml"
+
+async def _build_sitemap_xml(base: str) -> str:
     now_iso = datetime.now(timezone.utc).date().isoformat()
-
     static_routes = [
-        ("/",              "1.00", "weekly"),
-        ("/projects",      "0.90", "weekly"),
-        ("/login",         "0.30", "monthly"),
+        ("/",         "1.00", "weekly"),
+        ("/projects", "0.90", "weekly"),
+        ("/login",    "0.30", "monthly"),
     ]
-
     parts = ['<?xml version="1.0" encoding="UTF-8"?>',
              '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
-
     for path, priority, changefreq in static_routes:
         parts.append(
             f"<url><loc>{base}{path}</loc><lastmod>{now_iso}</lastmod>"
             f"<changefreq>{changefreq}</changefreq><priority>{priority}</priority></url>"
         )
-
     try:
         cursor = db.projects.find(
             {"published": {"$ne": False}},
@@ -1271,8 +1269,7 @@ async def sitemap_xml(request: Request):
         )
         async for proj in cursor:
             slug = proj.get("slug")
-            if not slug:
-                continue
+            if not slug: continue
             last = proj.get("updated_at") or proj.get("created_at")
             lastmod = last.date().isoformat() if hasattr(last, "date") else now_iso
             parts.append(
@@ -1280,10 +1277,31 @@ async def sitemap_xml(request: Request):
                 f"<changefreq>monthly</changefreq><priority>0.80</priority></url>"
             )
     except Exception as e:
-        logger.error(f"sitemap projects fetch failed: {e}")
-
+        logger.error(f"sitemap fetch failed: {e}")
     parts.append('</urlset>')
-    return Response(content="\n".join(parts), media_type="application/xml")
+    return "\n".join(parts)
+
+async def regenerate_static_sitemap():
+    """Write the full sitemap to /app/frontend/public/sitemap.xml so the root-domain
+    /sitemap.xml is served as proper XML by the static host (no SPA fallback risk)."""
+    try:
+        xml = await _build_sitemap_xml(SITE_BASE_URL)
+        async with aiofiles.open(SITEMAP_STATIC_PATH, "w") as f:
+            await f.write(xml)
+        logger.info(f"Regenerated static sitemap with {xml.count('<loc>')} URLs")
+    except Exception as e:
+        logger.error(f"Failed to write static sitemap: {e}")
+
+@app.get("/sitemap.xml", include_in_schema=False)
+@app.get("/api/sitemap.xml", include_in_schema=False)
+async def sitemap_xml(request: Request):
+    """Dynamic sitemap. Used by Googlebot directly via /api/sitemap.xml. The static
+    /sitemap.xml file in frontend/public is kept in sync on startup + project changes."""
+    host = request.headers.get("x-forwarded-host") or request.headers.get("host") or "www.thelocaljewel.com"
+    scheme = request.headers.get("x-forwarded-proto") or "https"
+    base = os.environ.get("SITE_BASE_URL") or f"{scheme}://{host}"
+    xml = await _build_sitemap_xml(base.rstrip("/"))
+    return Response(content=xml, media_type="application/xml")
 
 
 @app.get("/robots.txt", include_in_schema=False)
