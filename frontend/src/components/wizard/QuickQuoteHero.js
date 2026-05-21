@@ -7,16 +7,29 @@ import QuickQuoteModal from './QuickQuoteModal';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
-// Phone animation sequence: inspiration → designing → 4 renders → final with price
+// Phone animation sequence: inspiration → designing → renders → real video → final spec card
 const PHONE_STAGES = [
   { kind: 'inspiration', src: '/hero-inspiration-1.png', label: 'You shared inspiration' },
-  { kind: 'inspiration', src: '/hero-inspiration-2.png', label: 'Our designers see it' },
   { kind: 'designing',   src: null,                       label: 'Rendering in 3D...' },
-  { kind: 'render',      src: '/hero-render-3.jpeg',      label: 'Render 1 of 4' },
-  { kind: 'render',      src: '/hero-render-1.jpeg',      label: 'Render 2 of 4' },
-  { kind: 'render',      src: '/hero-render-2.jpeg',      label: 'Render 3 of 4' },
+  { kind: 'render',      src: '/hero-render-3.jpeg',      label: 'Render 1 of 3' },
+  { kind: 'render',      src: '/hero-render-1.jpeg',      label: 'Render 2 of 3' },
+  { kind: 'render',      src: '/hero-render-2.jpeg',      label: 'Render 3 of 3' },
+  { kind: 'video',       src: '/hero-final-video.mp4',    label: 'Final piece in your hand' },
   { kind: 'final',       src: '/hero-render-4.jpeg',      label: 'Your custom quote', price: '$2,850' },
 ];
+
+// Detailed quote spec — shown on the final phone screen + floating card
+const QUOTE_SPECS = {
+  name: 'Three Stone Trap Mark',
+  total_weight: '6.2 CT total',
+  metal: '14K White Gold',
+  style: 'Three Stone',
+  center: { label: 'Center stone', value: 'Emerald Cut · D/E/F · VVS1/VVS2' },
+  sides:  { label: 'Side stones',  value: '2 CT total · 1 CT × 2 Trapezoid' },
+  setting:{ label: 'Setting',      value: '1.2 CT Princess · D · VVS2' },
+  cert:   'IGI Certified',
+  price:  '$2,850',
+};
 
 export default function QuickQuoteHero() {
   const [linkInput, setLinkInput] = useState('');
@@ -30,8 +43,13 @@ export default function QuickQuoteHero() {
   // Cycle phone animation
   useEffect(() => {
     const stage = PHONE_STAGES[stageIdx];
-    // Final card lingers a little longer for read time
-    const delay = stage.kind === 'final' ? 3800 : stage.kind === 'designing' ? 1700 : 2400;
+    // Each stage has a custom dwell time
+    const delay =
+      stage.kind === 'final'      ? 4800 :
+      stage.kind === 'video'      ? 5200 :
+      stage.kind === 'designing'  ? 1700 :
+      stage.kind === 'inspiration'? 3000 :
+                                    2400;
     const t = setTimeout(() => setStageIdx(i => (i + 1) % PHONE_STAGES.length), delay);
     return () => clearTimeout(t);
   }, [stageIdx]);
@@ -211,7 +229,7 @@ export default function QuickQuoteHero() {
             </div>
           </div>
 
-          {/* Floating price tag — appears with the final render */}
+          {/* Floating quote card — appears with the final spec stage */}
           <AnimatePresence>
             {stage.kind === 'final' && (
               <motion.div
@@ -220,14 +238,21 @@ export default function QuickQuoteHero() {
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ type: 'spring', stiffness: 230, damping: 20, delay: 0.15 }}
                 data-testid="phone-floating-price"
-                className="absolute right-2 lg:right-0 top-12 rounded-2xl px-4 py-3 shadow-2xl"
+                className="absolute right-1 lg:-right-2 top-8 rounded-2xl px-4 py-3.5 shadow-2xl max-w-[180px]"
                 style={{
-                  background: 'var(--lj-text)', color: '#FFFFFF', minWidth: 130,
+                  background: 'var(--lj-text)', color: '#FFFFFF',
                   boxShadow: '0 14px 40px rgba(15,94,76,0.35)',
                 }}>
-                <div className="text-[10px] uppercase tracking-[0.18em] opacity-70 mb-1">Your custom quote</div>
-                <div className="text-[28px] font-semibold leading-none" style={{ fontFeatureSettings: '"tnum"' }}>$2,850</div>
-                <div className="text-[10.5px] mt-1.5 opacity-70">3.0ct emerald · 14k WG</div>
+                <div className="text-[9.5px] uppercase tracking-[0.2em] opacity-70 mb-1">Your custom quote</div>
+                <div className="text-[32px] font-semibold leading-none tracking-[-0.02em]" style={{ fontFeatureSettings: '"tnum"' }}>
+                  {QUOTE_SPECS.price}
+                </div>
+                <div className="text-[10.5px] mt-1.5 opacity-80 leading-[1.35]">
+                  {QUOTE_SPECS.total_weight} · {QUOTE_SPECS.style}
+                </div>
+                <div className="text-[10px] mt-0.5 opacity-65 leading-[1.35]">
+                  {QUOTE_SPECS.cert}
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -313,8 +338,8 @@ const PhoneScreen = ({ stage }) => {
           <div className="text-[10px] uppercase tracking-[0.12em] mb-1.5" style={{ color: '#6b7280' }}>Your inspiration</div>
         </div>
         <div className="flex-1 px-3.5 pb-4">
-          <div className="w-full h-full rounded-[14px] overflow-hidden shadow-md" style={{ border: '1px solid #e5e7eb' }}>
-            <img src={stage.src} alt="Inspiration board" className="w-full h-full object-cover" draggable="false" />
+          <div className="w-full h-full rounded-[14px] overflow-hidden shadow-md" style={{ border: '1px solid #e5e7eb', background: '#FFFFFF' }}>
+            <img src={stage.src} alt="Inspiration" className="w-full h-full object-cover object-top" draggable="false" />
           </div>
         </div>
         <div className="px-4 pb-3 flex items-center gap-2">
@@ -327,13 +352,113 @@ const PhoneScreen = ({ stage }) => {
     );
   }
 
-  // render + final
-  const isFinal = stage.kind === 'final';
+  if (stage.kind === 'video') {
+    return (
+      <div className="w-full h-full flex flex-col" style={{ background: '#0a0a0c' }}>
+        {/* status bar — inverted */}
+        <div className="w-full pt-12 pb-2.5 px-4 flex items-center justify-between text-[11px] font-semibold" style={{ color: '#FFFFFF' }}>
+          <span>9:41</span>
+          <span style={{ fontSize: 9, opacity: 0.85 }}>●●●●●</span>
+        </div>
+        <div className="px-3.5 pb-1.5">
+          <div className="text-[10px] uppercase tracking-[0.12em]" style={{ color: 'rgba(255,255,255,0.7)' }}>{stage.label}</div>
+        </div>
+        <div className="flex-1 px-3.5 pb-3 relative">
+          <div className="w-full h-full rounded-[14px] overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
+            <video
+              src={stage.src}
+              autoPlay
+              muted
+              loop
+              playsInline
+              data-testid="phone-final-video"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          {/* LIVE pulse */}
+          <div className="absolute top-1 right-5 flex items-center gap-1.5 px-2 py-1 rounded-full" style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}>
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#F87171' }} />
+            <span className="text-[9px] uppercase tracking-[0.16em] font-semibold" style={{ color: '#FFFFFF' }}>The real piece</span>
+          </div>
+        </div>
+        <div className="px-4 pb-3.5 flex items-center gap-2">
+          <Sparkles size={12} style={{ color: 'var(--lj-accent)' }} />
+          <div className="text-[11px]" style={{ color: 'rgba(255,255,255,0.75)' }}>
+            Mark's finished ring, shipped from Orlando
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (stage.kind === 'final') {
+    // Detailed quote spec sheet
+    const specs = QUOTE_SPECS;
+    return (
+      <div className="w-full h-full flex flex-col" style={{ background: '#FFFFFF' }}>
+        {baseHeader}
+        <div className="px-3.5 pt-1 pb-1.5 flex items-center justify-between">
+          <div className="text-[10px] uppercase tracking-[0.14em] font-semibold" style={{ color: 'var(--lj-accent)' }}>Your custom quote</div>
+          <div className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(15,94,76,0.10)', color: 'var(--lj-accent)' }}>
+            {specs.cert}
+          </div>
+        </div>
+
+        {/* Small ring thumbnail */}
+        <div className="px-3.5 pb-2">
+          <div className="w-full h-24 rounded-[12px] overflow-hidden flex items-center justify-center"
+            style={{ background: '#FAFAF9', border: '1px solid #e5e7eb' }}>
+            <img src={stage.src} alt="Final render" className="h-full w-full object-contain p-1.5" draggable="false" />
+          </div>
+        </div>
+
+        <div className="px-3.5 pb-1">
+          <div className="text-[12px] font-semibold leading-tight" style={{ color: '#0a0a0c', fontFamily: '"Cormorant Garamond","Playfair Display",Georgia,serif' }}>
+            {specs.name}
+          </div>
+          <div className="text-[9.5px] mt-0.5 mb-2" style={{ color: '#6b7280' }}>
+            {specs.total_weight} · {specs.style} · {specs.metal}
+          </div>
+        </div>
+
+        {/* Spec list */}
+        <div className="flex-1 px-3.5 pb-2 overflow-hidden">
+          <div className="rounded-[10px] divide-y" style={{ background: '#FAFAF9', borderColor: '#EEEEEC' }}>
+            {[specs.center, specs.sides, specs.setting].map((s, i) => (
+              <div key={i} className="px-2.5 py-1.5 flex items-start justify-between gap-2" style={{ borderColor: '#EEEEEC' }}>
+                <span className="text-[9.5px] uppercase tracking-[0.1em] flex-shrink-0 pt-0.5" style={{ color: '#9CA3AF' }}>
+                  {s.label}
+                </span>
+                <span className="text-[10px] font-medium text-right leading-[1.3]" style={{ color: '#1a1a1c' }}>
+                  {s.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Price footer */}
+        <div className="px-3.5 pb-3.5">
+          <div className="rounded-[12px] p-2.5 flex items-center justify-between" style={{ background: 'var(--lj-text)' }}>
+            <div>
+              <div className="text-[8.5px] uppercase tracking-[0.18em]" style={{ color: 'rgba(255,255,255,0.6)' }}>All in</div>
+              <div className="text-[20px] font-semibold leading-none mt-0.5" style={{ color: '#FFFFFF', fontFeatureSettings: '"tnum"' }}>{specs.price}</div>
+            </div>
+            <div className="text-[9.5px] px-2.5 py-1.5 rounded-full font-semibold" style={{ background: 'var(--lj-accent)', color: '#FFFFFF' }}>
+              Approve →
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // render
   return (
-    <div className="w-full h-full flex flex-col" style={{ background: isFinal ? '#FFFFFF' : '#FAFAF9' }}>
+    <div className="w-full h-full flex flex-col" style={{ background: '#FAFAF9' }}>
       {baseHeader}
       <div className="px-3.5 pb-1.5">
-        <div className="text-[10px] uppercase tracking-[0.12em]" style={{ color: isFinal ? 'var(--lj-accent)' : '#6b7280' }}>
+        <div className="text-[10px] uppercase tracking-[0.12em]" style={{ color: '#6b7280' }}>
           {stage.label}
         </div>
       </div>
@@ -343,19 +468,6 @@ const PhoneScreen = ({ stage }) => {
           <img src={stage.src} alt="Render" className="w-full h-full object-contain p-2" draggable="false" />
         </div>
       </div>
-      {isFinal && (
-        <div className="px-4 pb-3.5">
-          <div className="rounded-[12px] p-3 flex items-center justify-between" style={{ background: 'rgba(15,94,76,0.06)', border: '1px solid rgba(15,94,76,0.18)' }}>
-            <div>
-              <div className="text-[9.5px] uppercase tracking-[0.14em]" style={{ color: 'var(--lj-accent)' }}>Price</div>
-              <div className="text-[16px] font-semibold leading-none mt-0.5" style={{ color: '#0a0a0c' }}>$2,850</div>
-            </div>
-            <div className="text-[10px] px-2 py-1 rounded-full" style={{ background: 'var(--lj-accent)', color: '#FFFFFF' }}>
-              Approve →
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

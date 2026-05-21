@@ -236,9 +236,11 @@ async def wizard_restore(lead_id: str):
 async def upload_files(files: List[UploadFile] = File(...)):
     from storage import upload_file as cloud_upload
     uploaded = []
-    for file in files[:3]:
+    # Allow up to 8 files per call (admin journey/gallery batches). Per-file size cap below.
+    for file in files[:8]:
         content = await file.read()
-        if len(content) > 10 * 1024 * 1024:
+        # 100 MB cap — fits short product videos (HEIC, MP4, MOV)
+        if len(content) > 100 * 1024 * 1024:
             continue
         try:
             result = cloud_upload(
@@ -247,11 +249,13 @@ async def upload_files(files: List[UploadFile] = File(...)):
                 content_type=file.content_type,
                 subfolder="uploads",
             )
+            ct = (result.get("content_type") or "").lower()
             uploaded.append({
                 "filename": result["filename"],
                 "original_name": result["original_name"],
                 "storage_path": result["storage_path"],
                 "content_type": result["content_type"],
+                "media_type": "video" if ct.startswith("video/") else "image",
                 "url": f"/api/uploads/cloud/{result['storage_path']}",
             })
         except Exception as e:
@@ -262,7 +266,13 @@ async def upload_files(files: List[UploadFile] = File(...)):
             filepath = os.path.join(UPLOAD_DIR, filename)
             async with aiofiles.open(filepath, "wb") as f:
                 await f.write(content)
-            uploaded.append({"filename": filename, "original_name": file.filename, "url": f"/api/uploads/files/{filename}"})
+            ct = (file.content_type or "").lower()
+            uploaded.append({
+                "filename": filename,
+                "original_name": file.filename,
+                "media_type": "video" if ct.startswith("video/") else "image",
+                "url": f"/api/uploads/files/{filename}",
+            })
     return {"files": uploaded}
 
 @app.get("/api/uploads/cloud/{path:path}")

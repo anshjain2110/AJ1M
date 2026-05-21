@@ -1261,15 +1261,22 @@ class ProjectSpec(BaseModel):
     cert_number: Optional[str] = ""
     cert_link: Optional[str] = ""
 
+class ProjectMediaItem(BaseModel):
+    url: str
+    media_type: str = "image"   # 'image' | 'video'
+    caption: Optional[str] = ""
+
 class ProjectJourneyStep(BaseModel):
     label: str
     description: Optional[str] = ""
-    image_url: Optional[str] = ""
+    image_url: Optional[str] = ""           # kept for back-compat (single image)
+    media: List[ProjectMediaItem] = []      # NEW — multi-media (images + videos)
 
 class ProjectGalleryImage(BaseModel):
     url: str
     caption: Optional[str] = ""
-    type: Optional[str] = "final"  # render | final | journey
+    type: Optional[str] = "final"           # render | final | journey
+    media_type: Optional[str] = "image"     # NEW — 'image' | 'video'
 
 class ProjectCustomerStory(BaseModel):
     name: Optional[str] = ""

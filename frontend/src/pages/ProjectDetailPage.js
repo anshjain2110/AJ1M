@@ -167,7 +167,17 @@ export default function ProjectDetailPage() {
               style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}
             >
               {activeImage ? (
-                <img src={activeImage} alt={project.title} className="w-full h-full object-cover" />
+                (() => {
+                  // activeImage can be either a URL string or a media object
+                  const isUrl = typeof activeImage === 'string';
+                  const url = isUrl ? activeImage : activeImage.url;
+                  const isVideo = !isUrl && activeImage.media_type === 'video';
+                  return isVideo ? (
+                    <video src={url} controls autoPlay muted loop playsInline className="w-full h-full object-cover" data-testid="project-active-video" />
+                  ) : (
+                    <img src={url} alt={project.title} className="w-full h-full object-cover" />
+                  );
+                })()
               ) : (
                 <div className="w-full h-full flex items-center justify-center" style={{ color: 'var(--lj-muted)' }}>No image</div>
               )}
@@ -180,24 +190,37 @@ export default function ProjectDetailPage() {
             </div>
             {gallery.length > 0 && (
               <div className="mt-3 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-                {[{ url: project.hero_image_url, caption: 'Hero', type: 'final' }, ...gallery].filter(g => g.url).map((g, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveImage(g.url)}
-                    data-testid={`gallery-thumb-${i}`}
-                    className="relative flex-shrink-0 w-[68px] h-[68px] sm:w-[78px] sm:h-[78px] rounded-[10px] overflow-hidden transition-all"
-                    style={{
-                      border: activeImage === g.url ? '2px solid var(--lj-accent)' : '1px solid var(--lj-border)',
-                      opacity: activeImage === g.url ? 1 : 0.85,
-                    }}
-                  >
-                    <img src={g.url} alt={g.caption || `View ${i + 1}`} className="w-full h-full object-cover" />
-                    {g.type === 'render' && (
-                      <span className="absolute bottom-0 left-0 right-0 text-[8px] font-bold uppercase tracking-wider text-center py-0.5"
-                        style={{ background: 'rgba(15,94,76,0.85)', color: '#fff' }}>3D</span>
-                    )}
-                  </button>
-                ))}
+                {[{ url: project.hero_image_url, caption: 'Hero', type: 'final', media_type: 'image' }, ...gallery].filter(g => g.url).map((g, i) => {
+                  const isActive = typeof activeImage === 'string' ? activeImage === g.url : activeImage?.url === g.url;
+                  const isVideo = g.media_type === 'video';
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => setActiveImage(isVideo ? g : g.url)}
+                      data-testid={`gallery-thumb-${i}`}
+                      className="relative flex-shrink-0 w-[68px] h-[68px] sm:w-[78px] sm:h-[78px] rounded-[10px] overflow-hidden transition-all"
+                      style={{
+                        border: isActive ? '2px solid var(--lj-accent)' : '1px solid var(--lj-border)',
+                        opacity: isActive ? 1 : 0.85,
+                      }}
+                    >
+                      {isVideo ? (
+                        <>
+                          <video src={g.url} muted playsInline preload="metadata" className="w-full h-full object-cover" />
+                          <span className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.32)' }}>
+                            <span style={{ color: '#fff', fontSize: 16 }}>▶</span>
+                          </span>
+                        </>
+                      ) : (
+                        <img src={g.url} alt={g.caption || `View ${i + 1}`} className="w-full h-full object-cover" />
+                      )}
+                      {g.type === 'render' && !isVideo && (
+                        <span className="absolute bottom-0 left-0 right-0 text-[8px] font-bold uppercase tracking-wider text-center py-0.5"
+                          style={{ background: 'rgba(15,94,76,0.85)', color: '#fff' }}>3D</span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -340,11 +363,26 @@ export default function ProjectDetailPage() {
                   {step.description && (
                     <p className="text-[13.5px] sm:text-[14.5px] leading-[1.55]" style={{ color: 'var(--lj-muted)' }}>{step.description}</p>
                   )}
-                  {step.image_url && (
-                    <div className="mt-3 rounded-[12px] overflow-hidden max-w-md" style={{ border: '1px solid var(--lj-border)' }}>
-                      <img src={step.image_url} alt={step.label} className="w-full h-auto" loading="lazy" />
-                    </div>
-                  )}
+                  {(() => {
+                    // Back-compat: use image_url if no media[] is set
+                    const stepMedia = (step.media && step.media.length > 0)
+                      ? step.media
+                      : (step.image_url ? [{ url: step.image_url, media_type: 'image', caption: '' }] : []);
+                    if (stepMedia.length === 0) return null;
+                    return (
+                      <div className={`mt-3 grid gap-2 max-w-md ${stepMedia.length === 1 ? '' : 'grid-cols-2 sm:grid-cols-3'}`}>
+                        {stepMedia.map((m, mi) => (
+                          <div key={mi} className="rounded-[12px] overflow-hidden" style={{ border: '1px solid var(--lj-border)' }}>
+                            {m.media_type === 'video' ? (
+                              <video src={m.url} controls muted loop playsInline className="w-full h-auto block" preload="metadata" data-testid={`journey-step-${i + 1}-video-${mi}`} />
+                            ) : (
+                              <img src={m.url} alt={step.label} className="w-full h-auto block" loading="lazy" data-testid={`journey-step-${i + 1}-image-${mi}`} />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             ))}

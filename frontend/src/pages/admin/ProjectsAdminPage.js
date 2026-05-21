@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAdmin } from '../../context/AdminContext';
-import { Plus, Trash2, Edit2, Loader2, Image, ArrowLeft, Upload, Star, X } from 'lucide-react';
+import { Plus, Trash2, Edit2, Loader2, Image, ArrowLeft, Upload, Star, X, Film } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -68,13 +68,18 @@ export default function ProjectsAdminPage() {
     const fd = new FormData();
     fd.append('files', file);
     const res = await api('post', '/api/uploads', fd);
-    return res.data.files?.[0]?.url || '';
+    const item = res.data.files?.[0];
+    if (!item) return null;
+    return {
+      url: item.url,
+      media_type: item.media_type || ((file.type || '').startsWith('video/') ? 'video' : 'image'),
+    };
   };
 
   const handleHeroUpload = async (file) => {
     if (!file) return;
     setUploadingField('hero');
-    try { const url = await uploadFile(file); setForm(f => ({ ...f, hero_image_url: url })); }
+    try { const u = await uploadFile(file); if (u) setForm(f => ({ ...f, hero_image_url: u.url })); }
     catch (e) { setErr('Hero upload failed'); }
     finally { setUploadingField(''); }
   };
@@ -83,24 +88,37 @@ export default function ProjectsAdminPage() {
     if (!file) return;
     setUploadingField('gallery');
     try {
-      const url = await uploadFile(file);
-      setForm(f => ({ ...f, gallery: [...f.gallery, { url, caption: '', type }] }));
+      const u = await uploadFile(file);
+      if (u) setForm(f => ({ ...f, gallery: [...f.gallery, { url: u.url, caption: '', type, media_type: u.media_type }] }));
     } catch (e) { setErr('Gallery upload failed'); }
     finally { setUploadingField(''); }
   };
 
-  const handleJourneyImage = async (idx, file) => {
+  // Append one media item to a journey step's media[] array (multi-media)
+  const handleJourneyMediaAdd = async (idx, file) => {
     if (!file) return;
     setUploadingField(`journey-${idx}`);
     try {
-      const url = await uploadFile(file);
+      const u = await uploadFile(file);
+      if (!u) return;
       setForm(f => {
         const journey = [...f.journey];
-        journey[idx] = { ...journey[idx], image_url: url };
+        const existing = journey[idx].media || (journey[idx].image_url ? [{ url: journey[idx].image_url, media_type: 'image', caption: '' }] : []);
+        journey[idx] = { ...journey[idx], media: [...existing, { url: u.url, media_type: u.media_type, caption: '' }], image_url: '' };
         return { ...f, journey };
       });
-    } catch (e) { setErr('Journey image upload failed'); }
+    } catch (e) { setErr('Journey media upload failed'); }
     finally { setUploadingField(''); }
+  };
+
+  const removeJourneyMedia = (stepIdx, mediaIdx) => {
+    setForm(f => {
+      const journey = [...f.journey];
+      const media = [...(journey[stepIdx].media || [])];
+      media.splice(mediaIdx, 1);
+      journey[stepIdx] = { ...journey[stepIdx], media };
+      return { ...f, journey };
+    });
   };
 
   // ── Form handlers ──────────────────────────────────────
@@ -243,30 +261,39 @@ export default function ProjectsAdminPage() {
         {/* Gallery */}
         <Card title={`Gallery (${form.gallery.length})`}>
           <p className="text-[12px] mb-3" style={{ color: 'var(--lj-muted)' }}>
-            Add multiple images. Mark each as <strong>render</strong> or <strong>final</strong> so the page can tag the 3D-render thumbnails.
+            Add multiple images <strong>or videos</strong>. Mark each as <strong>render</strong> or <strong>final</strong> so the page can tag the 3D-render thumbnails.
           </p>
           <div className="flex gap-2 mb-4 flex-wrap">
             <label className="inline-flex items-center gap-2 px-3 py-2 rounded-[10px] text-[13px] font-medium cursor-pointer" style={{ background: 'var(--lj-accent)', color: '#fff' }} data-testid="admin-projects-gallery-add-final">
               {uploadingField === 'gallery' ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
-              Add final photo
-              <input type="file" accept="image/*" className="hidden" onChange={(e) => handleGalleryAdd(e.target.files?.[0], 'final')} />
+              Add final photo / video
+              <input type="file" accept="image/*,video/*" className="hidden" onChange={(e) => handleGalleryAdd(e.target.files?.[0], 'final')} />
             </label>
             <label className="inline-flex items-center gap-2 px-3 py-2 rounded-[10px] text-[13px] font-medium cursor-pointer" style={{ background: 'var(--lj-bg)', color: 'var(--lj-accent)', border: '1px solid var(--lj-border)' }} data-testid="admin-projects-gallery-add-render">
               {uploadingField === 'gallery' ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
-              Add 3D render
-              <input type="file" accept="image/*" className="hidden" onChange={(e) => handleGalleryAdd(e.target.files?.[0], 'render')} />
+              Add 3D render / animation
+              <input type="file" accept="image/*,video/*" className="hidden" onChange={(e) => handleGalleryAdd(e.target.files?.[0], 'render')} />
             </label>
           </div>
           {form.gallery.length === 0 ? (
-            <div className="py-6 text-center text-[13px]" style={{ color: 'var(--lj-muted)' }}>No images yet</div>
+            <div className="py-6 text-center text-[13px]" style={{ color: 'var(--lj-muted)' }}>No media yet</div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {form.gallery.map((g, i) => (
                 <div key={i} className="relative rounded-[10px] overflow-hidden" style={{ border: '1px solid var(--lj-border)' }}>
                   <div className="aspect-square" style={{ background: 'var(--lj-bg)' }}>
-                    <img src={g.url} alt={g.caption || `Image ${i + 1}`} className="w-full h-full object-cover" />
+                    {g.media_type === 'video' ? (
+                      <video src={g.url} muted playsInline className="w-full h-full object-cover" preload="metadata" />
+                    ) : (
+                      <img src={g.url} alt={g.caption || `Image ${i + 1}`} className="w-full h-full object-cover" />
+                    )}
                   </div>
                   <span className="absolute top-1.5 left-1.5 text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ background: g.type === 'render' ? 'rgba(15,94,76,0.85)' : 'rgba(0,0,0,0.55)', color: '#fff' }}>{g.type}</span>
+                  {g.media_type === 'video' && (
+                    <span className="absolute bottom-1.5 left-1.5 text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded flex items-center gap-1" style={{ background: 'rgba(0,0,0,0.7)', color: '#fff' }}>
+                      <Film size={8} /> Video
+                    </span>
+                  )}
                   <button
                     onClick={() => setForm(f => ({ ...f, gallery: f.gallery.filter((_, idx) => idx !== i) }))}
                     className="absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)', color: '#fff' }}>
@@ -284,9 +311,14 @@ export default function ProjectsAdminPage() {
         {/* Journey */}
         <Card title={`The Journey (${form.journey.length} steps)`}>
           <p className="text-[12px] mb-3" style={{ color: 'var(--lj-muted)' }}>
-            Build the timeline shown on the project page (Brief → 3D render → Stone selection → Setting → Final).
+            Build the timeline shown on the project page (Brief → 3D render → Stone selection → Setting → Final). Each step supports <strong>multiple images and videos</strong>.
           </p>
-          {form.journey.map((step, i) => (
+          {form.journey.map((step, i) => {
+            // Back-compat: if step still uses image_url, surface it as the first media item
+            const stepMedia = (step.media && step.media.length > 0)
+              ? step.media
+              : (step.image_url ? [{ url: step.image_url, media_type: 'image', caption: '' }] : []);
+            return (
             <div key={i} className="p-4 rounded-[12px] mb-3" style={{ background: 'var(--lj-bg)', border: '1px solid var(--lj-border)' }}>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[12px] font-semibold uppercase tracking-wider" style={{ color: 'var(--lj-accent)' }}>Step {i + 1}</span>
@@ -298,24 +330,47 @@ export default function ProjectsAdminPage() {
               <textarea placeholder="Description (what happened in this step)" value={step.description || ''}
                 onChange={e => setForm(f => { const j = [...f.journey]; j[i] = { ...j[i], description: e.target.value }; return { ...f, journey: j }; })}
                 className="input" rows={2} />
-              <div className="mt-2 flex items-center gap-2">
-                {step.image_url ? (
-                  <div className="relative w-16 h-16 rounded-[8px] overflow-hidden" style={{ border: '1px solid var(--lj-border)' }}>
-                    <img src={step.image_url} alt={step.label} className="w-full h-full object-cover" />
-                    <button onClick={() => setForm(f => { const j = [...f.journey]; j[i] = { ...j[i], image_url: '' }; return { ...f, journey: j }; })} className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)', color: '#fff' }}><X size={11} /></button>
-                  </div>
-                ) : (
-                  <label className="cursor-pointer w-16 h-16 rounded-[8px] flex items-center justify-center" style={{ background: 'var(--lj-bg)', border: '1.5px dashed var(--lj-border)' }}>
-                    {uploadingField === `journey-${i}` ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} style={{ color: 'var(--lj-muted)' }} />}
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleJourneyImage(i, e.target.files?.[0])} />
+
+              {/* Media grid */}
+              <div className="mt-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11.5px] font-medium" style={{ color: 'var(--lj-text)' }}>Media ({stepMedia.length})</span>
+                  <label className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-[8px] text-[11.5px] font-medium cursor-pointer" data-testid={`admin-projects-journey-${i}-add-media`}
+                    style={{ background: 'var(--lj-accent)', color: '#fff' }}>
+                    {uploadingField === `journey-${i}` ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                    Add image or video
+                    <input type="file" accept="image/*,video/*" className="hidden" onChange={(e) => handleJourneyMediaAdd(i, e.target.files?.[0])} />
                   </label>
+                </div>
+                {stepMedia.length === 0 ? (
+                  <div className="text-[11px] py-3 text-center" style={{ color: 'var(--lj-muted)' }}>No media yet — add images or videos for this step</div>
+                ) : (
+                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                    {stepMedia.map((m, mi) => (
+                      <div key={mi} className="relative rounded-[8px] overflow-hidden aspect-square" style={{ border: '1px solid var(--lj-border)' }}>
+                        {m.media_type === 'video' ? (
+                          <video src={m.url} muted playsInline className="w-full h-full object-cover" preload="metadata" />
+                        ) : (
+                          <img src={m.url} alt={step.label} className="w-full h-full object-cover" />
+                        )}
+                        {m.media_type === 'video' && (
+                          <span className="absolute bottom-1 left-1 text-[8.5px] uppercase tracking-wider px-1.5 py-0.5 rounded flex items-center gap-0.5" style={{ background: 'rgba(0,0,0,0.7)', color: '#fff' }}>
+                            <Film size={8} /> Video
+                          </span>
+                        )}
+                        <button onClick={() => removeJourneyMedia(i, mi)} className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)', color: '#fff' }}>
+                          <X size={11} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 )}
-                <span className="text-[11px]" style={{ color: 'var(--lj-muted)' }}>Optional image for this step</span>
               </div>
             </div>
-          ))}
+            );
+          })}
           <button
-            onClick={() => setForm(f => ({ ...f, journey: [...f.journey, { label: '', description: '', image_url: '' }] }))}
+            onClick={() => setForm(f => ({ ...f, journey: [...f.journey, { label: '', description: '', media: [], image_url: '' }] }))}
             data-testid="admin-projects-add-step"
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[10px] text-[13px] font-medium"
             style={{ background: 'var(--lj-bg)', color: 'var(--lj-accent)', border: '1px solid var(--lj-border)' }}>
