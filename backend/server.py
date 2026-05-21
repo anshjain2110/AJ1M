@@ -705,6 +705,117 @@ async def submit_lead(req: LeadSubmitRequest, request: Request):
 
     return {"status": "submitted", "lead_id": req.lead_id, "user_id": user_id, "token": token, "first_name": req.first_name}
 
+
+# ── API: Quick-Quote (friction-reduced single submit) ────────
+
+class QuickQuoteRequest(BaseModel):
+    name: str
+    email: str
+    phone: str
+    inspiration_link: str = ""
+    inspiration_files: list = []
+    inspiration_notes: str = ""
+
+@app.post("/api/leads/quick")
+async def submit_quick_quote(req: QuickQuoteRequest, request: Request):
+    """One-step lead capture from the homepage hero. Creates a user + lead from name / email / phone +
+    any inspiration the customer shared (link, files, or free-text). Defaults product_type to
+    engagement_ring since that's our wedge product. Returns a JWT so the customer lands authenticated."""
+    name = req.name.strip()
+    email_val = req.email.strip().lower() or None
+    phone = req.phone.strip() or None
+    if not name:
+        raise HTTPException(400, "Name is required")
+    if not email_val:
+        raise HTTPException(400, "Email is required")
+    if not phone:
+        raise HTTPException(400, "Phone is required")
+
+    client_ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "").split(",")[0].strip()
+
+    # Get or create user
+    user = await db.users.find_one({"email": email_val})
+    if not user and phone:
+        user = await db.users.find_one({"phone": phone})
+    if user:
+        user_id = user["user_id"]
+        update_fields = {}
+        if not user.get("first_name") and name: update_fields["first_name"] = name
+        if not user.get("phone") and phone: update_fields["phone"] = phone
+        if not user.get("email") and email_val: update_fields["email"] = email_val
+        if update_fields:
+            await db.users.update_one({"user_id": user_id}, {"$set": update_fields})
+    else:
+        user_id = f"user_{uuid.uuid4().hex[:12]}"
+        try:
+            await db.users.insert_one({
+                "user_id": user_id, "first_name": name, "email": email_val, "phone": phone,
+                "created_at": datetime.now(timezone.utc),
+            })
+        except Exception:
+            existing = await db.users.find_one({"email": email_val})
+            user_id = existing["user_id"] if existing else user_id
+
+    # Create lead
+    lead_id = f"lead_{uuid.uuid4().hex[:12]}"
+    inspiration_links = [req.inspiration_link] if req.inspiration_link else []
+    lead_doc = {
+        "lead_id": lead_id,
+        "user_id": user_id,
+        "first_name": name,
+        "email": email_val,
+        "phone": phone,
+        "product_type": "engagement_ring",
+        "source": "quick_quote_hero",
+        "inspiration_links": inspiration_links,
+        "inspiration_files": req.inspiration_files or [],
+        "inspiration_notes": req.inspiration_notes or "",
+        "attribution": {"ip_address": client_ip, "source": "homepage_quick_quote"},
+        "status": "new",
+        "comments": [],
+        "internal_notes": [],
+        "score": 35,
+        "quality_flags": ["quick_quote"],
+        "created_at": datetime.now(timezone.utc),
+        "updated_at": datetime.now(timezone.utc),
+    }
+    await db.leads.insert_one(lead_doc)
+
+    token = create_jwt(user_id, email_val)
+
+    # Admin notification email
+    if sg_client:
+        try:
+            has_link = "Yes" if req.inspiration_link else "No"
+            has_files = f"{len(req.inspiration_files)} file(s)" if req.inspiration_files else "None"
+            has_notes = "Yes" if req.inspiration_notes else "No"
+            notif = SGMail(
+                from_email=SENDGRID_FROM_EMAIL,
+                to_emails=SENDGRID_FROM_EMAIL,
+                subject=f"Quick Quote Request: {name}",
+                html_content=f"""
+                <div style="font-family: -apple-system, sans-serif; max-width: 520px; margin: 0 auto; padding: 30px 20px;">
+                    <h2 style="color: #0F5E4C; font-size: 20px; margin: 0 0 20px;">New Quick-Quote Lead</h2>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                        <tr><td style="padding: 8px 0; color: #6B7280; border-bottom: 1px solid #E5E5E3;">Name</td><td style="padding: 8px 0; color: #1A1A1C; font-weight: 600; border-bottom: 1px solid #E5E5E3; text-align: right;">{name}</td></tr>
+                        <tr><td style="padding: 8px 0; color: #6B7280; border-bottom: 1px solid #E5E5E3;">Email</td><td style="padding: 8px 0; color: #1A1A1C; font-weight: 600; border-bottom: 1px solid #E5E5E3; text-align: right;">{email_val}</td></tr>
+                        <tr><td style="padding: 8px 0; color: #6B7280; border-bottom: 1px solid #E5E5E3;">Phone</td><td style="padding: 8px 0; color: #1A1A1C; font-weight: 600; border-bottom: 1px solid #E5E5E3; text-align: right;">{phone}</td></tr>
+                        <tr><td style="padding: 8px 0; color: #6B7280; border-bottom: 1px solid #E5E5E3;">Link shared</td><td style="padding: 8px 0; text-align: right;">{has_link}</td></tr>
+                        <tr><td style="padding: 8px 0; color: #6B7280; border-bottom: 1px solid #E5E5E3;">Files shared</td><td style="padding: 8px 0; text-align: right;">{has_files}</td></tr>
+                        <tr><td style="padding: 8px 0; color: #6B7280;">Notes</td><td style="padding: 8px 0; text-align: right;">{has_notes}</td></tr>
+                    </table>
+                    {f'<div style="margin: 14px 0; padding: 12px; background: #F5F5F3; border-radius: 8px; font-size: 13px; color: #374151;"><strong>Customer notes:</strong><br/>{req.inspiration_notes}</div>' if req.inspiration_notes else ''}
+                    <p style="font-size: 12px; color: #9CA3AF; margin-top: 18px;">Lead ID: {lead_id} • Source: Homepage Quick Quote</p>
+                </div>
+                """,
+            )
+            sg_client.send(notif)
+        except Exception as e:
+            print(f"[QUICK-QUOTE NOTIF] {e}")
+
+    return {"status": "submitted", "lead_id": lead_id, "user_id": user_id, "token": token, "first_name": name}
+
+
 # ── API: Auth (OTP) ──────────────────────────────────────────
 
 @app.post("/api/auth/request-otp")

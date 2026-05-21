@@ -3,6 +3,7 @@ import { Star, Users, ArrowRight, ChevronRight, ExternalLink, Sparkles, MapPin, 
 import { useWizard } from '../../../context/WizardContext';
 import { trackEvent } from '../../../utils/analytics';
 import { RenderShowcase } from '../../RenderShowcase';
+import QuickQuoteHero from '../QuickQuoteHero';
 
 const HERO_IMAGE = '/hero-photo.jpeg';
 
@@ -81,6 +82,9 @@ export default function LandingScreen() {
 
   return (
     <div className="flex-1 flex flex-col">
+      {/* Quick-quote hero — friction-reduced entry point */}
+      <QuickQuoteHero />
+
       {/* Hero */}
       <div className="relative px-4 pt-8 pb-12 flex flex-col items-center text-center">
         <div
