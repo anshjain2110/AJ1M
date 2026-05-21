@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /dashboard
+Disallow: /pitch
+Disallow: /pitch/
+
+Sitemap: https://thelocaljewel.com/sitemap.xml
+Sitemap: https://thelocaljewel.com/api/sitemap.xml

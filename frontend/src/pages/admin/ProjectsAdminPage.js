@@ -35,6 +35,7 @@ const EMPTY = {
   description: '',
   meta_title: '',
   meta_description: '',
+  seo_phrases: [],
   published: true,
   featured: false,
   position: 0,
@@ -418,6 +419,17 @@ export default function ProjectsAdminPage() {
         <Card title="SEO">
           <Field label="Meta title (page <title>)"><input type="text" value={form.meta_title} onChange={e => updateField('meta_title', e.target.value)} className="input" /></Field>
           <Field label="Meta description"><textarea value={form.meta_description} onChange={e => updateField('meta_description', e.target.value)} className="input" rows={3} /></Field>
+
+          {/* Buyer-intent phrases */}
+          <Field label="Buyer-intent phrases (shown on the project page as 'People also search for')">
+            <p className="text-[11.5px] mb-2" style={{ color: 'var(--lj-muted)' }}>
+              Add phrases real buyers Google before they land. e.g. <em>"2 carat oval lab grown engagement ring under $3000"</em>. These render as clickable chips at the bottom of the project page and feed Google indexing.
+            </p>
+            <PhraseEditor
+              value={form.seo_phrases || []}
+              onChange={(next) => updateField('seo_phrases', next)}
+            />
+          </Field>
         </Card>
 
         {/* Publish */}
@@ -543,3 +555,52 @@ const Field = ({ label, children }) => (
     {children}
   </div>
 );
+
+const PhraseEditor = ({ value, onChange }) => {
+  const [draft, setDraft] = React.useState('');
+  const phrases = Array.isArray(value) ? value : [];
+
+  const add = () => {
+    const v = draft.trim();
+    if (!v) return;
+    if (phrases.includes(v)) { setDraft(''); return; }
+    onChange([...phrases, v]);
+    setDraft('');
+  };
+  const remove = (i) => onChange(phrases.filter((_, idx) => idx !== i));
+
+  return (
+    <div>
+      <div className="flex flex-wrap gap-1.5 mb-2" data-testid="seo-phrases-list">
+        {phrases.length === 0 ? (
+          <span className="text-[11.5px]" style={{ color: 'var(--lj-muted)' }}>No phrases yet</span>
+        ) : phrases.map((p, i) => (
+          <span key={i} data-testid={`seo-phrase-chip-${i}`} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px]"
+            style={{ background: 'var(--lj-bg)', color: 'var(--lj-text)', border: '1px solid var(--lj-border)' }}>
+            {p}
+            <button type="button" onClick={() => remove(i)} data-testid={`seo-phrase-remove-${i}`} className="opacity-60 hover:opacity-100" aria-label="Remove">
+              <X size={11} />
+            </button>
+          </span>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
+          placeholder='e.g. "2 carat oval lab grown engagement ring under $3000"'
+          data-testid="seo-phrase-input"
+          className="input flex-1"
+        />
+        <button type="button" onClick={add} data-testid="seo-phrase-add"
+          className="px-3 rounded-[10px] text-[12.5px] font-medium"
+          style={{ background: 'var(--lj-accent)', color: '#fff' }}>
+          Add
+        </button>
+      </div>
+    </div>
+  );
+};
+

@@ -4,6 +4,7 @@ import { useWizard } from '../../../context/WizardContext';
 import { trackEvent } from '../../../utils/analytics';
 import { RenderShowcase } from '../../RenderShowcase';
 import QuickQuoteHero from '../QuickQuoteHero';
+import FeaturedProjectsSection from '../../FeaturedProjectsSection';
 
 const HERO_IMAGE = '/hero-photo.jpeg';
 
@@ -84,6 +85,9 @@ export default function LandingScreen() {
     <div className="flex-1 flex flex-col">
       {/* Quick-quote hero — friction-reduced entry point */}
       <QuickQuoteHero />
+
+      {/* Featured Projects — luxe portfolio proof */}
+      <FeaturedProjectsSection />
 
       {/* Hero */}
       <div className="relative px-4 pt-8 pb-12 flex flex-col items-center text-center">

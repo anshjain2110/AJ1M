@@ -459,6 +459,36 @@ export default function ProjectDetailPage() {
         </section>
       )}
 
+      {/* Buyer-intent phrases (SEO long-tail anchors) */}
+      {Array.isArray(project.seo_phrases) && project.seo_phrases.length > 0 && (
+        <section className="px-4 pb-14 max-w-3xl mx-auto w-full" data-testid="project-seo-phrases-section">
+          <div className="rounded-[18px] p-6 sm:p-8"
+            style={{ background: 'linear-gradient(180deg, var(--lj-surface), var(--lj-bg))', border: '1px solid var(--lj-border)' }}>
+            <div className="text-[10.5px] uppercase tracking-[0.18em] mb-3" style={{ color: 'var(--lj-accent)' }}>People also search for</div>
+            <h3 className="text-[20px] sm:text-[24px] leading-[1.25] font-semibold mb-4 tracking-[-0.01em]"
+              style={{ color: 'var(--lj-text)', fontFamily: 'var(--lj-serif, "Cormorant Garamond","Playfair Display",Georgia,serif)' }}>
+              Buyers find rings like this one with searches like:
+            </h3>
+            <ul className="flex flex-wrap gap-2" data-testid="project-seo-phrases-chips">
+              {project.seo_phrases.map((p, i) => (
+                <li key={i}>
+                  <Link
+                    to={`/projects?q=${encodeURIComponent(p)}`}
+                    data-testid={`project-seo-phrase-${i}`}
+                    className="inline-flex items-center px-3 py-1.5 rounded-full text-[12.5px] transition-colors hover:bg-[var(--lj-accent)] hover:text-white"
+                    style={{ background: 'var(--lj-bg)', color: 'var(--lj-text)', border: '1px solid var(--lj-border)' }}>
+                    {p}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-4 text-[12.5px] leading-[1.55]" style={{ color: 'var(--lj-muted)' }}>
+              We build rings around exact phrases like these. Tell us yours, and we'll send 3D renders + a quote within 24-48 hours.
+            </p>
+          </div>
+        </section>
+      )}
+
       {/* Big CTA */}
       <section className="px-4 py-14 text-center" style={{ background: 'var(--lj-accent)', color: '#FFFFFF' }}>
         <div className="max-w-xl mx-auto">

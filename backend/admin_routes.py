@@ -1297,6 +1297,7 @@ class ProjectPayload(BaseModel):
     description: str = ""
     meta_title: Optional[str] = ""
     meta_description: Optional[str] = ""
+    seo_phrases: List[str] = []
     published: bool = True
     featured: bool = False
     position: int = 0

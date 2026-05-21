@@ -722,6 +722,8 @@ class QuickQuoteRequest(BaseModel):
     name: str
     email: str
     phone: str
+    metal_preference: str = ""
+    carat_range: str = ""
     inspiration_link: str = ""
     inspiration_files: list = []
     inspiration_notes: str = ""
@@ -777,6 +779,12 @@ async def submit_quick_quote(req: QuickQuoteRequest, request: Request):
         "phone": phone,
         "product_type": "engagement_ring",
         "source": "quick_quote_hero",
+        "answers": {
+            "metal": req.metal_preference or None,
+            "carat_range": req.carat_range or None,
+        },
+        "metal_preference": req.metal_preference or "",
+        "carat_range": req.carat_range or "",
         "inspiration_links": inspiration_links,
         "inspiration_files": req.inspiration_files or [],
         "inspiration_notes": req.inspiration_notes or "",
@@ -1226,4 +1234,73 @@ async def pitch_chat(req: PitchChatRequest):
         return {"reply": str(reply).strip()}
     except Exception as e:
         raise HTTPException(502, f"LLM error: {e}")
+
+
+# ── SEO: sitemap.xml + robots.txt ──────────────────────────
+
+from fastapi.responses import Response
+
+@app.get("/sitemap.xml", include_in_schema=False)
+@app.get("/api/sitemap.xml", include_in_schema=False)
+async def sitemap_xml(request: Request):
+    """Dynamic sitemap for Google Search Console. Includes static pages + all published projects."""
+    host = request.headers.get("x-forwarded-host") or request.headers.get("host") or "thelocaljewel.com"
+    scheme = request.headers.get("x-forwarded-proto") or "https"
+    base = f"{scheme}://{host}"
+    now_iso = datetime.now(timezone.utc).date().isoformat()
+
+    static_routes = [
+        ("/",              "1.00", "weekly"),
+        ("/projects",      "0.90", "weekly"),
+        ("/login",         "0.30", "monthly"),
+    ]
+
+    parts = ['<?xml version="1.0" encoding="UTF-8"?>',
+             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+
+    for path, priority, changefreq in static_routes:
+        parts.append(
+            f"<url><loc>{base}{path}</loc><lastmod>{now_iso}</lastmod>"
+            f"<changefreq>{changefreq}</changefreq><priority>{priority}</priority></url>"
+        )
+
+    try:
+        cursor = db.projects.find(
+            {"published": {"$ne": False}},
+            {"_id": 0, "slug": 1, "updated_at": 1, "created_at": 1},
+        )
+        async for proj in cursor:
+            slug = proj.get("slug")
+            if not slug:
+                continue
+            last = proj.get("updated_at") or proj.get("created_at")
+            lastmod = last.date().isoformat() if hasattr(last, "date") else now_iso
+            parts.append(
+                f"<url><loc>{base}/projects/{slug}</loc><lastmod>{lastmod}</lastmod>"
+                f"<changefreq>monthly</changefreq><priority>0.80</priority></url>"
+            )
+    except Exception as e:
+        logger.error(f"sitemap projects fetch failed: {e}")
+
+    parts.append('</urlset>')
+    return Response(content="\n".join(parts), media_type="application/xml")
+
+
+@app.get("/robots.txt", include_in_schema=False)
+@app.get("/api/robots.txt", include_in_schema=False)
+async def robots_txt(request: Request):
+    host = request.headers.get("x-forwarded-host") or request.headers.get("host") or "thelocaljewel.com"
+    scheme = request.headers.get("x-forwarded-proto") or "https"
+    base = f"{scheme}://{host}"
+    body = (
+        "User-agent: *\n"
+        "Allow: /\n"
+        "Disallow: /admin\n"
+        "Disallow: /admin/\n"
+        "Disallow: /dashboard\n"
+        "Disallow: /pitch\n"
+        "Disallow: /pitch/\n"
+        f"Sitemap: {base}/sitemap.xml\n"
+    )
+    return Response(content=body, media_type="text/plain")
 
