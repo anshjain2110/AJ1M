@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAdmin } from '../../context/AdminContext';
-import { Plus, Trash2, Edit2, Loader2, Image, ArrowLeft, Upload, Star, X, Film } from 'lucide-react';
+import { Plus, Trash2, Edit2, Loader2, Image, ArrowLeft, Upload, Star, X, Film, ArrowUp, ArrowDown, Eye, Maximize2 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -127,6 +127,31 @@ export default function ProjectsAdminPage() {
   const updateSpec = (k, v) => setForm(f => ({ ...f, specs: { ...f.specs, [k]: v } }));
   const updateStory = (k, v) => setForm(f => ({ ...f, customer_story: { ...f.customer_story, [k]: v } }));
 
+  // ── Reorder helpers ────────────────────────────────────
+  const moveItem = (arr, fromIdx, toIdx) => {
+    if (toIdx < 0 || toIdx >= arr.length) return arr;
+    const next = [...arr];
+    const [m] = next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, m);
+    return next;
+  };
+  const reorderGallery = (fromIdx, toIdx) =>
+    setForm(f => ({ ...f, gallery: moveItem(f.gallery, fromIdx, toIdx) }));
+  const reorderJourneyMedia = (stepIdx, fromIdx, toIdx) =>
+    setForm(f => {
+      const journey = [...f.journey];
+      const media = moveItem(journey[stepIdx].media || [], fromIdx, toIdx);
+      journey[stepIdx] = { ...journey[stepIdx], media };
+      return { ...f, journey };
+    });
+  const reorderJourneySteps = (fromIdx, toIdx) =>
+    setForm(f => ({ ...f, journey: moveItem(f.journey, fromIdx, toIdx) }));
+
+  // ── Media preview lightbox ─────────────────────────────
+  const [preview, setPreview] = useState(null);  // { url, media_type, caption } | null
+  const openPreview = (m) => setPreview(m);
+  const closePreview = () => setPreview(null);
+
   const startCreate = () => { setEditing(null); setForm({ ...EMPTY, gallery: [], journey: [], tags: [] }); setErr(''); setView('form'); };
   const startEdit = (p) => {
     setEditing(p);
@@ -182,6 +207,8 @@ export default function ProjectsAdminPage() {
   if (view === 'form') {
     return (
       <div data-testid="admin-projects-form" className="max-w-4xl">
+        {/* Media preview lightbox */}
+        {preview && <MediaPreview media={preview} onClose={closePreview} />}
         <button onClick={() => setView('list')} className="inline-flex items-center gap-1.5 text-[14px] mb-4" style={{ color: 'var(--lj-accent)' }} data-testid="admin-projects-back">
           <ArrowLeft size={16} /> Back to projects
         </button>
@@ -218,9 +245,16 @@ export default function ProjectsAdminPage() {
           <Field label="Hero image">
             <div className="flex items-center gap-3">
               {form.hero_image_url ? (
-                <div className="relative w-24 h-24 rounded-[10px] overflow-hidden" style={{ border: '1px solid var(--lj-border)' }}>
+                <div className="relative w-24 h-24 rounded-[10px] overflow-hidden group" style={{ border: '1px solid var(--lj-border)' }} data-testid="admin-hero-thumb">
                   <img src={form.hero_image_url} alt="hero" className="w-full h-full object-cover" />
-                  <button onClick={() => updateField('hero_image_url', '')} className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)', color: '#fff' }}><X size={12} /></button>
+                  <div className="absolute top-0.5 right-0.5 flex gap-0.5">
+                    <button onClick={() => openPreview({ url: form.hero_image_url, media_type: 'image' })} title="Preview"
+                      data-testid="admin-hero-preview"
+                      className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)', color: '#fff' }}>
+                      <Eye size={11} />
+                    </button>
+                    <button onClick={() => updateField('hero_image_url', '')} className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)', color: '#fff' }}><X size={12} /></button>
+                  </div>
                 </div>
               ) : (
                 <label className="cursor-pointer w-24 h-24 rounded-[10px] flex items-center justify-center" style={{ background: 'var(--lj-bg)', border: '1.5px dashed var(--lj-border)' }} data-testid="admin-projects-hero-upload">
@@ -281,7 +315,7 @@ export default function ProjectsAdminPage() {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {form.gallery.map((g, i) => (
-                <div key={i} className="relative rounded-[10px] overflow-hidden" style={{ border: '1px solid var(--lj-border)' }}>
+                <div key={i} className="relative rounded-[10px] overflow-hidden group" style={{ border: '1px solid var(--lj-border)' }} data-testid={`admin-gallery-item-${i}`}>
                   <div className="aspect-square" style={{ background: 'var(--lj-bg)' }}>
                     {g.media_type === 'video' ? (
                       <video src={g.url} muted playsInline className="w-full h-full object-cover" preload="metadata" />
@@ -291,15 +325,48 @@ export default function ProjectsAdminPage() {
                   </div>
                   <span className="absolute top-1.5 left-1.5 text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ background: g.type === 'render' ? 'rgba(15,94,76,0.85)' : 'rgba(0,0,0,0.55)', color: '#fff' }}>{g.type}</span>
                   {g.media_type === 'video' && (
-                    <span className="absolute bottom-1.5 left-1.5 text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded flex items-center gap-1" style={{ background: 'rgba(0,0,0,0.7)', color: '#fff' }}>
+                    <span className="absolute bottom-9 left-1.5 text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded flex items-center gap-1" style={{ background: 'rgba(0,0,0,0.7)', color: '#fff' }}>
                       <Film size={8} /> Video
                     </span>
                   )}
-                  <button
-                    onClick={() => setForm(f => ({ ...f, gallery: f.gallery.filter((_, idx) => idx !== i) }))}
-                    className="absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)', color: '#fff' }}>
-                    <X size={12} />
-                  </button>
+                  {/* Top-right cluster: preview + delete */}
+                  <div className="absolute top-1 right-1 flex gap-1">
+                    <button
+                      onClick={() => openPreview(g)}
+                      title="Preview"
+                      data-testid={`admin-gallery-preview-${i}`}
+                      className="w-6 h-6 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+                      style={{ background: 'rgba(0,0,0,0.6)', color: '#fff' }}>
+                      <Eye size={12} />
+                    </button>
+                    <button
+                      onClick={() => setForm(f => ({ ...f, gallery: f.gallery.filter((_, idx) => idx !== i) }))}
+                      title="Delete"
+                      data-testid={`admin-gallery-delete-${i}`}
+                      className="w-6 h-6 rounded-full flex items-center justify-center"
+                      style={{ background: 'rgba(0,0,0,0.6)', color: '#fff' }}>
+                      <X size={12} />
+                    </button>
+                  </div>
+                  {/* Reorder cluster (bottom-left of image) */}
+                  <div className="absolute bottom-9 right-1.5 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => reorderGallery(i, i - 1)} disabled={i === 0}
+                      title="Move left"
+                      data-testid={`admin-gallery-move-up-${i}`}
+                      className="w-6 h-6 rounded flex items-center justify-center disabled:opacity-30"
+                      style={{ background: 'rgba(0,0,0,0.65)', color: '#fff' }}>
+                      <ArrowUp size={11} />
+                    </button>
+                    <button
+                      onClick={() => reorderGallery(i, i + 1)} disabled={i === form.gallery.length - 1}
+                      title="Move right"
+                      data-testid={`admin-gallery-move-down-${i}`}
+                      className="w-6 h-6 rounded flex items-center justify-center disabled:opacity-30"
+                      style={{ background: 'rgba(0,0,0,0.65)', color: '#fff' }}>
+                      <ArrowDown size={11} />
+                    </button>
+                  </div>
                   <input type="text" placeholder="Caption (optional)" value={g.caption || ''}
                     onChange={e => setForm(f => { const gg = [...f.gallery]; gg[i] = { ...gg[i], caption: e.target.value }; return { ...f, gallery: gg }; })}
                     className="w-full text-[11px] px-2 py-1.5" style={{ background: 'var(--lj-surface)', borderTop: '1px solid var(--lj-border)' }} />
@@ -323,7 +390,23 @@ export default function ProjectsAdminPage() {
             <div key={i} className="p-4 rounded-[12px] mb-3" style={{ background: 'var(--lj-bg)', border: '1px solid var(--lj-border)' }}>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[12px] font-semibold uppercase tracking-wider" style={{ color: 'var(--lj-accent)' }}>Step {i + 1}</span>
-                <button onClick={() => setForm(f => ({ ...f, journey: f.journey.filter((_, idx) => idx !== i) }))} className="text-[12px]" style={{ color: '#C44' }}>Remove</button>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => reorderJourneySteps(i, i - 1)} disabled={i === 0}
+                    title="Move step up"
+                    data-testid={`admin-journey-step-up-${i}`}
+                    className="w-6 h-6 rounded flex items-center justify-center disabled:opacity-30"
+                    style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)', color: 'var(--lj-text)' }}>
+                    <ArrowUp size={11} />
+                  </button>
+                  <button onClick={() => reorderJourneySteps(i, i + 1)} disabled={i === form.journey.length - 1}
+                    title="Move step down"
+                    data-testid={`admin-journey-step-down-${i}`}
+                    className="w-6 h-6 rounded flex items-center justify-center disabled:opacity-30"
+                    style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)', color: 'var(--lj-text)' }}>
+                    <ArrowDown size={11} />
+                  </button>
+                  <button onClick={() => setForm(f => ({ ...f, journey: f.journey.filter((_, idx) => idx !== i) }))} className="text-[12px] ml-1" style={{ color: '#C44' }}>Remove</button>
+                </div>
               </div>
               <input type="text" placeholder="Step label (e.g. 3D Render)" value={step.label}
                 onChange={e => setForm(f => { const j = [...f.journey]; j[i] = { ...j[i], label: e.target.value }; return { ...f, journey: j }; })}
@@ -348,7 +431,7 @@ export default function ProjectsAdminPage() {
                 ) : (
                   <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
                     {stepMedia.map((m, mi) => (
-                      <div key={mi} className="relative rounded-[8px] overflow-hidden aspect-square" style={{ border: '1px solid var(--lj-border)' }}>
+                      <div key={mi} className="relative rounded-[8px] overflow-hidden aspect-square group" style={{ border: '1px solid var(--lj-border)' }} data-testid={`admin-journey-${i}-media-${mi}`}>
                         {m.media_type === 'video' ? (
                           <video src={m.url} muted playsInline className="w-full h-full object-cover" preload="metadata" />
                         ) : (
@@ -359,9 +442,34 @@ export default function ProjectsAdminPage() {
                             <Film size={8} /> Video
                           </span>
                         )}
-                        <button onClick={() => removeJourneyMedia(i, mi)} className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)', color: '#fff' }}>
-                          <X size={11} />
-                        </button>
+                        {/* Preview + delete (top-right) */}
+                        <div className="absolute top-0.5 right-0.5 flex gap-0.5">
+                          <button onClick={() => openPreview(m)} title="Preview"
+                            data-testid={`admin-journey-${i}-media-${mi}-preview`}
+                            className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)', color: '#fff' }}>
+                            <Eye size={10} />
+                          </button>
+                          <button onClick={() => removeJourneyMedia(i, mi)} title="Delete"
+                            data-testid={`admin-journey-${i}-media-${mi}-delete`}
+                            className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)', color: '#fff' }}>
+                            <X size={11} />
+                          </button>
+                        </div>
+                        {/* Reorder (bottom-right, on hover) */}
+                        <div className="absolute bottom-0.5 right-0.5 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => reorderJourneyMedia(i, mi, mi - 1)} disabled={mi === 0}
+                            title="Move left"
+                            data-testid={`admin-journey-${i}-media-${mi}-up`}
+                            className="w-5 h-5 rounded flex items-center justify-center disabled:opacity-30" style={{ background: 'rgba(0,0,0,0.6)', color: '#fff' }}>
+                            <ArrowUp size={10} />
+                          </button>
+                          <button onClick={() => reorderJourneyMedia(i, mi, mi + 1)} disabled={mi === stepMedia.length - 1}
+                            title="Move right"
+                            data-testid={`admin-journey-${i}-media-${mi}-down`}
+                            className="w-5 h-5 rounded flex items-center justify-center disabled:opacity-30" style={{ background: 'rgba(0,0,0,0.6)', color: '#fff' }}>
+                            <ArrowDown size={10} />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -560,13 +668,35 @@ const PhraseEditor = ({ value, onChange }) => {
   const [draft, setDraft] = React.useState('');
   const phrases = Array.isArray(value) ? value : [];
 
+  // Split a freeform input on commas / newlines / pipes, trim, dedupe vs existing
+  const splitPhrases = (raw) => raw
+    .split(/[,\n|]+/)
+    .map(s => s.trim())
+    .filter(Boolean);
+
   const add = () => {
-    const v = draft.trim();
-    if (!v) return;
-    if (phrases.includes(v)) { setDraft(''); return; }
-    onChange([...phrases, v]);
+    const incoming = splitPhrases(draft);
+    if (incoming.length === 0) return;
+    const next = [...phrases];
+    let added = 0;
+    incoming.forEach(p => { if (!next.includes(p)) { next.push(p); added++; } });
+    onChange(next);
     setDraft('');
   };
+
+  const handlePaste = (e) => {
+    const txt = (e.clipboardData || window.clipboardData).getData('text');
+    if (!txt) return;
+    if (/[,\n|]/.test(txt)) {
+      e.preventDefault();
+      const incoming = splitPhrases(txt);
+      const next = [...phrases];
+      incoming.forEach(p => { if (!next.includes(p)) next.push(p); });
+      onChange(next);
+      setDraft('');
+    }
+  };
+
   const remove = (i) => onChange(phrases.filter((_, idx) => idx !== i));
 
   return (
@@ -589,8 +719,9 @@ const PhraseEditor = ({ value, onChange }) => {
           type="text"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
+          onPaste={handlePaste}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
-          placeholder='e.g. "2 carat oval lab grown engagement ring under $3000"'
+          placeholder='Add one or paste a list: "2ct oval engagement ring, hidden halo, lab grown..."'
           data-testid="seo-phrase-input"
           className="input flex-1"
         />
@@ -599,6 +730,70 @@ const PhraseEditor = ({ value, onChange }) => {
           style={{ background: 'var(--lj-accent)', color: '#fff' }}>
           Add
         </button>
+      </div>
+      <p className="mt-1.5 text-[10.5px]" style={{ color: 'var(--lj-muted)' }}>
+        Tip: separate multiple phrases with commas, new lines, or pipes — they'll be added together.
+      </p>
+    </div>
+  );
+};
+
+
+/* ─────────── Media Preview Lightbox ─────────── */
+const MediaPreview = ({ media, onClose }) => {
+  React.useEffect(() => {
+    const handler = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handler);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', handler);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose]);
+
+  if (!media) return null;
+  const isVideo = media.media_type === 'video';
+
+  return (
+    <div data-testid="admin-media-preview" onClick={onClose}
+      className="fixed inset-0 z-[1000] flex items-center justify-center p-4 sm:p-8"
+      style={{ background: 'rgba(8, 18, 16, 0.86)', backdropFilter: 'blur(6px)' }}>
+      <button data-testid="admin-media-preview-close"
+        onClick={onClose}
+        className="absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center"
+        style={{ background: 'rgba(255,255,255,0.10)', color: '#fff' }}>
+        <X size={18} />
+      </button>
+      <div onClick={(e) => e.stopPropagation()} className="relative max-w-5xl w-full max-h-full">
+        <div className="rounded-[12px] overflow-hidden flex items-center justify-center"
+          style={{ background: '#0a0a0c', maxHeight: '85vh' }}>
+          {isVideo ? (
+            <video
+              src={media.url}
+              controls autoPlay
+              data-testid="admin-media-preview-video"
+              className="w-full h-auto max-h-[85vh] object-contain"
+            />
+          ) : (
+            <img
+              src={media.url}
+              alt={media.caption || 'Preview'}
+              data-testid="admin-media-preview-image"
+              className="w-full h-auto max-h-[85vh] object-contain"
+              draggable="false"
+            />
+          )}
+        </div>
+        <div className="mt-3 flex items-center justify-between gap-3 px-1 text-[12px]" style={{ color: 'rgba(255,255,255,0.78)' }}>
+          <div className="truncate">{media.caption || (isVideo ? 'Video preview' : 'Image preview')}</div>
+          <a href={media.url} target="_blank" rel="noopener noreferrer"
+            data-testid="admin-media-preview-open-new"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+            style={{ background: 'rgba(255,255,255,0.10)' }}>
+            <Maximize2 size={11} /> Open full size
+          </a>
+        </div>
       </div>
     </div>
   );
