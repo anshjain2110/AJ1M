@@ -7,11 +7,15 @@ import { trackEvent } from '../../utils/analytics';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
 const METAL_OPTIONS = [
-  { value: 'white_gold',   label: 'White gold',   sub: '14K · most popular' },
-  { value: 'yellow_gold',  label: 'Yellow gold',  sub: '14K · warm tone' },
-  { value: 'rose_gold',    label: 'Rose gold',    sub: '14K · romantic' },
-  { value: 'platinum',     label: 'Platinum',     sub: 'premium · durable' },
-  { value: 'not_sure',     label: "I'm not sure", sub: "We'll guide you" },
+  { value: '14k_white_gold',  label: '14K White Gold',  sub: 'Most popular' },
+  { value: '14k_yellow_gold', label: '14K Yellow Gold', sub: 'Warm classic' },
+  { value: '14k_rose_gold',   label: '14K Rose Gold',   sub: 'Romantic blush' },
+  { value: '18k_white_gold',  label: '18K White Gold',  sub: 'Premium · whiter' },
+  { value: '18k_yellow_gold', label: '18K Yellow Gold', sub: 'Premium · richer' },
+  { value: '18k_rose_gold',   label: '18K Rose Gold',   sub: 'Premium · deeper pink' },
+  { value: 'platinum',        label: 'Platinum',        sub: 'Most durable · hypoallergenic' },
+  { value: 'silver',          label: 'Silver',          sub: 'Budget-friendly' },
+  { value: 'not_sure',        label: "I'm not sure",    sub: "We'll guide you" },
 ];
 
 const CARAT_OPTIONS = [
