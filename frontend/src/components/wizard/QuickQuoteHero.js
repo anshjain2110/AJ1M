@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, Link as LinkIcon, ArrowRight, X, Loader2, Sparkles, Image as ImageIcon } from 'lucide-react';
+import { Upload, Link as LinkIcon, ArrowRight, X, Loader2, Sparkles, Image as ImageIcon, Mic, Square, Play, Pause, Trash2 } from 'lucide-react';
 import axios from 'axios';
 import { trackEvent } from '../../utils/analytics';
 import QuickQuoteModal from './QuickQuoteModal';
@@ -36,6 +36,7 @@ export default function QuickQuoteHero() {
   const [notesInput, setNotesInput] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [voiceNote, setVoiceNote] = useState(null); // {url, storage_path, filename, original_name, content_type, duration}
   const [modalOpen, setModalOpen] = useState(false);
   const fileRef = useRef(null);
   const [stageIdx, setStageIdx] = useState(0);
@@ -79,6 +80,7 @@ export default function QuickQuoteHero() {
       has_link: !!linkInput.trim(),
       has_files: uploadedFiles.length > 0,
       has_notes: !!notesInput.trim(),
+      has_voice: !!voiceNote,
     });
     setModalOpen(true);
   };
@@ -106,14 +108,14 @@ export default function QuickQuoteHero() {
             <Sparkles size={12} /> Custom in 90 seconds
           </div>
 
-          <h1 className="text-[36px] sm:text-[44px] lg:text-[52px] leading-[1.05] tracking-[-0.02em] font-semibold mb-4"
+          <h1 className="text-[32px] sm:text-[40px] lg:text-[46px] leading-[1.06] tracking-[-0.02em] font-semibold mb-4"
             style={{ color: 'var(--lj-text)' }}>
-            Show us the ring. <br className="hidden sm:block" />
-            <span style={{ color: 'var(--lj-accent)' }}>We'll send you renders + a quote.</span>
+            The most personal engagement ring buying experience <span style={{ color: 'var(--lj-accent)' }}>online.</span>
           </h1>
 
           <p className="text-[15px] sm:text-[17px] leading-[1.55] max-w-xl mb-7" style={{ color: 'var(--lj-muted)' }}>
-            Paste a link, drop an image, or describe what you have in mind. Our designers send back 3D renders and a price within 24-48 hours.
+            Paste a link, drop an image, record a voice note, or just describe what you have in mind.
+            Our designers send back 3D renders and a written quote within 24-48 hours.
           </p>
 
           {/* The 3 inspiration inputs */}
@@ -161,6 +163,9 @@ export default function QuickQuoteHero() {
                 </div>
               )}
             </div>
+
+            {/* Voice note — "Talk to your jeweler" */}
+            <VoiceRecorder voiceNote={voiceNote} setVoiceNote={setVoiceNote} />
 
             {/* Notes */}
             <textarea
@@ -266,6 +271,7 @@ export default function QuickQuoteHero() {
           inspirationLink={linkInput.trim()}
           inspirationFiles={uploadedFiles}
           inspirationNotes={notesInput.trim()}
+          inspirationVoice={voiceNote}
         />
       )}
     </section>
@@ -560,3 +566,226 @@ const IMessageScreen = ({ src }) => (
     </div>
   </div>
 );
+
+
+/* ──────────── VoiceRecorder — "Talk to your jeweler" ──────────── */
+const MAX_DURATION_SEC = 180; // 3 minutes
+
+const VoiceRecorder = ({ voiceNote, setVoiceNote }) => {
+  const [recording, setRecording] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState('');
+  const [duration, setDuration] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const chunksRef = useRef([]);
+  const timerRef = useRef(null);
+  const streamRef = useRef(null);
+  const audioElRef = useRef(null);
+
+  // Determine a MIME the browser supports (Safari prefers mp4, Chrome/Firefox prefer webm)
+  const pickMimeType = () => {
+    if (typeof MediaRecorder === 'undefined') return '';
+    const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'];
+    for (const m of candidates) {
+      try { if (MediaRecorder.isTypeSupported(m)) return m; } catch (_) {}
+    }
+    return '';
+  };
+
+  const cleanup = () => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+    }
+  };
+
+  useEffect(() => () => cleanup(), []);
+
+  const startRec = async () => {
+    setError('');
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      setError('Voice recording is not supported in this browser. Try Chrome, Safari, or Edge.');
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      const mimeType = pickMimeType();
+      const rec = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      mediaRecorderRef.current = rec;
+      chunksRef.current = [];
+      rec.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunksRef.current.push(e.data); };
+      rec.onstop = async () => {
+        const blob = new Blob(chunksRef.current, { type: mimeType || 'audio/webm' });
+        cleanup();
+        await uploadBlob(blob, mimeType || 'audio/webm');
+      };
+      rec.start();
+      setRecording(true);
+      setDuration(0);
+      timerRef.current = setInterval(() => {
+        setDuration(prev => {
+          if (prev + 1 >= MAX_DURATION_SEC) { stopRec(); return MAX_DURATION_SEC; }
+          return prev + 1;
+        });
+      }, 1000);
+      trackEvent('tlj_voice_record_start', {});
+    } catch (e) {
+      console.error(e);
+      setError(e.name === 'NotAllowedError'
+        ? 'Microphone permission denied. Please enable it in your browser settings.'
+        : 'Could not start recording. Please check your microphone and try again.');
+      cleanup();
+    }
+  };
+
+  const stopRec = () => {
+    try { mediaRecorderRef.current?.stop(); } catch (_) {}
+    setRecording(false);
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+  };
+
+  const uploadBlob = async (blob, mime) => {
+    setUploading(true);
+    try {
+      const ext = mime.includes('mp4') ? 'm4a' : mime.includes('ogg') ? 'ogg' : 'webm';
+      const file = new File([blob], `voice-note-${Date.now()}.${ext}`, { type: mime });
+      const fd = new FormData();
+      fd.append('files', file);
+      const res = await axios.post(`${BACKEND_URL}/api/uploads`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const uploaded = res.data?.files?.[0];
+      if (uploaded) {
+        setVoiceNote({ ...uploaded, duration });
+        trackEvent('tlj_voice_record_complete', { duration_sec: duration });
+      } else {
+        setError('Upload failed. Please try again.');
+      }
+    } catch (e) {
+      console.error(e);
+      setError("Couldn't upload your voice note. Please try again.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const remove = () => {
+    setVoiceNote(null);
+    setDuration(0);
+    setPlaying(false);
+    if (audioElRef.current) { audioElRef.current.pause(); audioElRef.current.currentTime = 0; }
+  };
+
+  const togglePlay = () => {
+    const el = audioElRef.current;
+    if (!el) return;
+    if (playing) { el.pause(); setPlaying(false); }
+    else { el.play().then(() => setPlaying(true)).catch(() => setPlaying(false)); }
+  };
+
+  const fmt = (s) => `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+
+  // Recorded — show playback
+  if (voiceNote) {
+    const audioUrl = voiceNote.url?.startsWith('http') ? voiceNote.url : `${BACKEND_URL}${voiceNote.url}`;
+    return (
+      <div className="rounded-[14px] px-3.5 py-3 flex items-center gap-3"
+        style={{ background: 'rgba(15,94,76,0.06)', border: '1.5px solid rgba(15,94,76,0.22)' }}
+        data-testid="quick-quote-voice-recorded">
+        <button
+          type="button"
+          onClick={togglePlay}
+          data-testid="quick-quote-voice-play"
+          className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-transform active:scale-95"
+          style={{ background: 'var(--lj-accent)', color: '#FFFFFF' }}>
+          {playing ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
+        </button>
+        <div className="flex-1 min-w-0">
+          <div className="text-[13px] font-medium leading-tight" style={{ color: 'var(--lj-text)' }}>
+            Voice note saved
+          </div>
+          <div className="text-[11.5px] mt-0.5" style={{ color: 'var(--lj-muted)' }}>
+            {voiceNote.duration ? fmt(voiceNote.duration) : 'Ready to send'} · Mark will hear this with your quote
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={remove}
+          data-testid="quick-quote-voice-remove"
+          className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors hover:bg-[#F4F1EC]"
+          style={{ color: 'var(--lj-muted)' }}>
+          <Trash2 size={14} />
+        </button>
+        <audio ref={audioElRef} src={audioUrl} preload="metadata" onEnded={() => setPlaying(false)} />
+      </div>
+    );
+  }
+
+  // Recording
+  if (recording) {
+    return (
+      <div className="rounded-[14px] px-3.5 py-3 flex items-center gap-3"
+        style={{ background: 'rgba(192,57,43,0.05)', border: '1.5px solid rgba(192,57,43,0.32)' }}
+        data-testid="quick-quote-voice-recording">
+        <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 relative" style={{ background: '#c0392b' }}>
+          <span className="absolute inset-0 rounded-full animate-ping" style={{ background: 'rgba(192,57,43,0.45)' }} />
+          <Mic size={16} style={{ color: '#FFFFFF', position: 'relative' }} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-[13px] font-medium leading-tight" style={{ color: 'var(--lj-text)' }}>
+            Recording... {fmt(duration)}
+          </div>
+          <div className="text-[11.5px] mt-0.5" style={{ color: 'var(--lj-muted)' }}>
+            Describe her taste — vintage, modern, gold, the ring she pinned...
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={stopRec}
+          data-testid="quick-quote-voice-stop"
+          className="px-3.5 min-h-[36px] rounded-full text-[12.5px] font-semibold inline-flex items-center gap-1.5 transition-transform active:scale-95"
+          style={{ background: 'var(--lj-text)', color: '#FFFFFF' }}>
+          <Square size={11} fill="#FFFFFF" /> Stop
+        </button>
+      </div>
+    );
+  }
+
+  // Idle — invite the user to record
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={startRec}
+        disabled={uploading}
+        data-testid="quick-quote-voice-start"
+        className="w-full min-h-[52px] px-4 rounded-[14px] flex items-center gap-3 text-left transition-all duration-200 hover:bg-[rgba(15,94,76,0.03)] disabled:opacity-70"
+        style={{ background: 'var(--lj-surface)', border: '1.5px dashed rgba(15,94,76,0.32)' }}>
+        <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ background: 'rgba(15,94,76,0.10)' }}>
+          {uploading ? <Loader2 size={15} className="animate-spin" style={{ color: 'var(--lj-accent)' }} />
+                     : <Mic size={15} style={{ color: 'var(--lj-accent)' }} />}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-[14px] font-medium leading-tight" style={{ color: 'var(--lj-text)' }}>
+            {uploading ? 'Saving your voice note...' : 'Talk to your jeweler'}
+          </div>
+          <div className="text-[11.5px] leading-[1.4] mt-0.5" style={{ color: 'var(--lj-muted)' }}>
+            You don't need to know shapes or settings. Just describe what she likes.
+          </div>
+        </div>
+        <div className="text-[11px] uppercase tracking-[0.14em] font-semibold flex-shrink-0" style={{ color: 'var(--lj-accent)' }}>
+          Record
+        </div>
+      </button>
+      {error && (
+        <div className="mt-1.5 px-3 py-2 rounded-[10px] text-[12px] leading-[1.4]"
+          style={{ background: 'rgba(192,57,43,0.08)', color: '#c0392b', border: '1px solid rgba(192,57,43,0.18)' }}
+          data-testid="quick-quote-voice-error">
+          {error}
+        </div>
+      )}
+    </div>
+  );
+};

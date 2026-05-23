@@ -109,7 +109,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.environ.get("CORS_ORIGINS", "https://thelocaljewel.com,https://jewel-crm-hub-1.preview.emergentagent.com").split(","),
+    allow_origins=os.environ.get("CORS_ORIGINS", "https://thelocaljewel.com,https://custom-jewelry-gen.preview.emergentagent.com").split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -255,12 +255,18 @@ async def upload_files(files: List[UploadFile] = File(...)):
                 subfolder="uploads",
             )
             ct = (result.get("content_type") or "").lower()
+            if ct.startswith("audio/"):
+                mtype = "audio"
+            elif ct.startswith("video/"):
+                mtype = "video"
+            else:
+                mtype = "image"
             uploaded.append({
                 "filename": result["filename"],
                 "original_name": result["original_name"],
                 "storage_path": result["storage_path"],
                 "content_type": result["content_type"],
-                "media_type": "video" if ct.startswith("video/") else "image",
+                "media_type": mtype,
                 "url": f"/api/uploads/cloud/{result['storage_path']}",
             })
         except Exception as e:
@@ -272,10 +278,16 @@ async def upload_files(files: List[UploadFile] = File(...)):
             async with aiofiles.open(filepath, "wb") as f:
                 await f.write(content)
             ct = (file.content_type or "").lower()
+            if ct.startswith("audio/"):
+                mtype = "audio"
+            elif ct.startswith("video/"):
+                mtype = "video"
+            else:
+                mtype = "image"
             uploaded.append({
                 "filename": filename,
                 "original_name": file.filename,
-                "media_type": "video" if ct.startswith("video/") else "image",
+                "media_type": mtype,
                 "url": f"/api/uploads/files/{filename}",
             })
     return {"files": uploaded}
@@ -732,6 +744,7 @@ class QuickQuoteRequest(BaseModel):
     inspiration_link: str = ""
     inspiration_files: list = []
     inspiration_notes: str = ""
+    inspiration_voice: Optional[dict] = None
 
 @app.post("/api/leads/quick")
 async def submit_quick_quote(req: QuickQuoteRequest, request: Request):
@@ -793,6 +806,7 @@ async def submit_quick_quote(req: QuickQuoteRequest, request: Request):
         "inspiration_links": inspiration_links,
         "inspiration_files": req.inspiration_files or [],
         "inspiration_notes": req.inspiration_notes or "",
+        "inspiration_voice": req.inspiration_voice or None,
         "attribution": {"ip_address": client_ip, "source": "homepage_quick_quote"},
         "status": "new",
         "comments": [],
@@ -812,6 +826,7 @@ async def submit_quick_quote(req: QuickQuoteRequest, request: Request):
             has_link = "Yes" if req.inspiration_link else "No"
             has_files = f"{len(req.inspiration_files)} file(s)" if req.inspiration_files else "None"
             has_notes = "Yes" if req.inspiration_notes else "No"
+            has_voice = "Yes (see lead detail)" if req.inspiration_voice else "No"
             notif = SGMail(
                 from_email=SENDGRID_FROM_EMAIL,
                 to_emails=SENDGRID_FROM_EMAIL,
@@ -825,6 +840,7 @@ async def submit_quick_quote(req: QuickQuoteRequest, request: Request):
                         <tr><td style="padding: 8px 0; color: #6B7280; border-bottom: 1px solid #E5E5E3;">Phone</td><td style="padding: 8px 0; color: #1A1A1C; font-weight: 600; border-bottom: 1px solid #E5E5E3; text-align: right;">{phone}</td></tr>
                         <tr><td style="padding: 8px 0; color: #6B7280; border-bottom: 1px solid #E5E5E3;">Link shared</td><td style="padding: 8px 0; text-align: right;">{has_link}</td></tr>
                         <tr><td style="padding: 8px 0; color: #6B7280; border-bottom: 1px solid #E5E5E3;">Files shared</td><td style="padding: 8px 0; text-align: right;">{has_files}</td></tr>
+                        <tr><td style="padding: 8px 0; color: #6B7280; border-bottom: 1px solid #E5E5E3;">Voice note</td><td style="padding: 8px 0; text-align: right;">{has_voice}</td></tr>
                         <tr><td style="padding: 8px 0; color: #6B7280;">Notes</td><td style="padding: 8px 0; text-align: right;">{has_notes}</td></tr>
                     </table>
                     {f'<div style="margin: 14px 0; padding: 12px; background: #F5F5F3; border-radius: 8px; font-size: 13px; color: #374151;"><strong>Customer notes:</strong><br/>{req.inspiration_notes}</div>' if req.inspiration_notes else ''}

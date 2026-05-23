@@ -69,7 +69,16 @@ FARM stack — FastAPI · React (CRA) · MongoDB. Cloudflare R2 storage via boto
 - **`/api/admin/projects`** (admin CRUD)
 - `/api/uploads` (R2)
 
+## Recent Updates
+- **2026-02 · Voice note "Talk to your jeweler"** — Hero now has a mic recorder that uploads to R2 as `inspiration_voice` on the lead; admin LeadsCRM detail panel renders an inline HTML5 audio player + download. Hero headline updated to "The most personal engagement ring buying experience online."
+- 2026-02 · Pinterest API research scoped (paused; user pivoted to voice note feature)
+
 ## Backlog / Roadmap
+
+### P1 — Phase 2 (Pinterest API automation — paused)
+- Five pin types per product: Hero, Lifestyle, Mood-board, Video, Carousel
+- Requires Standard access (POST /v5/pins), OAuth 2.0 with `pins:write` / `boards:write`, video upload flow (register → upload → confirm → create pin), carousel (multi `media_source`), and a custom mood-board image generator (Pinterest has no native collage API)
+- AI prompt for title/description/alt-text already provided by user — ready to wire to Emergent LLM key once integration approved
 
 ### P1 — Phase 2 (SEO landing pages)
 - Build template SEO landing pages: `/custom-engagement-rings`, `/oval-lab-diamond-engagement-rings`, `/orlando-custom-engagement-rings`, `/hidden-halo-engagement-rings`, etc.

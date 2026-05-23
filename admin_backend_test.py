@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime
 
 class AdminAPITester:
-    def __init__(self, base_url="https://jewel-crm-hub-1.preview.emergentagent.com"):
+    def __init__(self, base_url="https://custom-jewelry-gen.preview.emergentagent.com"):
         self.base_url = base_url
         self.session = requests.Session()
         self.tests_run = 0

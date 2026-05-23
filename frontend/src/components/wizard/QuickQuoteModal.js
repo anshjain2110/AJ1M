@@ -24,7 +24,7 @@ const CARAT_OPTIONS = [
 
 const TOTAL_STEPS = 5;  // Name → Metal → Carat → Email → Phone
 
-export default function QuickQuoteModal({ onClose, inspirationLink, inspirationFiles, inspirationNotes }) {
+export default function QuickQuoteModal({ onClose, inspirationLink, inspirationFiles, inspirationNotes, inspirationVoice }) {
   const [step, setStep] = useState(1);
   const [name,   setName]   = useState('');
   const [metal,  setMetal]  = useState('');
@@ -83,6 +83,7 @@ export default function QuickQuoteModal({ onClose, inspirationLink, inspirationF
         inspiration_link: inspirationLink || '',
         inspiration_files: inspirationFiles || [],
         inspiration_notes: inspirationNotes || '',
+        inspiration_voice: inspirationVoice || null,
       };
       const { data } = await axios.post(`${BACKEND_URL}/api/leads/quick`, payload);
       trackEvent('tlj_quick_quote_submit', { lead_id: data.lead_id });

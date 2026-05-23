@@ -227,9 +227,58 @@ export default function LeadsCRM() {
               </div>
 
               {/* Inspiration & References */}
-              {((detailData.lead.inspiration_files && detailData.lead.inspiration_files.length > 0) || (detailData.lead.inspiration_links && detailData.lead.inspiration_links.length > 0)) && (
+              {((detailData.lead.inspiration_files && detailData.lead.inspiration_files.length > 0) || (detailData.lead.inspiration_links && detailData.lead.inspiration_links.length > 0) || detailData.lead.inspiration_voice || detailData.lead.inspiration_notes) && (
                 <div className="p-4 rounded-[10px]" style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}>
                   <h4 className="text-[13px] font-medium mb-3" style={{ color: 'var(--lj-muted)' }}>Inspiration & References</h4>
+
+                  {/* Voice note — "Talk to your jeweler" */}
+                  {detailData.lead.inspiration_voice && (() => {
+                    const v = detailData.lead.inspiration_voice;
+                    const baseUrl = process.env.REACT_APP_BACKEND_URL || '';
+                    const storagePath = v.storage_path || '';
+                    const audioUrl = storagePath
+                      ? `${baseUrl}/api/uploads/cloud/${storagePath}`
+                      : (v.url?.startsWith('http') ? v.url : `${baseUrl}${v.url || ''}`);
+                    const downloadUrl = storagePath
+                      ? `${baseUrl}/api/uploads/download/${storagePath}`
+                      : `${baseUrl}/api/uploads/download/${v.filename || ''}`;
+                    const dur = v.duration ? `${Math.floor(v.duration/60)}:${String(v.duration%60).padStart(2,'0')}` : '';
+                    return (
+                      <div className="mb-3 p-3 rounded-[10px]" style={{ background: 'var(--lj-bg)', border: '1px solid var(--lj-border)' }} data-testid="inspiration-voice">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: 'rgba(15,94,76,0.12)' }}>
+                            <Mic size={13} style={{ color: 'var(--lj-accent)' }} />
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-[13px] font-medium" style={{ color: 'var(--lj-text)' }}>Voice note from customer</div>
+                            <div className="text-[11px]" style={{ color: 'var(--lj-muted)' }}>{dur || 'Talk to your jeweler'}</div>
+                          </div>
+                          <a href={downloadUrl} download={v.original_name || 'voice-note'}
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] text-[11.5px] font-medium transition-colors hover:opacity-80"
+                            style={{ background: 'var(--lj-accent)', color: '#FFFFFF' }}
+                            data-testid="inspiration-voice-download">
+                            <Download size={11} /> Download
+                          </a>
+                        </div>
+                        <audio
+                          controls
+                          preload="metadata"
+                          src={audioUrl}
+                          className="w-full"
+                          data-testid="inspiration-voice-player"
+                          style={{ height: 36 }}
+                        />
+                      </div>
+                    );
+                  })()}
+
+                  {/* Free-text inspiration notes */}
+                  {detailData.lead.inspiration_notes && (
+                    <div className="mb-3 p-3 rounded-[10px]" style={{ background: 'var(--lj-bg)', border: '1px solid var(--lj-border)' }} data-testid="inspiration-notes">
+                      <div className="text-[11.5px] uppercase tracking-[0.1em] mb-1" style={{ color: 'var(--lj-muted)' }}>Customer notes</div>
+                      <p className="text-[13.5px] leading-[1.5] whitespace-pre-wrap" style={{ color: 'var(--lj-text)' }}>{detailData.lead.inspiration_notes}</p>
+                    </div>
+                  )}
                   {detailData.lead.inspiration_files && detailData.lead.inspiration_files.length > 0 && (
                     <div className="space-y-3 mb-3">
                       {detailData.lead.inspiration_files.map((file, fi) => {
