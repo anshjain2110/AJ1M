@@ -20,6 +20,11 @@ import TermsPage from './pages/TermsPage';
 import CutsPage from './pages/CutsPage';
 import ProjectsIndexPage from './pages/ProjectsIndexPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
+import ContactPage from './pages/ContactPage';
+import BlogIndexPage from './pages/BlogIndexPage';
+import BlogDetailPage from './pages/BlogDetailPage';
+import BlogAdminPage from './pages/admin/BlogAdminPage';
+import MessagesAdminPage from './pages/admin/MessagesAdminPage';
 import PitchLoginPage from './pages/PitchLoginPage';
 import PitchPage from './pages/PitchPage';
 
@@ -46,6 +51,9 @@ function App() {
           <Route path="/cuts" element={<CutsPage />} />
           <Route path="/projects" element={<ProjectsIndexPage />} />
           <Route path="/projects/:slug" element={<ProjectDetailPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/blog" element={<BlogIndexPage />} />
+          <Route path="/blog/:slug" element={<BlogDetailPage />} />
           <Route path="/pitch/login" element={<PitchLoginPage />} />
           <Route path="/pitch" element={<PitchPage />} />
 
@@ -59,6 +67,8 @@ function App() {
                   <Route path="leads" element={<LeadsCRM />} />
                   <Route path="orders" element={<OrdersPage />} />
                   <Route path="projects" element={<ProjectsAdminPage />} />
+                  <Route path="blog" element={<BlogAdminPage />} />
+                  <Route path="messages" element={<MessagesAdminPage />} />
                   <Route path="settings" element={<SettingsPage />} />
                   <Route path="tracking" element={<TrackingPage />} />
                   <Route path="showcase" element={<ShowcasePage />} />

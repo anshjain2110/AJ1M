@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, Package, Plus, LogOut, Clock, Loader2, ChevronDown, ChevronUp, Send, Gem, Truck, CheckCircle, PenTool, Factory, Image as ImageIcon, MessageCircle, ExternalLink, Check } from 'lucide-react';
 import axios from 'axios';
+import MessagesPanel from '../components/MessagesPanel';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
 const STAGES = [
@@ -120,10 +121,11 @@ export default function DashboardPage() {
 
       {/* Tabs */}
       <div className="px-4 flex gap-1 pt-4" data-testid="dashboard-tabs">
-        {[{ id: 'quotations', label: 'My Quotations', icon: FileText }, { id: 'orders', label: 'My Orders', icon: Package }].map(tab => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)} className="flex-1 min-h-[44px] px-4 py-2.5 rounded-t-[14px] flex items-center justify-center gap-2 text-[16px] font-medium transition-colors duration-300"
+        {[{ id: 'quotations', label: 'Quotations', icon: FileText }, { id: 'orders', label: 'Orders', icon: Package }, { id: 'messages', label: 'Messages', icon: MessageCircle }].map(tab => (
+          <button key={tab.id} onClick={() => setActiveTab(tab.id)} data-testid={`dashboard-tab-${tab.id}`}
+            className="flex-1 min-h-[44px] px-3 py-2.5 rounded-t-[14px] flex items-center justify-center gap-1.5 text-[14.5px] sm:text-[16px] font-medium transition-colors duration-300"
             style={{ background: activeTab === tab.id ? 'var(--lj-surface)' : 'transparent', color: activeTab === tab.id ? 'var(--lj-text)' : 'var(--lj-muted)', borderBottom: activeTab === tab.id ? '2px solid var(--lj-accent)' : '2px solid transparent' }}>
-            <tab.icon size={18} />{tab.label}
+            <tab.icon size={17} />{tab.label}
           </button>
         ))}
       </div>
@@ -374,6 +376,8 @@ export default function DashboardPage() {
               })}
             </div>
           )
+        ) : activeTab === 'messages' ? (
+          <MessagesPanel headers={headers} />
         ) : (
           orders.length === 0 ? (
             <EmptyState title="No orders yet" subtitle="Once your quote is confirmed, orders will appear here" />

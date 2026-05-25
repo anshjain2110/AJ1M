@@ -7,6 +7,9 @@ import {
   Diamond, Gem, ShieldCheck, MapPin,
 } from 'lucide-react';
 import PublicHeader from '../components/PublicHeader';
+import PriceTag from '../components/PriceTag';
+import ProjectInquiryChat from '../components/ProjectInquiryChat';
+import QuickQuoteModal from '../components/wizard/QuickQuoteModal';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -46,6 +49,17 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [activeImage, setActiveImage] = useState(null);
+  const [quickQuoteOpen, setQuickQuoteOpen] = useState(false);
+
+  const openQuickQuote = () => setQuickQuoteOpen(true);
+  // Pre-fill the Quick Quote modal with this project's context
+  const inspirationFiles = project && project.hero_image_url
+    ? [{ url: project.hero_image_url, original_name: project.title || project.slug, media_type: 'image' }]
+    : [];
+  const inspirationNotes = project
+    ? `I'd like something like "${project.title}"${project.subtitle ? ` (${project.subtitle})` : ''}.${project.description ? ` ${project.description}` : ''}`
+    : '';
+  const inspirationLink = project ? `https://thelocaljewel.com/projects/${project.slug}` : '';
 
   useEffect(() => {
     let mounted = true;
@@ -260,9 +274,19 @@ export default function ProjectDetailPage() {
               </p>
             )}
 
+            {/* Price tag — prominent, eye-catching */}
+            {(project.price !== null && project.price !== undefined && project.price !== '') && (
+              <div className="mb-6" data-testid="project-detail-price">
+                <PriceTag price={project.price} prefix={project.price_prefix} currency={project.price_currency} size="lg" testid="project-detail-price-tag" />
+                <p className="mt-1.5 text-[12px]" style={{ color: 'var(--lj-muted)' }}>
+                  Final price varies with size, metal & customization — locked in your written quote.
+                </p>
+              </div>
+            )}
+
             {/* CTA */}
             <button
-              onClick={() => navigate('/')}
+              onClick={openQuickQuote}
               data-testid="project-detail-cta"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 min-h-[52px] px-7 rounded-[14px] font-medium text-[16px] transition-all duration-300 active:scale-[0.99] hover:opacity-95"
               style={{ background: 'var(--lj-accent)', color: '#FFFFFF', boxShadow: '0 4px 20px rgba(15,94,76,0.22)' }}
@@ -270,6 +294,11 @@ export default function ProjectDetailPage() {
               Start a piece like this <ArrowRight size={18} />
             </button>
             <p className="mt-2 text-[12px]" style={{ color: 'var(--lj-muted)' }}>Takes about 90 seconds · No payment required</p>
+
+            {/* Marketplace-style inquiry chat */}
+            <div className="mt-6">
+              <ProjectInquiryChat project={project} />
+            </div>
           </div>
         </div>
       </section>
@@ -502,7 +531,7 @@ export default function ProjectDetailPage() {
             Send us your inspiration. We'll send back photoreal 3D renders within 48 hours. You only pay once you fall in love.
           </p>
           <button
-            onClick={() => navigate('/')}
+            onClick={openQuickQuote}
             data-testid="project-detail-cta-bottom"
             className="inline-flex items-center justify-center gap-2 min-h-[52px] px-7 rounded-[14px] font-medium text-[16px] transition-all duration-300 active:scale-[0.99]"
             style={{ background: '#FFFFFF', color: 'var(--lj-accent)' }}
@@ -514,10 +543,14 @@ export default function ProjectDetailPage() {
 
       {/* Footer */}
       <footer className="px-4 py-8 text-center" style={{ borderTop: '1px solid var(--lj-border)' }}>
-        <div className="flex items-center justify-center gap-3 text-[12px]" style={{ color: 'var(--lj-muted)' }}>
+        <div className="flex items-center justify-center gap-3 text-[12px] flex-wrap" style={{ color: 'var(--lj-muted)' }}>
           <a href="/" className="hover:underline">Home</a>
           <span>·</span>
           <a href="/projects" className="hover:underline">Projects</a>
+          <span>·</span>
+          <a href="/blog" className="hover:underline">Journal</a>
+          <span>·</span>
+          <a href="/contact" className="hover:underline">Contact</a>
           <span>·</span>
           <a href="/privacy" className="hover:underline">Privacy</a>
           <span>·</span>
@@ -529,7 +562,7 @@ export default function ProjectDetailPage() {
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 px-4 py-3"
         style={{ background: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(10px)', borderTop: '1px solid var(--lj-border)' }}>
         <button
-          onClick={() => navigate('/')}
+          onClick={openQuickQuote}
           data-testid="project-detail-sticky-cta"
           className="w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-6 rounded-[12px] font-medium text-[15px]"
           style={{ background: 'var(--lj-accent)', color: '#FFFFFF', boxShadow: '0 4px 14px rgba(15,94,76,0.22)' }}
@@ -538,6 +571,17 @@ export default function ProjectDetailPage() {
         </button>
       </div>
       <div className="lg:hidden" style={{ height: '80px' }} aria-hidden="true" />
+
+      {/* Quick Quote modal — pre-filled with this project */}
+      {quickQuoteOpen && project && (
+        <QuickQuoteModal
+          onClose={() => setQuickQuoteOpen(false)}
+          inspirationLink={inspirationLink}
+          inspirationFiles={inspirationFiles}
+          inspirationNotes={inspirationNotes}
+          inspirationVoice={null}
+        />
+      )}
     </div>
   );
 }

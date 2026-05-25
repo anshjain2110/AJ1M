@@ -1,0 +1,69 @@
+{
+  "summary": "Comprehensive backend + frontend testing for 4-phase TLJ build (price tags, marketplace inquiry chat, blog CMS, contact page, mobile nav). 25/25 backend tests pass; frontend mostly works EXCEPT /blog/:slug detail page crashes with Helmet runtime error.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "BlogDetailPage",
+        "issue": "Uncaught runtime error: 'Helmet expects a string as a child of <title>'. pageTitle resolves to empty string when post.meta_title is '' (falsy) or rendered before post is fully loaded — falls through to template literal that React Helmet receives as ``. Entire blog detail page fails to render and JSON-LD BlogPosting schema is NOT present in DOM.",
+        "selector": "/blog/how-to-pick-a-lab-grown-diamond",
+        "file": "/app/frontend/src/pages/BlogDetailPage.js (line 61, 81)",
+        "priority": "HIGH",
+        "suggested_fix": "Guard against empty string: const pageTitle = (post.meta_title && post.meta_title.trim()) || (post.title ? `${post.title} | The Local Jewel` : 'The Local Jewel Journal'); AND ensure the Helmet block only renders when post.title is non-empty."
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "POST /api/contact creates submission and appears in admin contact-submissions list",
+    "POST /api/contact returns 400 when message missing",
+    "POST /api/projects/{slug}/inquire returns 404 for bad slug, 400 for missing fields, success creates thread+lead+JWT",
+    "GET /api/me/threads + /api/me/threads/{id} work with returned JWT; reply increments admin_unread_count; missing auth returns 401",
+    "GET /api/admin/threads list, q-search by email, status=active filter all work",
+    "POST /api/admin/threads/{id}/reply pushes admin message; PATCH status closed/active works",
+    "Blog CRUD: POST creates, duplicate slug → 400, GET admin list shows post, PUT updates title, DELETE removes; public GET /api/blog excludes drafts; GET /api/blog/{slug} returns content_html and no _id",
+    "Project price fields persist (price=2850), price_prefix='Starting at', price_currency='USD' visible in GET /api/projects/{slug}; admin PUT can update price",
+    "Sitemap.xml contains /blog, /contact, /blog/how-to-pick-a-lab-grown-diamond, /projects/4-41-carat-radiant-hidden-halo-engagement-ring",
+    "POST /api/uploads with audio/webm MIME returns media_type='audio'",
+    "Frontend: Header on desktop shows text nav (Projects, Journal, Contact, Call, Login)",
+    "Frontend: Mobile (390x844) shows 'Menu' button — clicking reveals dropdown with Projects/Journal/Contact",
+    "Frontend: /projects index displays 'Starting at $2,850' price tag badge on project card",
+    "Frontend: /projects/{slug} hero shows large 'STARTING AT $2,850' price tag",
+    "Frontend: 'Start a piece like this' CTA opens QuickQuoteModal (Step 1 of 5: name, metal, carat, email, phone) — does NOT navigate to homepage",
+    "Frontend: Project detail page shows marketplace inquiry input pre-filled with 'Hi - is this available?' and Send button",
+    "Frontend: /contact renders Call/Email/Studio cards; form submits successfully and shows success state",
+    "Frontend: /blog index renders 'Notes from the studio' with All/Diamond Guides filter tabs and 1 published post card",
+    "Frontend: /admin/blog renders 'Journal (Blog)' admin with 'New post' button and seeded post row (edit/delete icons)",
+    "Frontend: /admin/messages renders Messages inbox with All/Active/Closed/Spam filters, search input, thread list (3 threads created during testing)"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_phase4_features.py",
+    "/app/test_reports/pytest/phase4_results.xml"
+  ],
+  "action_items": [
+    "HIGH: Fix BlogDetailPage.js Helmet <title> crash — guard pageTitle to never be empty string. Recommended: const pageTitle = (post?.meta_title?.trim()) || (post?.title ? `${post.title} | The Local Jewel` : 'The Local Jewel Journal'); and conditionally render Helmet only when post is loaded. This blocks public blog detail viewing AND prevents JSON-LD BlogPosting schema from rendering — both are seed/SEO-critical."
+  ],
+  "critical_code_review_comments": [
+    "BlogDetailPage.js: post may render with empty meta_title — must defensively coerce to non-empty string before passing into <title>. The same risk applies to <meta description>, <meta og:title>, and the JSON-LD jsonLd computation if post is null.",
+    "admin_routes.py thread reply uses dynamic `from server import ...` inside try/except — works but creates circular-import risk; extract sg/twilio helpers into a shared utils module.",
+    "server.py /api/projects/{slug}/inquire — auto-creates a user on email match without OTP verification. This means anyone can claim an existing user's threads via that email. Consider: at minimum, do not return a fully-valid login JWT here; or require email verification flow before merging into an existing user_id.",
+    "BlogPayload model lacks length caps (slug/title) — long inputs accepted as-is."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_phase4_features.py"
+  ],
+  "success_rate": {
+    "backend": "100% (25/25)",
+    "frontend": "~91% (10/11 flows pass; blog detail page broken)"
+  },
+  "test_credentials": "Admin: ansh@thelocaljewel.com / Rakesh@2709 (from /app/memory/test_credentials.md). User JWTs are minted by /api/projects/{slug}/inquire on the fly.",
+  "seed_data_creation": "Created during testing: ~3 contact submissions, ~3 marketplace threads + leads (TEST_User_... emails), 1 blog post (test-post-{ts}) that was then deleted. Updated price on seed project (then restored to 2850).",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend is fully green via pytest /app/backend/tests/test_phase4_features.py. The only outstanding bug is the React Helmet crash on /blog/:slug — verify by simply navigating to /blog/how-to-pick-a-lab-grown-diamond after the fix; JSON-LD BlogPosting script tag must be present in DOM and the article content must render. Test in both prod build and dev — Helmet's invariant only fires in dev mode but production will still produce an empty <title>. Admin and customer dashboard messages flows visually look right but full E2E send-from-customer-dashboard-Messages-tab was not exercised — worth a check if main agent re-tests.",
+  "rca_of_issue": "BlogDetailPage.js line 61: `const pageTitle = post.meta_title || \\`${post.title} | The Local Jewel\\`;` — the seeded blog post returned by the API has meta_title as empty string and react-helmet-async invariant throws when given an empty string child of <title>. Even if meta_title were truthy, render order during async data fetch can show post in an intermediate empty-string state. Fix: guard with .trim() and a non-empty literal fallback, and consider gating the Helmet block on post?.title being truthy."
+}

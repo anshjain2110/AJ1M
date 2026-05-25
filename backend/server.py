@@ -96,6 +96,17 @@ async def lifespan(app: FastAPI):
     await db.projects.create_index("published")
     await db.projects.create_index("tags")
     await db.projects.create_index([("published", 1), ("featured", -1), ("position", 1)])
+    # Blog posts
+    try:
+        await db.blog_posts.create_index("slug", unique=True)
+    except Exception:
+        pass
+    await db.blog_posts.create_index("published")
+    await db.blog_posts.create_index([("published", 1), ("featured", -1), ("position", 1), ("published_at", -1)])
+    # Message threads (marketplace inquiries)
+    await db.message_threads.create_index("user_id")
+    await db.message_threads.create_index("project_slug")
+    await db.message_threads.create_index([("updated_at", -1)])
     await db.users.update_many({"phone": ""}, {"$unset": {"phone": ""}})
     # Refresh static sitemap on every startup so production deploys always have fresh URLs
     try:
@@ -408,6 +419,272 @@ async def get_public_project_by_slug(slug: str):
     if not doc:
         raise HTTPException(404, "Project not found")
     return _project_strip_internal(doc)
+
+
+# ── API: Public Blog ─────────────────────────────────────────
+
+@app.get("/api/blog")
+async def get_public_blog(
+    category: Optional[str] = None,
+    featured: Optional[bool] = None,
+    limit: int = 30,
+):
+    query = {"published": True}
+    if category:
+        query["category"] = category
+    if featured is True:
+        query["featured"] = True
+    cursor = db.blog_posts.find(query, {"_id": 0, "content_html": 0}).sort(
+        [("featured", -1), ("published_at", -1), ("created_at", -1)]
+    ).limit(min(limit, 100))
+    items = [_project_strip_internal(doc) async for doc in cursor]
+    # Distinct categories
+    cat_pipeline = [
+        {"$match": {"published": True, "category": {"$ne": ""}}},
+        {"$group": {"_id": "$category", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+    ]
+    cats = [{"category": c["_id"], "count": c["count"]} async for c in db.blog_posts.aggregate(cat_pipeline) if c.get("_id")]
+    return {"posts": items, "categories": cats, "total": len(items)}
+
+@app.get("/api/blog/{slug}")
+async def get_public_blog_by_slug(slug: str):
+    doc = await db.blog_posts.find_one({"slug": slug, "published": True}, {"_id": 0})
+    if not doc:
+        raise HTTPException(404, "Post not found")
+    return _project_strip_internal(doc)
+
+
+# ── API: Contact form ────────────────────────────────────────
+
+class ContactRequest(BaseModel):
+    name: str
+    email: str
+    phone: Optional[str] = ""
+    subject: Optional[str] = ""
+    message: str
+
+@app.post("/api/contact")
+async def submit_contact(req: ContactRequest, request: Request):
+    name = req.name.strip()
+    email_val = req.email.strip().lower()
+    msg = req.message.strip()
+    if not name or not email_val or not msg:
+        raise HTTPException(400, "Name, email, and message are required")
+    client_ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "").split(",")[0].strip()
+    now = datetime.now(timezone.utc)
+    doc = {
+        "submission_id": f"contact_{uuid.uuid4().hex[:12]}",
+        "name": name,
+        "email": email_val,
+        "phone": req.phone.strip() if req.phone else "",
+        "subject": req.subject.strip() if req.subject else "",
+        "message": msg,
+        "ip_address": client_ip,
+        "created_at": now,
+    }
+    await db.contact_submissions.insert_one(doc)
+    if sg_client:
+        try:
+            notif = SGMail(
+                from_email=SENDGRID_FROM_EMAIL,
+                to_emails=SENDGRID_FROM_EMAIL,
+                subject=f"Contact form: {name}" + (f" — {req.subject}" if req.subject else ""),
+                html_content=f"""
+                <div style='font-family:-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:28px 20px;'>
+                    <h2 style='color:#0F5E4C;font-size:20px;margin:0 0 14px;'>New Contact Submission</h2>
+                    <table style='width:100%;font-size:14px;border-collapse:collapse;'>
+                        <tr><td style='padding:6px 0;color:#6B7280;'>Name</td><td style='padding:6px 0;text-align:right;'><strong>{name}</strong></td></tr>
+                        <tr><td style='padding:6px 0;color:#6B7280;'>Email</td><td style='padding:6px 0;text-align:right;'>{email_val}</td></tr>
+                        <tr><td style='padding:6px 0;color:#6B7280;'>Phone</td><td style='padding:6px 0;text-align:right;'>{req.phone or '—'}</td></tr>
+                        {f"<tr><td style='padding:6px 0;color:#6B7280;'>Subject</td><td style='padding:6px 0;text-align:right;'>{req.subject}</td></tr>" if req.subject else ''}
+                    </table>
+                    <div style='margin-top:14px;padding:14px 16px;background:#F5F5F3;border-radius:10px;color:#1A1A1C;font-size:14px;line-height:1.5;'>{msg}</div>
+                </div>
+                """,
+            )
+            sg_client.send(notif)
+        except Exception as e:
+            logger.warning(f"contact notify failed: {e}")
+    return {"status": "received", "submission_id": doc["submission_id"]}
+
+
+# ── API: Marketplace inquiries (project chat threads) ────────
+
+class ProjectInquireRequest(BaseModel):
+    name: str
+    email: str
+    phone: str
+    message: str
+
+@app.post("/api/projects/{slug}/inquire")
+async def project_inquire(slug: str, req: ProjectInquireRequest, request: Request):
+    """Marketplace-style "Hi, is this available?" submission on a project page."""
+    name = req.name.strip()
+    email_val = req.email.strip().lower()
+    phone = req.phone.strip()
+    message = req.message.strip()
+    if not (name and email_val and phone and message):
+        raise HTTPException(400, "Name, email, phone, and message are required")
+
+    project = await db.projects.find_one({"slug": slug, "published": True}, {"_id": 0, "title": 1, "hero_image_url": 1, "slug": 1, "price": 1})
+    if not project:
+        raise HTTPException(404, "Project not found")
+
+    client_ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "").split(",")[0].strip()
+
+    user = await db.users.find_one({"email": email_val}) or await db.users.find_one({"phone": phone})
+    if user:
+        user_id = user["user_id"]
+        upd = {}
+        if not user.get("first_name") and name: upd["first_name"] = name
+        if not user.get("phone") and phone: upd["phone"] = phone
+        if not user.get("email") and email_val: upd["email"] = email_val
+        if upd:
+            await db.users.update_one({"user_id": user_id}, {"$set": upd})
+    else:
+        user_id = f"user_{uuid.uuid4().hex[:12]}"
+        try:
+            await db.users.insert_one({
+                "user_id": user_id, "first_name": name, "email": email_val, "phone": phone,
+                "created_at": datetime.now(timezone.utc),
+            })
+        except Exception:
+            existing = await db.users.find_one({"email": email_val})
+            user_id = existing["user_id"] if existing else user_id
+
+    now = datetime.now(timezone.utc)
+    thread_id = f"thr_{uuid.uuid4().hex[:12]}"
+    first_msg = {"sender": "user", "text": message, "author_name": name, "created_at": now}
+    thread_doc = {
+        "thread_id": thread_id,
+        "user_id": user_id,
+        "user_name": name,
+        "user_email": email_val,
+        "user_phone": phone,
+        "project_slug": project.get("slug"),
+        "project_title": project.get("title", ""),
+        "project_hero": project.get("hero_image_url", ""),
+        "messages": [first_msg],
+        "status": "active",
+        "admin_unread_count": 1,
+        "user_unread_count": 0,
+        "attribution": {"ip_address": client_ip, "source": "project_inquiry"},
+        "created_at": now,
+        "updated_at": now,
+    }
+    await db.message_threads.insert_one(thread_doc)
+
+    lead_id = f"lead_{uuid.uuid4().hex[:12]}"
+    try:
+        await db.leads.insert_one({
+            "lead_id": lead_id,
+            "user_id": user_id,
+            "first_name": name,
+            "email": email_val,
+            "phone": phone,
+            "product_type": "engagement_ring",
+            "source": "project_inquiry",
+            "answers": {},
+            "inspiration_links": [f"https://thelocaljewel.com/projects/{slug}"],
+            "inspiration_notes": message,
+            "attribution": {"ip_address": client_ip, "source": "project_inquiry", "project_slug": slug, "thread_id": thread_id},
+            "status": "new",
+            "comments": [],
+            "internal_notes": [],
+            "score": 40,
+            "quality_flags": ["project_inquiry"],
+            "created_at": now,
+            "updated_at": now,
+        })
+    except Exception as e:
+        logger.warning(f"inquiry lead insert failed: {e}")
+
+    token = create_jwt(user_id, email_val)
+
+    if sg_client:
+        try:
+            notif = SGMail(
+                from_email=SENDGRID_FROM_EMAIL,
+                to_emails=SENDGRID_FROM_EMAIL,
+                subject=f"New project inquiry: {project.get('title', slug)}",
+                html_content=f"""
+                <div style='font-family:-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:28px 20px;'>
+                    <h2 style='color:#0F5E4C;font-size:20px;margin:0 0 12px;'>New message about a project</h2>
+                    <p style='font-size:14px;color:#374151;margin:0 0 14px;'>Re: <strong>{project.get('title','')}</strong></p>
+                    <table style='width:100%;font-size:14px;border-collapse:collapse;'>
+                        <tr><td style='padding:6px 0;color:#6B7280;'>From</td><td style='padding:6px 0;text-align:right;'><strong>{name}</strong></td></tr>
+                        <tr><td style='padding:6px 0;color:#6B7280;'>Email</td><td style='padding:6px 0;text-align:right;'>{email_val}</td></tr>
+                        <tr><td style='padding:6px 0;color:#6B7280;'>Phone</td><td style='padding:6px 0;text-align:right;'>{phone}</td></tr>
+                    </table>
+                    <div style='margin-top:14px;padding:14px 16px;background:#F5F5F3;border-radius:10px;color:#1A1A1C;font-size:14px;line-height:1.5;'>{message}</div>
+                    <p style='font-size:13px;color:#6B7280;margin-top:18px;'>Reply from the <a href='https://thelocaljewel.com/admin/messages' style='color:#0F5E4C;'>Messages tab in admin</a>.</p>
+                </div>
+                """,
+            )
+            sg_client.send(notif)
+        except Exception as e:
+            logger.warning(f"inquiry notify failed: {e}")
+
+    return {"status": "sent", "thread_id": thread_id, "lead_id": lead_id, "user_id": user_id, "token": token}
+
+
+@app.get("/api/me/threads")
+async def get_my_threads(user=Depends(get_current_user)):
+    cursor = db.message_threads.find({"user_id": user["user_id"]}, {"_id": 0}).sort("updated_at", -1)
+    threads = []
+    async for t in cursor:
+        out = dict(t)
+        for k, v in list(out.items()):
+            if isinstance(v, datetime): out[k] = v.isoformat()
+        out["messages"] = [
+            {kk: (vv.isoformat() if isinstance(vv, datetime) else vv) for kk, vv in (m if isinstance(m, dict) else {}).items()}
+            for m in (out.get("messages") or [])
+        ]
+        threads.append(out)
+    return {"threads": threads}
+
+@app.get("/api/me/threads/{thread_id}")
+async def get_my_thread(thread_id: str, user=Depends(get_current_user)):
+    doc = await db.message_threads.find_one({"thread_id": thread_id, "user_id": user["user_id"]}, {"_id": 0})
+    if not doc:
+        raise HTTPException(404, "Thread not found")
+    await db.message_threads.update_one(
+        {"thread_id": thread_id},
+        {"$set": {"user_unread_count": 0, "user_last_read_at": datetime.now(timezone.utc)}}
+    )
+    doc["user_unread_count"] = 0
+    out = dict(doc)
+    for k, v in list(out.items()):
+        if isinstance(v, datetime): out[k] = v.isoformat()
+    out["messages"] = [
+        {kk: (vv.isoformat() if isinstance(vv, datetime) else vv) for kk, vv in (m if isinstance(m, dict) else {}).items()}
+        for m in (out.get("messages") or [])
+    ]
+    return out
+
+class UserThreadReply(BaseModel):
+    text: str
+
+@app.post("/api/me/threads/{thread_id}/reply")
+async def reply_my_thread(thread_id: str, req: UserThreadReply, user=Depends(get_current_user)):
+    text = req.text.strip()
+    if not text:
+        raise HTTPException(400, "Message is empty")
+    thread = await db.message_threads.find_one({"thread_id": thread_id, "user_id": user["user_id"]})
+    if not thread:
+        raise HTTPException(404, "Thread not found")
+    now = datetime.now(timezone.utc)
+    msg = {"sender": "user", "text": text, "author_name": user.get("first_name", "Customer"), "created_at": now}
+    await db.message_threads.update_one(
+        {"thread_id": thread_id},
+        {
+            "$push": {"messages": msg},
+            "$inc": {"admin_unread_count": 1},
+            "$set": {"updated_at": now, "status": "active"},
+        }
+    )
+    return {"status": "sent", "message": {**msg, "created_at": now.isoformat()}}
 
 
 # ── Public Projects API (key-gated, for automation/n8n/scripts) ─────────
@@ -1269,6 +1546,8 @@ async def _build_sitemap_xml(base: str) -> str:
     static_routes = [
         ("/",         "1.00", "weekly"),
         ("/projects", "0.90", "weekly"),
+        ("/blog",     "0.85", "weekly"),
+        ("/contact",  "0.50", "monthly"),
         ("/login",    "0.30", "monthly"),
     ]
     parts = ['<?xml version="1.0" encoding="UTF-8"?>',
@@ -1294,6 +1573,22 @@ async def _build_sitemap_xml(base: str) -> str:
             )
     except Exception as e:
         logger.error(f"sitemap fetch failed: {e}")
+    try:
+        bcursor = db.blog_posts.find(
+            {"published": True},
+            {"_id": 0, "slug": 1, "updated_at": 1, "published_at": 1, "created_at": 1},
+        )
+        async for post in bcursor:
+            slug = post.get("slug")
+            if not slug: continue
+            last = post.get("updated_at") or post.get("published_at") or post.get("created_at")
+            lastmod = last.date().isoformat() if hasattr(last, "date") else now_iso
+            parts.append(
+                f"<url><loc>{base}/blog/{slug}</loc><lastmod>{lastmod}</lastmod>"
+                f"<changefreq>monthly</changefreq><priority>0.70</priority></url>"
+            )
+    except Exception as e:
+        logger.error(f"sitemap blog fetch failed: {e}")
     parts.append('</urlset>')
     return "\n".join(parts)
 

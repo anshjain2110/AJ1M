@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { motion, useInView } from 'framer-motion';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import PriceTag from './PriceTag';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -164,6 +165,13 @@ const ProjectCard = ({ project, index, onClick }) => {
             </span>
           ))}
         </div>
+
+        {/* Price tag (top-right) */}
+        {(project.price !== null && project.price !== undefined && project.price !== '') && (
+          <div className="absolute top-3 right-3">
+            <PriceTag price={project.price} prefix={project.price_prefix} currency={project.price_currency} testid={`featured-price-${project.slug}`} />
+          </div>
+        )}
 
         {/* Bottom shimmer gradient + CTA on hover */}
         <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-1/3 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"

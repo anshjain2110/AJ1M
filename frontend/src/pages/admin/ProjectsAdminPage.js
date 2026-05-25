@@ -39,6 +39,10 @@ const EMPTY = {
   published: true,
   featured: false,
   position: 0,
+  // Pricing
+  price: '',
+  price_prefix: 'Starting at',
+  price_currency: 'USD',
 };
 
 export default function ProjectsAdminPage() {
@@ -178,6 +182,7 @@ export default function ProjectsAdminPage() {
         ...form,
         slug: toSlug(form.slug),
         position: Number(form.position) || 0,
+        price: form.price === '' || form.price === null ? null : Number(form.price),
       };
       if (editing) {
         await api('put', `/api/admin/projects/${editing.project_id}`, payload);
@@ -270,6 +275,36 @@ export default function ProjectsAdminPage() {
           <Field label="Story / description">
             <textarea value={form.description} onChange={e => updateField('description', e.target.value)} className="input" rows={4} placeholder="Tell the story behind this piece — brief, customer ask, choices, the result." />
           </Field>
+          {/* Pricing */}
+          <div className="grid grid-cols-3 gap-3 mt-1">
+            <Field label="Price (USD)">
+              <input data-testid="admin-projects-price" type="number" min="0" step="50"
+                value={form.price === null || form.price === undefined ? '' : form.price}
+                onChange={e => updateField('price', e.target.value)}
+                className="input" placeholder="e.g. 2850" />
+            </Field>
+            <Field label="Price prefix">
+              <select data-testid="admin-projects-price-prefix" value={form.price_prefix || ''}
+                onChange={e => updateField('price_prefix', e.target.value)}
+                className="input">
+                <option value="Starting at">Starting at</option>
+                <option value="From">From</option>
+                <option value="">No prefix</option>
+              </select>
+            </Field>
+            <Field label="Currency">
+              <select value={form.price_currency || 'USD'}
+                onChange={e => updateField('price_currency', e.target.value)} className="input">
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP">GBP (£)</option>
+                <option value="INR">INR (₹)</option>
+              </select>
+            </Field>
+          </div>
+          <p className="text-[11.5px] mt-1" style={{ color: 'var(--lj-muted)' }}>
+            Leave price blank to hide the price tag entirely.
+          </p>
         </Card>
 
         {/* Specs */}

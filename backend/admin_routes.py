@@ -1301,6 +1301,10 @@ class ProjectPayload(BaseModel):
     published: bool = True
     featured: bool = False
     position: int = 0
+    # Pricing — optional
+    price: Optional[float] = None
+    price_prefix: Optional[str] = "Starting at"  # "Starting at", "From", or "" for none
+    price_currency: Optional[str] = "USD"
 
 def _project_public_view(doc: dict) -> dict:
     """Strip _id, format dates, return JSON-safe dict."""
@@ -1441,3 +1445,221 @@ async def admin_revoke_projects_api_key(admin=Depends(require_admin)):
     """Revoke the DB-stored key (env fallback still works if present)."""
     await db.settings.delete_one({"key": "projects_api_key"})
     return {"status": "revoked"}
+
+
+# ── Admin: Blog CMS ──────────────────────────────────────────
+
+class BlogPayload(BaseModel):
+    slug: str
+    title: str
+    subtitle: Optional[str] = ""
+    excerpt: Optional[str] = ""
+    hero_image_url: Optional[str] = ""
+    content_html: str = ""        # TipTap-generated HTML
+    category: Optional[str] = ""
+    tags: List[str] = []
+    author_name: Optional[str] = "The Local Jewel"
+    meta_title: Optional[str] = ""
+    meta_description: Optional[str] = ""
+    published: bool = False
+    featured: bool = False
+    position: int = 0
+
+def _blog_public_view(doc: dict) -> dict:
+    if not doc:
+        return None
+    out = {k: v for k, v in doc.items() if k != "_id"}
+    for k, v in out.items():
+        if isinstance(v, datetime):
+            out[k] = v.isoformat()
+    return out
+
+@router.get("/blog")
+async def admin_list_blog(admin=Depends(require_admin)):
+    cursor = db.blog_posts.find({}, {"_id": 0}).sort([("position", 1), ("published_at", -1), ("created_at", -1)])
+    items = [_blog_public_view(doc) async for doc in cursor]
+    return {"posts": items}
+
+@router.get("/blog/{post_id}")
+async def admin_get_blog(post_id: str, admin=Depends(require_admin)):
+    doc = await db.blog_posts.find_one({"post_id": post_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(404, "Post not found")
+    return _blog_public_view(doc)
+
+@router.post("/blog")
+async def admin_create_blog(req: BlogPayload, admin=Depends(require_admin)):
+    existing = await db.blog_posts.find_one({"slug": req.slug})
+    if existing:
+        raise HTTPException(400, "A post with this slug already exists")
+    now = datetime.now(timezone.utc)
+    doc = req.dict()
+    doc["post_id"] = f"post_{uuid.uuid4().hex[:12]}"
+    doc["created_at"] = now
+    doc["updated_at"] = now
+    if req.published:
+        doc["published_at"] = now
+    await db.blog_posts.insert_one(doc)
+    await _regen_sitemap_safe()
+    return _blog_public_view({k: v for k, v in doc.items() if k != "_id"})
+
+@router.put("/blog/{post_id}")
+async def admin_update_blog(post_id: str, req: BlogPayload, admin=Depends(require_admin)):
+    existing = await db.blog_posts.find_one({"post_id": post_id})
+    if not existing:
+        raise HTTPException(404, "Post not found")
+    if req.slug != existing.get("slug"):
+        clash = await db.blog_posts.find_one({"slug": req.slug, "post_id": {"$ne": post_id}})
+        if clash:
+            raise HTTPException(400, "A post with this slug already exists")
+    update = req.dict()
+    update["updated_at"] = datetime.now(timezone.utc)
+    # Stamp published_at on the transition from draft → published
+    if req.published and not existing.get("published_at"):
+        update["published_at"] = update["updated_at"]
+    await db.blog_posts.update_one({"post_id": post_id}, {"$set": update})
+    doc = await db.blog_posts.find_one({"post_id": post_id}, {"_id": 0})
+    await _regen_sitemap_safe()
+    return _blog_public_view(doc)
+
+@router.delete("/blog/{post_id}")
+async def admin_delete_blog(post_id: str, admin=Depends(require_admin)):
+    result = await db.blog_posts.delete_one({"post_id": post_id})
+    if result.deleted_count == 0:
+        raise HTTPException(404, "Post not found")
+    await _regen_sitemap_safe()
+    return {"status": "deleted"}
+
+
+# ── Admin: Message Threads (marketplace-style inquiries) ──────
+
+class ThreadReply(BaseModel):
+    text: str
+
+def _thread_public_view(doc: dict) -> dict:
+    if not doc:
+        return None
+    out = {k: v for k, v in doc.items() if k != "_id"}
+    for k, v in out.items():
+        if isinstance(v, datetime):
+            out[k] = v.isoformat()
+        elif isinstance(v, list):
+            out[k] = [
+                (
+                    {kk: (vv.isoformat() if isinstance(vv, datetime) else vv) for kk, vv in m.items()}
+                    if isinstance(m, dict) else m
+                )
+                for m in v
+            ]
+    return out
+
+@router.get("/threads")
+async def admin_list_threads(admin=Depends(require_admin), q: Optional[str] = None, status: Optional[str] = None):
+    query = {}
+    if status: query["status"] = status
+    if q:
+        query["$or"] = [
+            {"user_email": {"$regex": q, "$options": "i"}},
+            {"user_phone": {"$regex": q, "$options": "i"}},
+            {"user_name": {"$regex": q, "$options": "i"}},
+            {"project_title": {"$regex": q, "$options": "i"}},
+        ]
+    cursor = db.message_threads.find(query, {"_id": 0}).sort("updated_at", -1).limit(200)
+    threads = [_thread_public_view(doc) async for doc in cursor]
+    return {"threads": threads, "total": len(threads)}
+
+@router.get("/threads/{thread_id}")
+async def admin_get_thread(thread_id: str, admin=Depends(require_admin)):
+    doc = await db.message_threads.find_one({"thread_id": thread_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(404, "Thread not found")
+    # Mark all customer messages as read by admin
+    await db.message_threads.update_one(
+        {"thread_id": thread_id},
+        {"$set": {"admin_unread_count": 0, "admin_last_read_at": datetime.now(timezone.utc)}}
+    )
+    doc["admin_unread_count"] = 0
+    return _thread_public_view(doc)
+
+@router.post("/threads/{thread_id}/reply")
+async def admin_reply_thread(thread_id: str, req: ThreadReply, admin=Depends(require_admin)):
+    text = req.text.strip()
+    if not text:
+        raise HTTPException(400, "Message is empty")
+    thread = await db.message_threads.find_one({"thread_id": thread_id})
+    if not thread:
+        raise HTTPException(404, "Thread not found")
+    now = datetime.now(timezone.utc)
+    msg = {"sender": "admin", "text": text, "author_name": admin.get("email", "Admin"), "created_at": now}
+    await db.message_threads.update_one(
+        {"thread_id": thread_id},
+        {
+            "$push": {"messages": msg},
+            "$inc": {"user_unread_count": 1},
+            "$set": {"updated_at": now, "status": "active"},
+        }
+    )
+    # Best-effort notify customer via email + SMS (non-blocking)
+    try:
+        from server import sg_client, SENDGRID_FROM_EMAIL, twilio_client, TWILIO_PHONE
+        from sendgrid.helpers.mail import Mail as SGMail
+        proj_title = thread.get("project_title", "your inquiry")
+        if sg_client and thread.get("user_email"):
+            try:
+                em = SGMail(
+                    from_email=SENDGRID_FROM_EMAIL,
+                    to_emails=thread["user_email"],
+                    subject=f"The Local Jewel replied about {proj_title}",
+                    html_content=f"""
+                    <div style='font-family: -apple-system, sans-serif; max-width: 520px; margin: 0 auto; padding: 28px 20px;'>
+                        <h2 style='color:#0F5E4C; font-size:20px; margin:0 0 14px;'>You have a new message</h2>
+                        <p style='font-size:14px; color:#374151; margin:0 0 14px;'>Re: <strong>{proj_title}</strong></p>
+                        <div style='padding:14px 16px; background:#F5F5F3; border-radius:10px; color:#1A1A1C; font-size:14px; line-height:1.5;'>{text}</div>
+                        <p style='font-size:13px; color:#6B7280; margin-top:18px;'>
+                            Reply by visiting your <a href='https://thelocaljewel.com/dashboard' style='color:#0F5E4C;'>dashboard</a>.
+                        </p>
+                    </div>
+                    """,
+                )
+                sg_client.send(em)
+            except Exception as e:
+                import logging; logging.getLogger(__name__).warning(f"thread email failed: {e}")
+        if twilio_client and thread.get("user_phone") and TWILIO_PHONE:
+            try:
+                sms_preview = text[:120] + ("..." if len(text) > 120 else "")
+                twilio_client.messages.create(
+                    body=f"The Local Jewel replied: {sms_preview}\nView at thelocaljewel.com/dashboard",
+                    from_=TWILIO_PHONE,
+                    to=thread["user_phone"],
+                )
+            except Exception as e:
+                import logging; logging.getLogger(__name__).warning(f"thread SMS failed: {e}")
+    except Exception as e:
+        import logging; logging.getLogger(__name__).warning(f"thread notify import failed: {e}")
+    return {"status": "sent", "message": {**msg, "created_at": now.isoformat()}}
+
+@router.patch("/threads/{thread_id}")
+async def admin_update_thread(thread_id: str, payload: dict, admin=Depends(require_admin)):
+    """Update thread status (active/closed/spam) or add admin notes."""
+    allowed = {k: v for k, v in payload.items() if k in {"status", "admin_notes"}}
+    if not allowed:
+        raise HTTPException(400, "Nothing to update")
+    allowed["updated_at"] = datetime.now(timezone.utc)
+    await db.message_threads.update_one({"thread_id": thread_id}, {"$set": allowed})
+    doc = await db.message_threads.find_one({"thread_id": thread_id}, {"_id": 0})
+    return _thread_public_view(doc)
+
+
+# ── Admin: Contact form submissions ───────────────────────────
+
+@router.get("/contact-submissions")
+async def admin_list_contact_submissions(admin=Depends(require_admin)):
+    cursor = db.contact_submissions.find({}, {"_id": 0}).sort("created_at", -1).limit(200)
+    items = []
+    async for doc in cursor:
+        out = {k: v for k, v in doc.items()}
+        for k, v in out.items():
+            if isinstance(v, datetime): out[k] = v.isoformat()
+        items.append(out)
+    return {"submissions": items, "total": len(items)}
+

@@ -456,6 +456,10 @@ export default function LandingScreen() {
         <div className="flex items-center justify-center gap-3 text-[12px] flex-wrap" style={{ color: 'var(--lj-muted)' }}>
           <a href="/projects" className="hover:underline font-medium" style={{ color: 'var(--lj-accent)' }} data-testid="footer-projects-link">Past Projects</a>
           <span>·</span>
+          <a href="/blog" className="hover:underline font-medium" style={{ color: 'var(--lj-accent)' }} data-testid="footer-blog-link">Journal</a>
+          <span>·</span>
+          <a href="/contact" className="hover:underline font-medium" style={{ color: 'var(--lj-accent)' }} data-testid="footer-contact-link">Contact</a>
+          <span>·</span>
           <a href="/privacy" className="hover:underline">Privacy Policy</a>
           <span>·</span>
           <a href="/terms" className="hover:underline">Terms & Conditions</a>

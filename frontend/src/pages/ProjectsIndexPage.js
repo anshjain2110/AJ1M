@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 import { ArrowRight, Sparkles, ChevronRight, Loader2 } from 'lucide-react';
 import PublicHeader from '../components/PublicHeader';
+import PriceTag from '../components/PriceTag';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -181,6 +182,11 @@ export default function ProjectsIndexPage() {
                         Featured
                       </div>
                     )}
+                    {(p.price !== null && p.price !== undefined && p.price !== '') && (
+                      <div className="absolute top-3 right-3">
+                        <PriceTag price={p.price} prefix={p.price_prefix} currency={p.price_currency} testid={`project-card-price-${p.slug}`} />
+                      </div>
+                    )}
                   </div>
                   <div className="p-5">
                     <h3
@@ -240,10 +246,14 @@ export default function ProjectsIndexPage() {
 
       {/* Footer */}
       <footer className="px-4 py-8 text-center" style={{ borderTop: '1px solid var(--lj-border)' }}>
-        <div className="flex items-center justify-center gap-3 text-[12px]" style={{ color: 'var(--lj-muted)' }}>
+        <div className="flex items-center justify-center gap-3 text-[12px] flex-wrap" style={{ color: 'var(--lj-muted)' }}>
           <a href="/" className="hover:underline">Home</a>
           <span>·</span>
           <a href="/projects" className="hover:underline">Projects</a>
+          <span>·</span>
+          <a href="/blog" className="hover:underline">Journal</a>
+          <span>·</span>
+          <a href="/contact" className="hover:underline">Contact</a>
           <span>·</span>
           <a href="/privacy" className="hover:underline">Privacy</a>
           <span>·</span>
