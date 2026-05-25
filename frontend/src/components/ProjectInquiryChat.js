@@ -6,12 +6,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
 /**
- * Marketplace-style chat for project detail pages.
+ * Marketplace-style chat for project detail pages AND embedded inside cards.
  * Renders a sticky "Send seller a message" box with an editable pre-filled bubble.
  * On send → opens a sheet that captures name/email/phone in one step (Q1.a),
  * fires /api/projects/{slug}/inquire, saves JWT, then shows a success/chat view.
+ *
+ * Props:
+ *   compact: bool — render slimmer (no header/footnote) for grid cards
  */
-export default function ProjectInquiryChat({ project, defaultMessage = "Hi - is this available?" }) {
+export default function ProjectInquiryChat({ project, defaultMessage = "Hi - is this available?", compact = false }) {
   const [message, setMessage] = useState(defaultMessage);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [contact, setContact] = useState({ name: '', email: '', phone: '' });
@@ -73,22 +76,27 @@ export default function ProjectInquiryChat({ project, defaultMessage = "Hi - is 
     <>
       {/* Inline send-message bar (looks like Facebook marketplace) */}
       <div data-testid="project-inquiry-bar"
-        className="rounded-[16px] p-4"
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        className={compact ? "rounded-[14px] p-2.5" : "rounded-[16px] p-4"}
         style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}>
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: 'rgba(15,94,76,0.10)' }}>
-            <MessageCircle size={14} style={{ color: 'var(--lj-accent)' }} />
+        {!compact && (
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: 'rgba(15,94,76,0.10)' }}>
+              <MessageCircle size={14} style={{ color: 'var(--lj-accent)' }} />
+            </div>
+            <div className="text-[14px] font-medium" style={{ color: 'var(--lj-text)' }}>Send the jeweler a message</div>
           </div>
-          <div className="text-[14px] font-medium" style={{ color: 'var(--lj-text)' }}>Send the jeweler a message</div>
-        </div>
-        <form onSubmit={(e) => { e.preventDefault(); openSheet(); }} className="flex items-center gap-2">
+        )}
+        <form onSubmit={(e) => { e.preventDefault(); openSheet(); }} className="flex items-center gap-1.5">
           <input
             ref={inputRef}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
             data-testid="project-inquiry-input"
             placeholder="Hi - is this available?"
-            className="flex-1 min-h-[44px] px-4 rounded-full text-[14.5px] outline-none transition-colors"
+            className={(compact ? "min-h-[38px] text-[13.5px] px-3 " : "min-h-[44px] text-[14.5px] px-4 ") + "flex-1 rounded-full outline-none transition-colors"}
             style={{ background: 'var(--lj-bg)', border: '1.5px solid var(--lj-border)', color: 'var(--lj-text)' }}
           />
           <button
@@ -96,15 +104,17 @@ export default function ProjectInquiryChat({ project, defaultMessage = "Hi - is 
             data-testid="project-inquiry-send"
             disabled={!message.trim()}
             aria-label="Send message"
-            className="w-11 h-11 rounded-full flex-shrink-0 flex items-center justify-center transition-transform active:scale-95 disabled:opacity-50"
+            className={(compact ? "w-9 h-9" : "w-11 h-11") + " rounded-full flex-shrink-0 flex items-center justify-center transition-transform active:scale-95 disabled:opacity-50"}
             style={{ background: 'var(--lj-accent)', color: '#FFFFFF' }}
           >
-            <Send size={16} />
+            <Send size={compact ? 14 : 16} />
           </button>
         </form>
-        <p className="mt-2 text-[11.5px]" style={{ color: 'var(--lj-muted)' }}>
-          Real human reply — usually within a few hours.
-        </p>
+        {!compact && (
+          <p className="mt-2 text-[11.5px]" style={{ color: 'var(--lj-muted)' }}>
+            Real human reply — usually within a few hours.
+          </p>
+        )}
       </div>
 
       {/* Contact-gate sheet */}

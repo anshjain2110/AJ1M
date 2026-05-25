@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, useInView } from 'framer-motion';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import PriceTag from './PriceTag';
+import ProjectInquiryChat from './ProjectInquiryChat';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -121,9 +122,8 @@ const ProjectCard = ({ project, index, onClick }) => {
     || '';
 
   return (
-    <motion.button
+    <motion.div
       ref={ref}
-      onClick={onClick}
       data-testid={`featured-project-card-${project.slug || index}`}
       initial={{ opacity: 0, y: 24 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -134,8 +134,12 @@ const ProjectCard = ({ project, index, onClick }) => {
         width: 'min(78vw, 320px)',
       }}
     >
-      {/* Image card */}
-      <div className="relative overflow-hidden rounded-[18px] mb-4"
+      {/* Clickable image card → project detail */}
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={`View project ${project.title}`}
+        className="block w-full text-left relative overflow-hidden rounded-[18px] mb-4"
         style={{
           background: 'var(--lj-surface)',
           aspectRatio: '4/5',
@@ -185,10 +189,11 @@ const ProjectCard = ({ project, index, onClick }) => {
             <ArrowRight size={14} />
           </span>
         </div>
-      </div>
+      </button>
 
-      {/* Meta */}
-      <div className="px-1">
+      {/* Meta — also a clickable region */}
+      <button type="button" onClick={onClick} className="block w-full text-left px-1 mb-3"
+        aria-label={`View ${project.title} details`}>
         <div className="text-[11px] uppercase tracking-[0.18em] mb-1.5" style={{ color: 'var(--lj-muted)' }}>
           {project.client_name || 'Custom design'} · {project.location || project.timeline || 'TheLocalJewel'}
         </div>
@@ -201,8 +206,13 @@ const ProjectCard = ({ project, index, onClick }) => {
             {project.description}
           </p>
         )}
+      </button>
+
+      {/* Marketplace-style inquiry chat — embedded below each card */}
+      <div className="px-1">
+        <ProjectInquiryChat project={project} compact />
       </div>
-    </motion.button>
+    </motion.div>
   );
 };
 

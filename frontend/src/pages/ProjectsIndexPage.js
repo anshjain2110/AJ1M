@@ -5,6 +5,7 @@ import axios from 'axios';
 import { ArrowRight, Sparkles, ChevronRight, Loader2 } from 'lucide-react';
 import PublicHeader from '../components/PublicHeader';
 import PriceTag from '../components/PriceTag';
+import ProjectInquiryChat from '../components/ProjectInquiryChat';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -205,6 +206,10 @@ export default function ProjectsIndexPage() {
                           {labelFor(t)}
                         </span>
                       ))}
+                    </div>
+                    {/* Marketplace-style inquiry chat embedded in card */}
+                    <div className="mb-3">
+                      <ProjectInquiryChat project={p} compact />
                     </div>
                     <div className="flex items-center justify-between text-[13px] font-medium" style={{ color: 'var(--lj-accent)' }}>
                       <span>View the journey</span>
