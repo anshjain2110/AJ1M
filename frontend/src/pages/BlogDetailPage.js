@@ -34,6 +34,19 @@ export default function BlogDetailPage() {
     return () => { mounted = false; };
   }, [slug]);
 
+  // Compute SEO strings before early returns so hooks order stays stable
+  const pageTitle = post
+    ? String((post.meta_title && post.meta_title.trim()) || (post.title ? `${post.title} | The Local Jewel` : 'The Local Jewel Journal'))
+    : 'Journal · The Local Jewel';
+
+  // Set document.title imperatively — sidesteps react-helmet-async title-child quirk
+  useEffect(() => {
+    if (!pageTitle) return;
+    const prev = document.title;
+    document.title = pageTitle;
+    return () => { document.title = prev; };
+  }, [pageTitle]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col" style={{ background: 'var(--lj-bg)' }}>
@@ -58,15 +71,16 @@ export default function BlogDetailPage() {
     );
   }
 
-  const pageTitle = post.meta_title || `${post.title} | The Local Jewel`;
-  const desc = post.meta_description || post.excerpt || '';
+  const desc = String((post.meta_description && post.meta_description.trim()) || (post.excerpt && post.excerpt.trim()) || 'Real advice from working jewelers — diamond buying guides, custom design stories, and behind-the-scenes from The Local Jewel.');
   const canonical = `https://thelocaljewel.com/blog/${post.slug}`;
+  const ogTitle = String(post.meta_title || post.title || 'The Local Jewel Journal');
+  const heroImg = post.hero_image_url || '';
 
-  const jsonLd = JSON.stringify({
+  const jsonLdString = JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
-    headline: post.title,
-    image: post.hero_image_url || '',
+    headline: post.title || '',
+    image: heroImg,
     datePublished: post.published_at || post.created_at,
     dateModified: post.updated_at || post.published_at || post.created_at,
     author: { '@type': 'Organization', name: post.author_name || 'The Local Jewel' },
@@ -78,17 +92,17 @@ export default function BlogDetailPage() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--lj-bg)' }} data-testid="blog-detail-page">
       <Helmet>
-        <title>{pageTitle}</title>
         <meta name="description" content={desc} />
         <link rel="canonical" href={canonical} />
-        <meta property="og:title" content={post.title} />
+        <meta property="og:title" content={ogTitle} />
         <meta property="og:description" content={desc} />
-        <meta property="og:image" content={post.hero_image_url || ''} />
+        <meta property="og:image" content={heroImg} />
         <meta property="og:type" content="article" />
         <meta property="og:url" content={canonical} />
         <meta name="twitter:card" content="summary_large_image" />
       </Helmet>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />
+      {/* JSON-LD outside Helmet to avoid react-helmet-async script-child quirk */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString }} />
 
       <PublicHeader />
 

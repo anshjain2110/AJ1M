@@ -73,6 +73,17 @@ FARM stack — FastAPI · React (CRA) · MongoDB. Cloudflare R2 storage via boto
 - **2026-02 · Voice note "Talk to your jeweler"** — Hero now has a mic recorder that uploads to R2 as `inspiration_voice` on the lead; admin LeadsCRM detail panel renders an inline HTML5 audio player + download. Hero headline updated to "The most personal engagement ring buying experience online."
 - 2026-02 · Pinterest API research scoped (paused; user pivoted to voice note feature)
 
+## Recent Updates
+- **2026-05 · Phase 3 multi-feature ship (price tags, marketplace chat, blog CMS, contact page, mobile nav menu, sticky project CTA fix)** — verified by testing agent: 25/25 backend tests pass, all frontend flows working including blog detail (after Helmet `<title>` imperative fix matching ProjectDetailPage pattern).
+  - **Pricing**: `price`, `price_prefix`, `price_currency` on projects; eye-catching green PriceTag badge on cards + large hero badge on detail.
+  - **Marketplace inquiry chat** (Facebook-style): editable "Hi - is this available?" bar on project detail → inline name/email/phone gate → creates `message_threads` collection + lead + JWT, fires SendGrid notif + best-effort Twilio SMS on admin reply. Admin inbox at `/admin/messages`, customer view on dashboard "Messages" tab.
+  - **Blog CMS**: TipTap WYSIWYG editor at `/admin/blog`, public `/blog` index + `/blog/:slug` detail with JSON-LD BlogPosting schema, included in sitemap.xml.
+  - **Contact page** at `/contact` with phone/email/location cards + form posting to `/api/contact` → `contact_submissions` collection + admin email notif.
+  - **Mobile nav fix**: replaced ambiguous icon-only Projects link with proper text-based "Menu" dropdown (Projects · Journal · Contact) on PublicHeader + WizardShell.
+  - **Sticky CTA fix**: all "Start a piece like this" buttons on project pages now open Quick Quote modal pre-filled with project context instead of navigating to homepage.
+- 2026-02 · Voice note ("Talk to your jeweler") in hero
+- 2026-02 · Pinterest API research paused (5 pin types planned; user pivoted)
+
 ## Backlog / Roadmap
 
 ### P1 — Phase 2 (Pinterest API automation — paused)
