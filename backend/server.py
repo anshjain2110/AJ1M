@@ -879,6 +879,258 @@ async def projects_api_delete(slug: str, _auth: bool = Depends(_require_projects
     return {"status": "deleted", "slug": slug}
 
 
+# ──────────────────────────────────────────────────────────────
+# Public Blog Automation API (key-gated, for internal HQ / n8n / Make / Zapier)
+# ──────────────────────────────────────────────────────────────
+
+async def _require_blog_api_key(x_api_key: Optional[str] = Header(None, alias="X-API-Key")):
+    if not x_api_key:
+        raise HTTPException(401, "Invalid or missing X-API-Key header")
+    doc = await db.settings.find_one({"key": "blog_api_key"}, {"_id": 0, "value": 1})
+    if doc and doc.get("value") and x_api_key == doc.get("value"):
+        return True
+    env_key = os.environ.get("BLOG_API_KEY", "")
+    if env_key and x_api_key == env_key:
+        return True
+    raise HTTPException(401, "Invalid or missing X-API-Key header")
+
+
+def _md_to_safe_html(markdown_text: str) -> str:
+    """Convert Markdown → HTML and sanitize. Strips scripts, preserves common HTML+attrs."""
+    import markdown as md_lib
+    import bleach
+    raw = md_lib.markdown(
+        markdown_text or "",
+        extensions=["extra", "sane_lists", "smarty", "toc", "fenced_code", "tables"],
+        output_format="html5",
+    )
+    allowed_tags = set(bleach.sanitizer.ALLOWED_TAGS) | {
+        "p", "br", "img", "h1", "h2", "h3", "h4", "h5", "h6",
+        "ul", "ol", "li", "blockquote", "pre", "code", "hr",
+        "strong", "em", "a", "span", "div", "figure", "figcaption",
+        "table", "thead", "tbody", "tr", "th", "td",
+    }
+    allowed_attrs = {
+        "*": ["class", "id"],
+        "a": ["href", "title", "target", "rel"],
+        "img": ["src", "alt", "title", "width", "height", "loading"],
+    }
+    return bleach.clean(
+        raw,
+        tags=allowed_tags,
+        attributes=allowed_attrs,
+        protocols=["http", "https", "mailto", "tel", "data"],
+        strip=True,
+    )
+
+
+def _blog_strip_internal(doc: dict) -> dict:
+    if not doc:
+        return None
+    out = {k: v for k, v in doc.items() if k != "_id"}
+    for k, v in list(out.items()):
+        if isinstance(v, datetime):
+            out[k] = v.isoformat()
+    return out
+
+
+def _parse_blog_payload(payload_json: str, partial: bool = False) -> dict:
+    """Parse + validate the JSON payload sent in the multipart 'payload' field."""
+    import json as _json_lib
+    try:
+        body = _json_lib.loads(payload_json)
+    except Exception:
+        raise HTTPException(400, "payload must be valid JSON")
+    if not isinstance(body, dict):
+        raise HTTPException(400, "payload must be a JSON object")
+
+    out = {}
+    if "title" in body:
+        out["title"] = str(body["title"]).strip()
+    if "slug" in body and body["slug"]:
+        out["slug"] = _slugify(str(body["slug"]))
+    elif "title" in body and not partial:
+        out["slug"] = _slugify(out.get("title", ""))
+
+    if not partial:
+        if not out.get("title"):
+            raise HTTPException(400, "title is required")
+        if not out.get("slug"):
+            raise HTTPException(400, "slug is required (or auto-derived from title)")
+
+    for f in ("subtitle", "excerpt", "category", "author_name", "meta_title", "meta_description"):
+        if f in body:
+            out[f] = str(body[f] or "")
+    if "tags" in body and isinstance(body["tags"], list):
+        out["tags"] = [str(t) for t in body["tags"] if t]
+
+    if "content_html" in body and body["content_html"]:
+        out["content_html"] = str(body["content_html"])
+    elif "content_markdown" in body and body["content_markdown"]:
+        out["content_html"] = _md_to_safe_html(str(body["content_markdown"]))
+
+    for f in ("published", "featured"):
+        if f in body:
+            out[f] = bool(body[f])
+    if "position" in body:
+        try: out["position"] = int(body["position"])
+        except (TypeError, ValueError): pass
+
+    if "hero_image_url" in body and body["hero_image_url"]:
+        out["hero_image_url"] = str(body["hero_image_url"])
+
+    return out
+
+
+@app.post("/api/blog/api/create", status_code=201)
+async def blog_api_create(
+    payload: str = Form(..., description="JSON string with blog post metadata + optional content_markdown/content_html"),
+    hero: Optional[UploadFile] = File(None, description="Optional hero/featured image — uploaded to R2"),
+    media: List[UploadFile] = File([], description="Optional additional inline media files"),
+    _auth: bool = Depends(_require_blog_api_key),
+):
+    """Create a blog post via automation API. See BLOG_API.md / /blog-api-handoff.md for full schema."""
+    data = _parse_blog_payload(payload, partial=False)
+
+    if hero is not None and hero.filename:
+        data["hero_image_url"] = await _upload_to_r2(hero, subfolder="blog")
+
+    uploaded_media = []
+    for m in media or []:
+        if m and m.filename:
+            url = await _upload_to_r2(m, subfolder="blog")
+            uploaded_media.append({"original_name": m.filename, "url": url, "content_type": m.content_type})
+
+    existing = await db.blog_posts.find_one({"slug": data["slug"]})
+    if existing:
+        raise HTTPException(400, f"A post with slug '{data['slug']}' already exists. Use PUT /api/blog/api/{data['slug']} to update.")
+
+    now = datetime.now(timezone.utc)
+    doc = {
+        "post_id": f"post_{uuid.uuid4().hex[:12]}",
+        "slug": data["slug"],
+        "title": data["title"],
+        "subtitle": data.get("subtitle", ""),
+        "excerpt": data.get("excerpt", ""),
+        "hero_image_url": data.get("hero_image_url", ""),
+        "content_html": data.get("content_html", ""),
+        "category": data.get("category", ""),
+        "tags": data.get("tags", []),
+        "author_name": data.get("author_name", "The Local Jewel"),
+        "meta_title": data.get("meta_title", ""),
+        "meta_description": data.get("meta_description", ""),
+        "published": data.get("published", False),
+        "featured": data.get("featured", False),
+        "position": data.get("position", 0),
+        "created_at": now,
+        "updated_at": now,
+    }
+    if doc["published"]:
+        doc["published_at"] = now
+    await db.blog_posts.insert_one(doc)
+    await regenerate_static_sitemap()
+    return {
+        "status": "created",
+        "post": _blog_strip_internal({k: v for k, v in doc.items() if k != "_id"}),
+        "uploaded_media": uploaded_media,
+    }
+
+
+@app.put("/api/blog/api/{slug}")
+async def blog_api_update(
+    slug: str,
+    payload: str = Form(..., description="JSON string (partial — only fields to change)"),
+    hero: Optional[UploadFile] = File(None),
+    media: List[UploadFile] = File([]),
+    _auth: bool = Depends(_require_blog_api_key),
+):
+    existing = await db.blog_posts.find_one({"slug": slug})
+    if not existing:
+        raise HTTPException(404, f"No post with slug '{slug}'")
+
+    data = _parse_blog_payload(payload, partial=True)
+
+    if hero is not None and hero.filename:
+        data["hero_image_url"] = await _upload_to_r2(hero, subfolder="blog")
+
+    uploaded_media = []
+    for m in media or []:
+        if m and m.filename:
+            url = await _upload_to_r2(m, subfolder="blog")
+            uploaded_media.append({"original_name": m.filename, "url": url, "content_type": m.content_type})
+
+    new_slug = data.get("slug")
+    if new_slug and new_slug != slug:
+        clash = await db.blog_posts.find_one({"slug": new_slug, "post_id": {"$ne": existing["post_id"]}})
+        if clash:
+            raise HTTPException(400, f"Slug '{new_slug}' is already in use")
+
+    update = {}
+    for k in ("title", "slug", "subtitle", "excerpt", "hero_image_url", "content_html",
+              "category", "tags", "author_name", "meta_title", "meta_description",
+              "published", "featured", "position"):
+        if k in data:
+            update[k] = data[k]
+    update["updated_at"] = datetime.now(timezone.utc)
+    if data.get("published") is True and not existing.get("published_at"):
+        update["published_at"] = update["updated_at"]
+
+    await db.blog_posts.update_one({"post_id": existing["post_id"]}, {"$set": update})
+    target_slug = new_slug or slug
+    doc = await db.blog_posts.find_one({"slug": target_slug}, {"_id": 0})
+    await regenerate_static_sitemap()
+    return {"status": "updated", "post": _blog_strip_internal(doc), "uploaded_media": uploaded_media}
+
+
+@app.get("/api/blog/api/list")
+async def blog_api_list(
+    include_drafts: bool = True,
+    limit: int = 100,
+    _auth: bool = Depends(_require_blog_api_key),
+):
+    """List posts (incl. drafts by default). Designed for automation sync checks."""
+    query = {} if include_drafts else {"published": True}
+    cursor = db.blog_posts.find(query, {"_id": 0, "content_html": 0}).sort(
+        [("featured", -1), ("published_at", -1), ("created_at", -1)]
+    ).limit(min(limit, 500))
+    items = [_blog_strip_internal(doc) async for doc in cursor]
+    return {"posts": items, "total": len(items)}
+
+
+@app.get("/api/blog/api/{slug}")
+async def blog_api_get(slug: str, _auth: bool = Depends(_require_blog_api_key)):
+    doc = await db.blog_posts.find_one({"slug": slug}, {"_id": 0})
+    if not doc:
+        raise HTTPException(404, f"No post with slug '{slug}'")
+    return _blog_strip_internal(doc)
+
+
+@app.delete("/api/blog/api/{slug}")
+async def blog_api_delete(slug: str, _auth: bool = Depends(_require_blog_api_key)):
+    result = await db.blog_posts.delete_one({"slug": slug})
+    if result.deleted_count == 0:
+        raise HTTPException(404, f"No post with slug '{slug}'")
+    await regenerate_static_sitemap()
+    return {"status": "deleted", "slug": slug}
+
+
+@app.post("/api/blog/api/upload")
+async def blog_api_upload(
+    files: List[UploadFile] = File(..., description="One or more image/video files to host on R2"),
+    _auth: bool = Depends(_require_blog_api_key),
+):
+    """Upload media to R2 separately — use the returned URLs in your post content_html/content_markdown."""
+    if not files:
+        raise HTTPException(400, "No files provided")
+    uploaded = []
+    for f in files:
+        if not f or not f.filename:
+            continue
+        url = await _upload_to_r2(f, subfolder="blog")
+        uploaded.append({"original_name": f.filename, "url": url, "content_type": f.content_type})
+    return {"uploaded": uploaded, "count": len(uploaded)}
+
+
 # ── API: Lead Submission ─────────────────────────────────────
 
 @app.post("/api/leads/submit")

@@ -1447,6 +1447,61 @@ async def admin_revoke_projects_api_key(admin=Depends(require_admin)):
     return {"status": "revoked"}
 
 
+# ── Blog Automation API key (same pattern as projects) ────────
+
+@router.get("/api-keys/blog")
+async def admin_get_blog_api_key(admin=Depends(require_admin)):
+    doc = await db.settings.find_one({"key": "blog_api_key"}, {"_id": 0})
+    env_key = os.environ.get("BLOG_API_KEY", "")
+    if not doc:
+        return {
+            "configured": bool(env_key),
+            "source": "env" if env_key else "none",
+            "masked": _mask_api_key(env_key) if env_key else "—",
+            "created_at": None,
+            "rotated_at": None,
+        }
+    return {
+        "configured": True,
+        "source": "db",
+        "masked": _mask_api_key(doc.get("value", "")),
+        "created_at": doc.get("created_at").isoformat() if doc.get("created_at") else None,
+        "rotated_at": doc.get("rotated_at").isoformat() if doc.get("rotated_at") else None,
+    }
+
+@router.post("/api-keys/blog/rotate")
+async def admin_rotate_blog_api_key(admin=Depends(require_admin)):
+    new_key = "tljb_" + _secrets.token_urlsafe(32)
+    now = datetime.now(timezone.utc)
+    existing = await db.settings.find_one({"key": "blog_api_key"})
+    if existing:
+        await db.settings.update_one(
+            {"key": "blog_api_key"},
+            {"$set": {"value": new_key, "rotated_at": now}},
+        )
+        created_at = existing.get("created_at", now)
+    else:
+        await db.settings.insert_one({
+            "key": "blog_api_key",
+            "value": new_key,
+            "created_at": now,
+            "rotated_at": now,
+        })
+        created_at = now
+    return {
+        "full_key": new_key,
+        "masked": _mask_api_key(new_key),
+        "created_at": created_at.isoformat() if isinstance(created_at, datetime) else None,
+        "rotated_at": now.isoformat(),
+        "warning": "Save this key now — it cannot be retrieved again after you close this view.",
+    }
+
+@router.delete("/api-keys/blog")
+async def admin_revoke_blog_api_key(admin=Depends(require_admin)):
+    await db.settings.delete_one({"key": "blog_api_key"})
+    return {"status": "revoked"}
+
+
 # ── Admin: Blog CMS ──────────────────────────────────────────
 
 class BlogPayload(BaseModel):

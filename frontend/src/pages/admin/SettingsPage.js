@@ -65,7 +65,8 @@ export default function SettingsPage() {
         </Section>
 
         {/* Automation API Keys */}
-        <ApiKeysPanel />
+        <ApiKeysPanel target="projects" />
+        <ApiKeysPanel target="blog" />
       </div>
     </div>
   );
