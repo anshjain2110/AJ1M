@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAdmin } from '../../context/AdminContext';
-import { Plus, Trash2, Edit2, Loader2, Image, ArrowLeft, Upload, Star, X, Film, ArrowUp, ArrowDown, Eye, Maximize2 } from 'lucide-react';
+import { Plus, Trash2, Edit2, Loader2, Image, ArrowLeft, Upload, Star, X, Film, ArrowUp, ArrowDown, Eye, Maximize2, EyeOff } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -55,6 +55,44 @@ export default function ProjectsAdminPage() {
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
   const [uploadingField, setUploadingField] = useState('');
+  const [filterTab, setFilterTab] = useState('published'); // 'published' | 'drafts' | 'all'
+  const [togglingId, setTogglingId] = useState(null);
+
+  // Counts per status
+  const counts = useMemo(() => {
+    const published = projects.filter(p => p.published).length;
+    const drafts = projects.filter(p => !p.published).length;
+    return { published, drafts, all: projects.length };
+  }, [projects]);
+
+  const filteredProjects = useMemo(() => {
+    if (filterTab === 'published') return projects.filter(p => p.published);
+    if (filterTab === 'drafts') return projects.filter(p => !p.published);
+    return projects;
+  }, [projects, filterTab]);
+
+  // Quick publish/unpublish toggle without opening the edit form
+  const toggleStatus = useCallback(async (p, e) => {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    setTogglingId(p.project_id);
+    try {
+      // Build a clean payload from the existing project — strip server-set fields
+      const payload = { ...p, published: !p.published };
+      delete payload.project_id;
+      delete payload.created_at;
+      delete payload.updated_at;
+      // Ensure price is a number or null
+      if (payload.price === '' || payload.price === undefined) payload.price = null;
+      await api('put', `/api/admin/projects/${p.project_id}`, payload);
+      // Optimistic local update + refresh
+      setProjects(prev => prev.map(x => x.project_id === p.project_id ? { ...x, published: !x.published } : x));
+    } catch (err) {
+      console.error(err);
+      window.alert('Could not update status. Please try again.');
+    } finally {
+      setTogglingId(null);
+    }
+  }, [api]);
 
   const fetchProjects = useCallback(async () => {
     setLoading(true);
@@ -639,22 +677,68 @@ export default function ProjectsAdminPage() {
         </button>
       </div>
 
+      {/* Status filter tabs */}
+      <div className="flex items-center gap-1 mb-4 flex-wrap" data-testid="admin-projects-tabs">
+        {[
+          { id: 'published', label: 'Published', icon: Eye, count: counts.published },
+          { id: 'drafts', label: 'Drafts', icon: EyeOff, count: counts.drafts },
+          { id: 'all', label: 'All', icon: null, count: counts.all },
+        ].map(t => (
+          <button key={t.id} onClick={() => setFilterTab(t.id)}
+            data-testid={`admin-projects-tab-${t.id}`}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12.5px] font-medium transition-all duration-200"
+            style={{
+              background: filterTab === t.id ? 'var(--lj-accent)' : 'var(--lj-surface)',
+              color: filterTab === t.id ? '#FFFFFF' : 'var(--lj-text)',
+              border: '1px solid ' + (filterTab === t.id ? 'var(--lj-accent)' : 'var(--lj-border)'),
+            }}>
+            {t.icon && <t.icon size={12} />}
+            {t.label}
+            <span className="text-[10.5px] font-semibold ml-0.5 px-1.5 py-0.5 rounded-full"
+              style={{
+                background: filterTab === t.id ? 'rgba(255,255,255,0.22)' : 'var(--lj-bg)',
+                color: filterTab === t.id ? '#fff' : 'var(--lj-muted)',
+                minWidth: 18,
+              }}>{t.count}</span>
+          </button>
+        ))}
+      </div>
+
       {loading ? (
         <div className="py-12 flex items-center justify-center" style={{ color: 'var(--lj-muted)' }}>
           <Loader2 size={20} className="animate-spin mr-2" /> Loading…
         </div>
-      ) : projects.length === 0 ? (
-        <div className="py-12 text-center rounded-[14px]" style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}>
+      ) : filteredProjects.length === 0 ? (
+        <div className="py-12 text-center rounded-[14px]" style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }} data-testid="admin-projects-empty">
           <Image size={36} style={{ color: 'var(--lj-muted)', opacity: 0.5 }} className="mx-auto mb-3" />
-          <p className="text-[14px] mb-3" style={{ color: 'var(--lj-text)' }}>No projects yet</p>
-          <button onClick={startCreate} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[10px] text-[13px] font-medium" style={{ background: 'var(--lj-accent)', color: '#fff' }}>
-            <Plus size={14} /> Create your first project
-          </button>
+          {filterTab === 'drafts' ? (
+            <>
+              <p className="text-[14px] mb-1" style={{ color: 'var(--lj-text)' }}>No drafts</p>
+              <p className="text-[12px]" style={{ color: 'var(--lj-muted)' }}>When you unpublish a project, it lands here — safe from public view but not deleted.</p>
+            </>
+          ) : filterTab === 'published' ? (
+            <>
+              <p className="text-[14px] mb-1" style={{ color: 'var(--lj-text)' }}>No published projects yet</p>
+              <p className="text-[12px] mb-3" style={{ color: 'var(--lj-muted)' }}>Create a project or publish a draft to make it appear at /projects.</p>
+              <button onClick={startCreate} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[10px] text-[13px] font-medium" style={{ background: 'var(--lj-accent)', color: '#fff' }}>
+                <Plus size={14} /> Create your first project
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="text-[14px] mb-3" style={{ color: 'var(--lj-text)' }}>No projects yet</p>
+              <button onClick={startCreate} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[10px] text-[13px] font-medium" style={{ background: 'var(--lj-accent)', color: '#fff' }}>
+                <Plus size={14} /> Create your first project
+              </button>
+            </>
+          )}
         </div>
       ) : (
         <div className="rounded-[14px] overflow-hidden" style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}>
-          {projects.map((p, i) => (
-            <div key={p.project_id} className="flex items-center gap-4 p-4" style={{ borderTop: i === 0 ? 'none' : '1px solid var(--lj-border)' }}>
+          {filteredProjects.map((p, i) => (
+            <div key={p.project_id} data-testid={`admin-projects-row-${p.slug}`}
+              className="flex items-center gap-4 p-4"
+              style={{ borderTop: i === 0 ? 'none' : '1px solid var(--lj-border)', opacity: !p.published ? 0.78 : 1 }}>
               <div className="w-16 h-16 rounded-[10px] overflow-hidden flex-shrink-0" style={{ background: 'var(--lj-bg)', border: '1px solid var(--lj-border)' }}>
                 {p.hero_image_url ? <img src={p.hero_image_url} alt={p.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Image size={18} style={{ color: 'var(--lj-muted)', opacity: 0.5 }} /></div>}
               </div>
@@ -672,7 +756,24 @@ export default function ProjectsAdminPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <a href={`/projects/${p.slug}`} target="_blank" rel="noopener noreferrer" className="text-[12px] px-2.5 py-1 rounded-[8px]" style={{ color: 'var(--lj-accent)', border: '1px solid var(--lj-border)' }}>View</a>
+                <button
+                  onClick={(e) => toggleStatus(p, e)}
+                  disabled={togglingId === p.project_id}
+                  data-testid={`admin-projects-toggle-${p.slug}`}
+                  title={p.published ? 'Move to drafts (hide from public)' : 'Publish (make visible at /projects)'}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-[8px] text-[11.5px] font-medium transition-all disabled:opacity-60"
+                  style={p.published
+                    ? { background: 'var(--lj-bg)', color: 'var(--lj-muted)', border: '1px solid var(--lj-border)' }
+                    : { background: 'rgba(15,94,76,0.10)', color: 'var(--lj-accent)', border: '1px solid rgba(15,94,76,0.30)' }
+                  }>
+                  {togglingId === p.project_id
+                    ? <Loader2 size={12} className="animate-spin" />
+                    : (p.published ? <EyeOff size={12} /> : <Eye size={12} />)}
+                  {p.published ? 'Move to drafts' : 'Publish'}
+                </button>
+                {p.published && (
+                  <a href={`/projects/${p.slug}`} target="_blank" rel="noopener noreferrer" className="text-[12px] px-2.5 py-1 rounded-[8px]" style={{ color: 'var(--lj-accent)', border: '1px solid var(--lj-border)' }}>View</a>
+                )}
                 <button onClick={() => startEdit(p)} data-testid={`admin-projects-edit-${p.slug}`} className="p-2 rounded-[8px] hover:bg-[#EDEDEB]" style={{ color: 'var(--lj-accent)' }}><Edit2 size={15} /></button>
                 <button onClick={() => handleDelete(p)} className="p-2 rounded-[8px] hover:bg-[#EDEDEB]" style={{ color: '#C44' }}><Trash2 size={15} /></button>
               </div>
