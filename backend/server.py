@@ -732,14 +732,26 @@ async def projects_api_create(
     hero: Optional[UploadFile] = File(None),
     gallery: List[UploadFile] = File([]),
     renders: List[UploadFile] = File([]),
+    render_files: List[UploadFile] = File([], description="Alias of `renders` for back-compat"),
+    client_brief_image: Optional[UploadFile] = File(None, description="iMessage screenshot or initial client-brief image"),
     _auth: bool = Depends(_require_projects_api_key),
 ):
     """
-    Create a project via API (for automation/n8n/scripts). Multipart form:
-      - payload (form field, JSON): {slug?, title, subtitle?, description?, specs?, journey?, customer_story?, tags?, meta_title?, meta_description?, published?, featured?, position?}
-      - hero (file, optional): single hero image
-      - gallery (files, optional): multiple FINAL photos
-      - renders (files, optional): multiple 3D-RENDER photos
+    Create a project via API (for automation / internal HQ / n8n / scripts).
+
+    Multipart form fields:
+      - payload (JSON):
+          {slug?, title, subtitle?, description?, specs?, tags?, meta_title?, meta_description?,
+           meta_keywords? (array → mapped to seo_phrases),
+           journey? (array of {label,description,media}), customer_story?,
+           project_story? (nested convenience: {client_brief, stone_selection, setting, final_result}),
+           client_brief_text?, stone_selection_text?, setting_text?, final_result_text?,  ← flat alt
+           testimonial? (string OR {name,location,quote,date}),
+           published?, featured?, position?, price?, price_prefix?, price_currency?}
+      - hero (file)         : single hero image
+      - gallery (files)     : FINAL piece photos
+      - renders (files)     : 3D RENDER images (also accepted as `render_files`)
+      - client_brief_image  : iMessage screenshot / initial client message (single file)
 
     Auth: X-API-Key header.
     """
@@ -755,12 +767,10 @@ async def projects_api_create(
     slug = _slugify(data.get("slug") or title)
     if not slug:
         raise HTTPException(400, "slug could not be derived; provide a valid slug or title")
-
-    # Ensure unique slug
     if await db.projects.find_one({"slug": slug}):
         raise HTTPException(400, f"A project with slug '{slug}' already exists")
 
-    # Upload media
+    # ── Upload media ──
     hero_url = ""
     if hero and hero.filename:
         hero_url = await _upload_to_r2(hero)
@@ -769,17 +779,41 @@ async def projects_api_create(
     final_captions = data.get("gallery_captions") or []
     render_captions = data.get("render_captions") or []
     for i, f in enumerate(gallery or []):
-        if not f or not f.filename:
-            continue
+        if not f or not f.filename: continue
         url = await _upload_to_r2(f)
         cap = final_captions[i] if i < len(final_captions) else ""
         gallery_items.append({"url": url, "caption": cap, "type": "final"})
-    for i, f in enumerate(renders or []):
-        if not f or not f.filename:
-            continue
+
+    # `renders` and `render_files` are aliases — accept either
+    render_urls = []
+    all_render_files = (renders or []) + (render_files or [])
+    for i, f in enumerate(all_render_files):
+        if not f or not f.filename: continue
         url = await _upload_to_r2(f)
         cap = render_captions[i] if i < len(render_captions) else ""
         gallery_items.append({"url": url, "caption": cap, "type": "render"})
+        render_urls.append(url)
+
+    # `client_brief_image` — single screenshot. Also added to gallery so it appears in hero gallery.
+    client_brief_url = ""
+    if client_brief_image and client_brief_image.filename:
+        client_brief_url = await _upload_to_r2(client_brief_image)
+        gallery_items.append({"url": client_brief_url, "caption": "Client brief", "type": "journey"})
+
+    # ── Normalize project_story / flat fields → canonical journey[] ──
+    journey = _normalize_into_journey(
+        data,
+        client_brief_url=client_brief_url,
+        render_urls=render_urls,
+    )
+
+    # ── Normalize testimonial → customer_story ──
+    customer_story = _normalize_customer_story(data)
+
+    # ── Normalize meta_keywords → seo_phrases ──
+    seo_phrases = data.get("seo_phrases") or []
+    if not seo_phrases and isinstance(data.get("meta_keywords"), list):
+        seo_phrases = [str(k) for k in data["meta_keywords"] if k]
 
     now = datetime.now(timezone.utc)
     doc = {
@@ -790,20 +824,135 @@ async def projects_api_create(
         "hero_image_url": hero_url,
         "gallery": gallery_items,
         "specs": data.get("specs") or {},
-        "journey": data.get("journey") or [],
-        "customer_story": data.get("customer_story") or None,
+        "journey": journey,
+        "customer_story": customer_story,
         "tags": data.get("tags") or [],
         "description": data.get("description", ""),
         "meta_title": data.get("meta_title", ""),
         "meta_description": data.get("meta_description", ""),
+        "seo_phrases": seo_phrases,
         "published": bool(data.get("published", True)),
         "featured": bool(data.get("featured", False)),
         "position": int(data.get("position", 0)),
+        # Pricing
+        "price": _coerce_price(data.get("price")),
+        "price_prefix": data.get("price_prefix", "Starting at"),
+        "price_currency": data.get("price_currency", "USD"),
         "created_at": now,
         "updated_at": now,
     }
     await db.projects.insert_one(doc)
+    await regenerate_static_sitemap()
     return _project_strip_internal({k: v for k, v in doc.items() if k != "_id"})
+
+
+def _coerce_price(v):
+    if v is None or v == "":
+        return None
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None
+
+
+# Canonical journey step labels — auto-mapped from flat or nested HQ payloads
+_STORY_FIELD_TO_LABEL = [
+    ("client_brief",    "Client brief"),
+    ("stone_selection", "Stone selection"),
+    ("setting",         "Setting design"),
+    ("final_result",    "Final result"),
+]
+
+
+def _normalize_into_journey(data: dict, client_brief_url: str = "", render_urls: list = None) -> list:
+    """
+    Accept three input shapes from automation and produce a canonical journey[] list:
+      1) data['journey'] — already the canonical array; pass through (still attaches client_brief/render media)
+      2) data['project_story'] = {client_brief, stone_selection, setting, final_result} (strings OR {text, image_url})
+      3) flat fields: client_brief_text, stone_selection_text, setting_text, final_result_text
+    """
+    render_urls = render_urls or []
+
+    # 1) Existing canonical journey[]
+    journey = list(data.get("journey") or [])
+
+    # If no journey passed, derive from project_story or flat fields
+    if not journey:
+        story = data.get("project_story") if isinstance(data.get("project_story"), dict) else {}
+        for field, label in _STORY_FIELD_TO_LABEL:
+            text_val = ""
+            image_url = ""
+            # nested form
+            sub = story.get(field) if story else None
+            if isinstance(sub, dict):
+                text_val = str(sub.get("text") or sub.get("description") or "").strip()
+                image_url = str(sub.get("image_url") or sub.get("image") or "").strip()
+            elif isinstance(sub, str):
+                text_val = sub.strip()
+            # flat form (overrides empty nested)
+            flat_val = data.get(f"{field}_text")
+            if flat_val and isinstance(flat_val, str):
+                text_val = text_val or flat_val.strip()
+            flat_img = data.get(f"{field}_image_url")
+            if flat_img and isinstance(flat_img, str):
+                image_url = image_url or flat_img.strip()
+            if text_val or image_url:
+                step = {"label": label, "description": text_val, "media": []}
+                if image_url:
+                    step["image_url"] = image_url
+                    step["media"].append({"url": image_url, "media_type": "image", "caption": ""})
+                journey.append(step)
+
+    # 2) Auto-attach uploaded client_brief_image to the Client brief step
+    if client_brief_url:
+        target = next((s for s in journey if (s.get("label") or "").strip().lower() == "client brief"), None)
+        if not target:
+            target = {"label": "Client brief", "description": "", "media": []}
+            journey.insert(0, target)
+        target.setdefault("media", []).append({"url": client_brief_url, "media_type": "image", "caption": "iMessage from client"})
+        if not target.get("image_url"):
+            target["image_url"] = client_brief_url
+
+    # 3) Auto-attach uploaded renders to the Setting design step (creates one if needed)
+    if render_urls:
+        target = next((s for s in journey if (s.get("label") or "").strip().lower() in ("setting design", "setting", "3d render", "render")), None)
+        if not target:
+            target = {"label": "Setting design", "description": "", "media": []}
+            # insert before final result if exists
+            insert_at = len(journey)
+            for i, s in enumerate(journey):
+                if (s.get("label") or "").strip().lower() == "final result":
+                    insert_at = i; break
+            journey.insert(insert_at, target)
+        for u in render_urls:
+            target.setdefault("media", []).append({"url": u, "media_type": "image", "caption": "3D render"})
+        if not target.get("image_url") and render_urls:
+            target["image_url"] = render_urls[0]
+
+    return journey
+
+
+def _normalize_customer_story(data: dict) -> Optional[dict]:
+    """Accept `customer_story` object OR `testimonial` string/object."""
+    cs = data.get("customer_story")
+    if isinstance(cs, dict) and any(cs.get(k) for k in ("name", "location", "quote", "date")):
+        return {
+            "name": str(cs.get("name") or ""),
+            "location": str(cs.get("location") or ""),
+            "quote": str(cs.get("quote") or ""),
+            "date": str(cs.get("date") or ""),
+        }
+    test = data.get("testimonial")
+    if isinstance(test, str) and test.strip():
+        return {"name": "", "location": "", "quote": test.strip(), "date": ""}
+    if isinstance(test, dict):
+        return {
+            "name": str(test.get("name") or ""),
+            "location": str(test.get("location") or ""),
+            "quote": str(test.get("quote") or test.get("text") or ""),
+            "date": str(test.get("date") or ""),
+        }
+    return None
 
 
 @app.put("/api/projects/api/{slug}")
@@ -813,7 +962,10 @@ async def projects_api_update(
     hero: Optional[UploadFile] = File(None),
     gallery: List[UploadFile] = File([]),
     renders: List[UploadFile] = File([]),
+    render_files: List[UploadFile] = File([], description="Alias of `renders` for back-compat"),
+    client_brief_image: Optional[UploadFile] = File(None),
     replace_gallery: bool = Form(False, description="If true, replace existing gallery; otherwise append"),
+    replace_journey: bool = Form(False, description="If true, replace existing journey[] with the derived one; otherwise merge"),
     _auth: bool = Depends(_require_projects_api_key),
 ):
     """Partial update of a project by slug. Same shape as /create — all payload fields optional. Files (if provided) get uploaded to R2."""
@@ -827,9 +979,20 @@ async def projects_api_update(
         raise HTTPException(400, "payload must be valid JSON")
 
     update = {}
-    for k in ["title", "subtitle", "description", "meta_title", "meta_description", "tags", "specs", "journey", "customer_story", "published", "featured", "position"]:
+    for k in ["title", "subtitle", "description", "meta_title", "meta_description", "tags",
+              "specs", "customer_story", "published", "featured", "position",
+              "price", "price_prefix", "price_currency"]:
         if k in data:
             update[k] = data[k]
+    if "price" in update:
+        update["price"] = _coerce_price(update["price"])
+
+    # meta_keywords → seo_phrases convenience
+    if "seo_phrases" in data:
+        update["seo_phrases"] = data.get("seo_phrases") or []
+    elif "meta_keywords" in data and isinstance(data["meta_keywords"], list):
+        update["seo_phrases"] = [str(k) for k in data["meta_keywords"] if k]
+
     if "slug" in data and data["slug"]:
         new_slug = _slugify(data["slug"])
         if new_slug != slug:
@@ -845,21 +1008,69 @@ async def projects_api_update(
     final_captions = data.get("gallery_captions") or []
     render_captions = data.get("render_captions") or []
     for i, f in enumerate(gallery or []):
-        if not f or not f.filename:
-            continue
+        if not f or not f.filename: continue
         url = await _upload_to_r2(f)
         cap = final_captions[i] if i < len(final_captions) else ""
         new_gallery_items.append({"url": url, "caption": cap, "type": "final"})
-    for i, f in enumerate(renders or []):
-        if not f or not f.filename:
-            continue
+
+    # renders / render_files alias
+    render_urls = []
+    all_render_files = (renders or []) + (render_files or [])
+    for i, f in enumerate(all_render_files):
+        if not f or not f.filename: continue
         url = await _upload_to_r2(f)
         cap = render_captions[i] if i < len(render_captions) else ""
         new_gallery_items.append({"url": url, "caption": cap, "type": "render"})
+        render_urls.append(url)
+
+    client_brief_url = ""
+    if client_brief_image and client_brief_image.filename:
+        client_brief_url = await _upload_to_r2(client_brief_image)
+        new_gallery_items.append({"url": client_brief_url, "caption": "Client brief", "type": "journey"})
+
     if new_gallery_items:
         update["gallery"] = new_gallery_items if replace_gallery else (existing.get("gallery") or []) + new_gallery_items
     elif replace_gallery:
         update["gallery"] = []
+
+    # Journey — accept canonical, nested project_story, or flat fields. Also auto-attach uploaded media.
+    has_story_input = (
+        "journey" in data
+        or "project_story" in data
+        or any(k in data for k in ("client_brief_text", "stone_selection_text", "setting_text", "final_result_text"))
+        or client_brief_url
+        or render_urls
+    )
+    if has_story_input:
+        derived = _normalize_into_journey(data, client_brief_url=client_brief_url, render_urls=render_urls)
+        if replace_journey or "journey" in data:
+            update["journey"] = derived
+        else:
+            # merge: append derived steps to existing, deduping by label
+            existing_journey = list(existing.get("journey") or [])
+            existing_labels = {(s.get("label") or "").strip().lower() for s in existing_journey}
+            for step in derived:
+                lab = (step.get("label") or "").strip().lower()
+                if lab and lab in existing_labels:
+                    # If client brief image or renders were uploaded, append media to the existing step
+                    for s in existing_journey:
+                        if (s.get("label") or "").strip().lower() == lab:
+                            s.setdefault("media", []).extend(step.get("media") or [])
+                            if not s.get("image_url") and step.get("image_url"):
+                                s["image_url"] = step["image_url"]
+                            if not s.get("description") and step.get("description"):
+                                s["description"] = step["description"]
+                            break
+                else:
+                    existing_journey.append(step)
+                    existing_labels.add(lab)
+            update["journey"] = existing_journey
+
+    # testimonial → customer_story alias
+    if "testimonial" in data and "customer_story" not in data:
+        cs = _normalize_customer_story(data)
+        if cs:
+            update["customer_story"] = cs
 
     if not update:
         raise HTTPException(400, "No fields or files provided to update")
@@ -868,6 +1079,7 @@ async def projects_api_update(
     target_slug = update.get("slug", slug)
     await db.projects.update_one({"slug": slug}, {"$set": update})
     doc = await db.projects.find_one({"slug": target_slug}, {"_id": 0})
+    await regenerate_static_sitemap()
     return _project_strip_internal(doc)
 
 

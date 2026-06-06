@@ -59,6 +59,8 @@ The key starts with `tlj_`.
 | hero     | file        | no       | Single hero image (max 15 MB).                                                 |
 | gallery  | files[]     | no       | "Final" photos — repeat the field for each file.                              |
 | renders  | files[]     | no       | "3D-render" photos — repeat the field for each file.                          |
+| render_files | files[] | no       | **Alias of `renders`** — accepted for back-compat. Use either.                |
+| client_brief_image | file | no    | iMessage screenshot / initial client message. Auto-attached to "Client brief" journey step + added to gallery. |
 
 **`payload` schema** (`?` = optional):
 
@@ -212,15 +214,175 @@ console.log(data);
 
 ---
 
+### 4.1.1 — Project story / journey shapes (HQ FAQ)
+
+The "project story" on the public page (Client Brief → Stone Selection → Setting → Final Result) lives in the `journey[]` array of the project document. **The API accepts three input shapes — pick whichever is easiest for your pipeline. The server normalizes all three into the same `journey[]` structure.**
+
+#### Shape A — Canonical `journey[]` (full control)
+
+```jsonc
+{
+  "title": "...",
+  "journey": [
+    {
+      "label": "Client brief",
+      "description": "She sent us a Pinterest screenshot saying 'I want vintage but modern'...",
+      "image_url": "https://...",
+      "media": [
+        { "url": "https://...", "media_type": "image", "caption": "iMessage from client" }
+      ]
+    },
+    { "label": "Stone selection", "description": "..." },
+    { "label": "Setting design",  "description": "..." },
+    { "label": "Final result",    "description": "..." }
+  ]
+}
+```
+
+Use this when you want non-standard step labels or multiple media items per step.
+
+#### Shape B — Nested `project_story` (recommended for HQ)
+
+```jsonc
+{
+  "title": "...",
+  "project_story": {
+    "client_brief":    "She sent us a Pinterest screenshot...",
+    "stone_selection": "We hand-picked two pear lab diamonds, 1.2ct + 1.0ct, F/VS.",
+    "setting":         "East-west toi et moi with a fine claw setting in 14K yellow gold.",
+    "final_result":    "She cried."
+  }
+}
+```
+
+Each value can also be a `{text, image_url}` object if you want to attach a specific image per step:
+
+```jsonc
+{
+  "project_story": {
+    "client_brief":    { "text": "She wanted vintage but modern.", "image_url": "https://..." },
+    "stone_selection": "We hand-picked two pear lab diamonds.",
+    "setting":         { "text": "East-west toi et moi.", "image_url": "https://..." },
+    "final_result":    "She cried."
+  }
+}
+```
+
+#### Shape C — Flat `*_text` fields (simplest for templated systems)
+
+```jsonc
+{
+  "title": "...",
+  "client_brief_text":    "She sent us a Pinterest screenshot...",
+  "stone_selection_text": "We hand-picked two pear lab diamonds.",
+  "setting_text":         "East-west toi et moi.",
+  "final_result_text":    "She cried."
+}
+```
+
+Optional per-step image URLs: `client_brief_image_url`, `stone_selection_image_url`, `setting_image_url`, `final_result_image_url`.
+
+#### How file uploads auto-link to story steps
+
+| Multipart file field | Auto-attached to | Also added to |
+|---|---|---|
+| `hero` | (not a step) | `hero_image_url` |
+| `gallery` | (not a step) | `gallery[]` with `type: "final"` |
+| `renders` / `render_files` | **"Setting design" step** (created if missing) | `gallery[]` with `type: "render"` |
+| `client_brief_image` | **"Client brief" step** (created if missing) | `gallery[]` with `type: "journey"` |
+
+→ Send the iMessage screenshot as `client_brief_image` and the 3D render(s) as `renders` — the story sections render with the right images automatically. **No need to host images yourself first.**
+
+#### Testimonial
+
+Same flexibility — three input shapes, all normalized to `customer_story`:
+
+```jsonc
+// A — canonical
+{ "customer_story": { "name": "Jess", "location": "Boston, MA", "quote": "...", "date": "Jun 2025" } }
+// B — object alias
+{ "testimonial":    { "name": "Jess", "location": "Boston, MA", "quote": "...", "date": "Jun 2025" } }
+// C — plain string
+{ "testimonial":    "The Local Jewel literally read her mind." }
+```
+
+#### SEO keywords
+
+- `meta_keywords` (array of strings) is **accepted** as a convenience and mapped to `seo_phrases` on save.
+- You can also send `seo_phrases` directly. Both work — `seo_phrases` is the canonical field name.
+
+---
+
+### 4.1.2 — Full HQ example (everything in one call)
+
+```bash
+curl -X POST "https://thelocaljewel.com/api/projects/api/create" \
+  -H "X-API-Key: $TLJ_API_KEY" \
+  -F 'payload={
+        "title": "Vintage Toi et Moi for Jess",
+        "subtitle": "From DM to finished ring in 5 weeks",
+        "description": "An east-west toi et moi engagement ring with two pear lab diamonds.",
+        "specs": {
+          "carat": "1.2 + 1.0 ct",
+          "shape": "Pear (Toi et Moi)",
+          "setting_style": "East-West Claw",
+          "metal": "14K Yellow Gold",
+          "color": "F",
+          "clarity": "VS"
+        },
+        "tags": ["engagement_ring","toi_et_moi","pear","lab_grown","yellow_gold"],
+        "meta_keywords": ["toi et moi","vintage ring","lab grown engagement ring","pear cut"],
+
+        "project_story": {
+          "client_brief":    "She sent us a Pinterest screenshot saying I want vintage but modern.",
+          "stone_selection": "We hand-picked two pear lab diamonds, 1.2ct + 1.0ct, F/VS.",
+          "setting":         "East-west toi et moi with a fine claw setting in 14K yellow gold.",
+          "final_result":    "She cried."
+        },
+
+        "testimonial": {
+          "name": "Jess M.",
+          "location": "Boston, MA",
+          "quote": "The Local Jewel literally read her mind.",
+          "date": "Jun 2026"
+        },
+
+        "price": 4850,
+        "price_prefix": "Starting at",
+        "published": true,
+        "featured": true
+      }' \
+  -F "hero=@/path/to/hero.jpg;type=image/jpeg" \
+  -F "client_brief_image=@/path/to/imessage-screenshot.png;type=image/png" \
+  -F "renders=@/path/to/3d-render-front.jpg;type=image/jpeg" \
+  -F "renders=@/path/to/3d-render-side.jpg;type=image/jpeg" \
+  -F "gallery=@/path/to/final-1.jpg;type=image/jpeg" \
+  -F "gallery=@/path/to/final-2.jpg;type=image/jpeg"
+```
+
+This single call produces a fully-rendered project page at `https://thelocaljewel.com/projects/vintage-toi-et-moi-for-jess` with:
+- Hero image set
+- 4-step journey rendered (Client brief → Stone selection → Setting design → Final result)
+- iMessage screenshot attached to "Client brief"
+- 3D renders attached to "Setting design"
+- Final photos in the gallery
+- Testimonial card with quote + name + location
+- Price tag "Starting at $4,850" on cards and detail hero
+- SEO keywords stored under `seo_phrases`
+
+---
+
+
 ### 4.2 — Update a project · `PUT /api/projects/api/{slug}`
 
 Same multipart shape. **All fields are optional** — only what you send gets updated.
 
-Extra field:
+Extra flags:
 
-| Field            | Type    | Default | Notes                                                                           |
-|------------------|---------|---------|---------------------------------------------------------------------------------|
-| replace_gallery  | boolean | `false` | `true` = replace existing gallery with newly uploaded files. Else **append**.   |
+| Field            | Type    | Default | Notes                                                                                                                |
+|------------------|---------|---------|----------------------------------------------------------------------------------------------------------------------|
+| replace_gallery  | boolean | `false` | `true` = replace existing gallery with newly uploaded files. Else **append**.                                        |
+| replace_journey  | boolean | `false` | `true` = replace existing journey[] with the one derived from the payload. Else **merge** (existing labels preserved, new media appended). |
 
 ```bash
 # Toggle "featured" and update copy — no files
@@ -228,7 +390,7 @@ curl -X PUT "https://thelocaljewel.com/api/projects/api/5-carat-oval-solitaire" 
   -H "X-API-Key: $TLJ_API_KEY" \
   -F 'payload={"subtitle":"Updated subtitle","featured":true}'
 
-# Append 2 more renders to existing gallery
+# Append 2 more renders to existing gallery (also adds to "Setting design" journey step media)
 curl -X PUT "https://thelocaljewel.com/api/projects/api/5-carat-oval-solitaire" \
   -H "X-API-Key: $TLJ_API_KEY" \
   -F "renders=@/path/to/new_render_1.jpg" \
@@ -239,6 +401,24 @@ curl -X PUT "https://thelocaljewel.com/api/projects/api/5-carat-oval-solitaire" 
   -H "X-API-Key: $TLJ_API_KEY" \
   -F "replace_gallery=true" \
   -F "gallery=@/path/to/new.jpg"
+
+# Update the project story copy without touching media
+curl -X PUT "https://thelocaljewel.com/api/projects/api/5-carat-oval-solitaire" \
+  -H "X-API-Key: $TLJ_API_KEY" \
+  -F 'payload={
+        "project_story": {
+          "client_brief":    "She came in knowing exactly what she wanted.",
+          "stone_selection": "Pulled a 5.02ct D/VVS2 oval from our lab inventory.",
+          "setting":         "Classic solitaire on a knife-edge band.",
+          "final_result":    "Proposed on the Charles Bridge in Prague."
+        }
+      }' \
+  -F "replace_journey=true"
+
+# Attach an iMessage screenshot to an EXISTING project (Client brief step)
+curl -X PUT "https://thelocaljewel.com/api/projects/api/5-carat-oval-solitaire" \
+  -H "X-API-Key: $TLJ_API_KEY" \
+  -F "client_brief_image=@/path/to/imessage.png"
 ```
 
 ---
