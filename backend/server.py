@@ -120,7 +120,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.environ.get("CORS_ORIGINS", "https://thelocaljewel.com,https://custom-jewelry-gen.preview.emergentagent.com").split(","),
+    allow_origins=os.environ.get("CORS_ORIGINS", "https://thelocaljewel.com,https://jewel-lead-gen.preview.emergentagent.com").split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -537,9 +537,12 @@ async def project_inquire(slug: str, req: ProjectInquireRequest, request: Reques
     if user:
         user_id = user["user_id"]
         upd = {}
-        if not user.get("first_name") and name: upd["first_name"] = name
-        if not user.get("phone") and phone: upd["phone"] = phone
-        if not user.get("email") and email_val: upd["email"] = email_val
+        if not user.get("first_name") and name:
+            upd["first_name"] = name
+        if not user.get("phone") and phone:
+            upd["phone"] = phone
+        if not user.get("email") and email_val:
+            upd["email"] = email_val
         if upd:
             await db.users.update_one({"user_id": user_id}, {"$set": upd})
     else:
@@ -636,7 +639,8 @@ async def get_my_threads(user=Depends(get_current_user)):
     async for t in cursor:
         out = dict(t)
         for k, v in list(out.items()):
-            if isinstance(v, datetime): out[k] = v.isoformat()
+            if isinstance(v, datetime):
+                out[k] = v.isoformat()
         out["messages"] = [
             {kk: (vv.isoformat() if isinstance(vv, datetime) else vv) for kk, vv in (m if isinstance(m, dict) else {}).items()}
             for m in (out.get("messages") or [])
@@ -656,7 +660,8 @@ async def get_my_thread(thread_id: str, user=Depends(get_current_user)):
     doc["user_unread_count"] = 0
     out = dict(doc)
     for k, v in list(out.items()):
-        if isinstance(v, datetime): out[k] = v.isoformat()
+        if isinstance(v, datetime):
+            out[k] = v.isoformat()
     out["messages"] = [
         {kk: (vv.isoformat() if isinstance(vv, datetime) else vv) for kk, vv in (m if isinstance(m, dict) else {}).items()}
         for m in (out.get("messages") or [])
@@ -779,7 +784,8 @@ async def projects_api_create(
     final_captions = data.get("gallery_captions") or []
     render_captions = data.get("render_captions") or []
     for i, f in enumerate(gallery or []):
-        if not f or not f.filename: continue
+        if not f or not f.filename:
+            continue
         url = await _upload_to_r2(f)
         cap = final_captions[i] if i < len(final_captions) else ""
         gallery_items.append({"url": url, "caption": cap, "type": "final"})
@@ -788,7 +794,8 @@ async def projects_api_create(
     render_urls = []
     all_render_files = (renders or []) + (render_files or [])
     for i, f in enumerate(all_render_files):
-        if not f or not f.filename: continue
+        if not f or not f.filename:
+            continue
         url = await _upload_to_r2(f)
         cap = render_captions[i] if i < len(render_captions) else ""
         gallery_items.append({"url": url, "caption": cap, "type": "render"})
@@ -922,7 +929,8 @@ def _normalize_into_journey(data: dict, client_brief_url: str = "", render_urls:
             insert_at = len(journey)
             for i, s in enumerate(journey):
                 if (s.get("label") or "").strip().lower() == "final result":
-                    insert_at = i; break
+                    insert_at = i
+                    break
             journey.insert(insert_at, target)
         for u in render_urls:
             target.setdefault("media", []).append({"url": u, "media_type": "image", "caption": "3D render"})
@@ -1008,7 +1016,8 @@ async def projects_api_update(
     final_captions = data.get("gallery_captions") or []
     render_captions = data.get("render_captions") or []
     for i, f in enumerate(gallery or []):
-        if not f or not f.filename: continue
+        if not f or not f.filename:
+            continue
         url = await _upload_to_r2(f)
         cap = final_captions[i] if i < len(final_captions) else ""
         new_gallery_items.append({"url": url, "caption": cap, "type": "final"})
@@ -1017,7 +1026,8 @@ async def projects_api_update(
     render_urls = []
     all_render_files = (renders or []) + (render_files or [])
     for i, f in enumerate(all_render_files):
-        if not f or not f.filename: continue
+        if not f or not f.filename:
+            continue
         url = await _upload_to_r2(f)
         cap = render_captions[i] if i < len(render_captions) else ""
         new_gallery_items.append({"url": url, "caption": cap, "type": "render"})
@@ -1185,8 +1195,10 @@ def _parse_blog_payload(payload_json: str, partial: bool = False) -> dict:
         if f in body:
             out[f] = bool(body[f])
     if "position" in body:
-        try: out["position"] = int(body["position"])
-        except (TypeError, ValueError): pass
+        try:
+            out["position"] = int(body["position"])
+        except (TypeError, ValueError):
+            pass
 
     if "hero_image_url" in body and body["hero_image_url"]:
         out["hero_image_url"] = str(body["hero_image_url"])
@@ -1348,9 +1360,11 @@ async def blog_api_upload(
 @app.post("/api/leads/submit")
 async def submit_lead(req: LeadSubmitRequest, request: Request):
     phone = req.phone.strip() if req.phone else None
-    if phone == "": phone = None
+    if phone == "":
+        phone = None
     email_val = req.email.strip() if req.email else None
-    if email_val == "": email_val = None
+    if email_val == "":
+        email_val = None
 
     # Capture IP for geo
     client_ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "").split(",")[0].strip()
@@ -1380,23 +1394,30 @@ async def submit_lead(req: LeadSubmitRequest, request: Request):
     score = 30  # base score for submitting
     quality_flags = []
     if req.answers.get("product_type") in ("engagement_ring", "wedding_bands"):
-        score += 15; quality_flags.append("high_value_product")
+        score += 15
+        quality_flags.append("high_value_product")
     if req.answers.get("carat_range") in ("2.0_2.9", "3.0_plus"):
-        score += 10; quality_flags.append("large_carat")
+        score += 10
+        quality_flags.append("large_carat")
     if req.answers.get("priority") in ("biggest_look", "best_sparkle"):
         score += 5
     if req.answers.get("has_inspiration") == "yes":
-        score += 10; quality_flags.append("has_inspiration")
+        score += 10
+        quality_flags.append("has_inspiration")
     if phone:
-        score += 10; quality_flags.append("has_phone")
+        score += 10
+        quality_flags.append("has_phone")
     if email_val:
-        score += 5; quality_flags.append("has_email")
+        score += 5
+        quality_flags.append("has_email")
     if req.sms_opt_in:
-        score += 5; quality_flags.append("sms_opt_in")
+        score += 5
+        quality_flags.append("sms_opt_in")
     # Check for returning visitor
     prev_events = await db.events.count_documents({"anonymous_id": req.attribution.get("anonymous_id", ""), "event_name": "tlj_session_start"})
     if prev_events > 1:
-        score += 10; quality_flags.append("returning_visitor")
+        score += 10
+        quality_flags.append("returning_visitor")
     score = min(score, 100)
     intent_bucket = "high" if score >= 70 else ("medium" if score >= 45 else "low")
     
@@ -1423,13 +1444,17 @@ async def submit_lead(req: LeadSubmitRequest, request: Request):
     if not user:
         user_id = f"user_{uuid.uuid4().hex[:12]}"
         user_doc = {"user_id": user_id, "first_name": req.first_name, "phone": phone, "created_at": datetime.now(timezone.utc)}
-        if email_val: user_doc["email"] = email_val
+        if email_val:
+            user_doc["email"] = email_val
         try:
             await db.users.insert_one(user_doc)
         except Exception:
-            if phone: user = await db.users.find_one({"phone": phone})
-            if not user and email_val: user = await db.users.find_one({"email": email_val})
-            if user: user_id = user["user_id"]
+            if phone:
+                user = await db.users.find_one({"phone": phone})
+            if not user and email_val:
+                user = await db.users.find_one({"email": email_val})
+            if user:
+                user_id = user["user_id"]
     else:
         user_id = user["user_id"]
         if email_val and not user.get("email"):
@@ -1511,9 +1536,12 @@ async def submit_quick_quote(req: QuickQuoteRequest, request: Request):
     if user:
         user_id = user["user_id"]
         update_fields = {}
-        if not user.get("first_name") and name: update_fields["first_name"] = name
-        if not user.get("phone") and phone: update_fields["phone"] = phone
-        if not user.get("email") and email_val: update_fields["email"] = email_val
+        if not user.get("first_name") and name:
+            update_fields["first_name"] = name
+        if not user.get("phone") and phone:
+            update_fields["phone"] = phone
+        if not user.get("email") and email_val:
+            update_fields["email"] = email_val
         if update_fields:
             await db.users.update_one({"user_id": user_id}, {"$set": update_fields})
     else:
@@ -1695,7 +1723,7 @@ async def get_me(user=Depends(get_current_user)):
 
 @app.get("/api/me/leads")
 async def get_my_leads(user=Depends(get_current_user)):
-    leads = [serialize_doc(l) async for l in db.leads.find({"user_id": user["user_id"]}).sort("created_at", -1)]
+    leads = [serialize_doc(ld) async for ld in db.leads.find({"user_id": user["user_id"]}).sort("created_at", -1)]
     return {"leads": leads}
 
 @app.get("/api/me/leads/{lead_id}")
@@ -2000,8 +2028,6 @@ async def pitch_chat(req: PitchChatRequest):
 
 # ── SEO: sitemap.xml + robots.txt ──────────────────────────
 
-from fastapi.responses import Response
-
 SITE_BASE_URL = os.environ.get("SITE_BASE_URL", "https://www.thelocaljewel.com").rstrip("/")
 SITEMAP_STATIC_PATH = "/app/frontend/public/sitemap.xml"
 
@@ -2028,7 +2054,8 @@ async def _build_sitemap_xml(base: str) -> str:
         )
         async for proj in cursor:
             slug = proj.get("slug")
-            if not slug: continue
+            if not slug:
+                continue
             last = proj.get("updated_at") or proj.get("created_at")
             lastmod = last.date().isoformat() if hasattr(last, "date") else now_iso
             parts.append(
@@ -2044,7 +2071,8 @@ async def _build_sitemap_xml(base: str) -> str:
         )
         async for post in bcursor:
             slug = post.get("slug")
-            if not slug: continue
+            if not slug:
+                continue
             last = post.get("updated_at") or post.get("published_at") or post.get("created_at")
             lastmod = last.date().isoformat() if hasattr(last, "date") else now_iso
             parts.append(

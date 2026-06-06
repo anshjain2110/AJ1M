@@ -15,7 +15,7 @@ import time
 import pytest
 import requests
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "").rstrip("/") or "https://custom-jewelry-gen.preview.emergentagent.com"
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "").rstrip("/") or "https://jewel-lead-gen.preview.emergentagent.com"
 ADMIN_EMAIL = "ansh@thelocaljewel.com"
 ADMIN_PASSWORD = "Rakesh@2709"
 SEED_PROJECT_SLUG = "4-41-carat-radiant-hidden-halo-engagement-ring"
@@ -311,8 +311,6 @@ class TestProjectPrice:
         target = next((p for p in projects if p.get("slug") == SEED_PROJECT_SLUG), None)
         assert target is not None
         pid = target["project_id"]
-        # PUT updated price
-        updated = dict(target)
         # admin GET to retrieve full payload
         r2 = requests.get(f"{BASE_URL}/api/admin/projects/{pid}", headers=admin_headers)
         assert r2.status_code == 200

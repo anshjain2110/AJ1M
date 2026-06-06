@@ -31,13 +31,18 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 # ── Helpers ──────────────────────────────────────────────────
 
 def serialize_doc(doc):
-    if doc is None: return None
+    if doc is None:
+        return None
     doc = dict(doc)
-    if "_id" in doc: doc["_id"] = str(doc["_id"])
+    if "_id" in doc:
+        doc["_id"] = str(doc["_id"])
     for k, v in doc.items():
-        if isinstance(v, datetime): doc[k] = v.isoformat()
-        elif isinstance(v, list): doc[k] = [serialize_doc(i) if isinstance(i, dict) else (i.isoformat() if isinstance(i, datetime) else i) for i in v]
-        elif isinstance(v, dict): doc[k] = serialize_doc(v)
+        if isinstance(v, datetime):
+            doc[k] = v.isoformat()
+        elif isinstance(v, list):
+            doc[k] = [serialize_doc(i) if isinstance(i, dict) else (i.isoformat() if isinstance(i, datetime) else i) for i in v]
+        elif isinstance(v, dict):
+            doc[k] = serialize_doc(v)
     return doc
 
 def create_admin_jwt(email: str):
@@ -137,14 +142,14 @@ def build_date_filter(days: int = 30, date_from: str = None, date_to: str = None
     if date_from:
         try:
             start = datetime.fromisoformat(date_from.replace("Z", "+00:00"))
-        except:
+        except Exception:
             start = datetime.now(timezone.utc) - timedelta(days=days)
     else:
         start = datetime.now(timezone.utc) - timedelta(days=days)
     if date_to:
         try:
             end = datetime.fromisoformat(date_to.replace("Z", "+00:00"))
-        except:
+        except Exception:
             end = datetime.now(timezone.utc)
     else:
         end = datetime.now(timezone.utc)
@@ -515,7 +520,7 @@ async def analytics_geo(
         "countries": [{"country": c["_id"], "events": c["events"], "sessions": len(c["sessions"])} for c in country_result],
         "cities": [{"city": c["_id"]["city"], "region": c["_id"]["region"], "country": c["_id"]["country"], "events": c["events"], "sessions": len(c["sessions"])} for c in city_result],
         "timezones": [{"timezone": t["_id"], "events": t["events"]} for t in tz_result],
-        "lead_geo": [{"country": l["_id"], "leads": l["leads"]} for l in lead_geo_result],
+        "lead_geo": [{"country": lg["_id"], "leads": lg["leads"]} for lg in lead_geo_result],
     }
 
 @router.get("/analytics/sources")
@@ -578,7 +583,7 @@ async def analytics_sources(
         "sources": [{"source": s["_id"]["source"], "medium": s["_id"]["medium"], "count": s["count"], "avg_score": round(s["avg_score"], 1), "high_intent": s["high_intent"]} for s in source_result],
         "campaigns": [{"campaign": c["_id"], "count": c["count"], "avg_score": round(c["avg_score"], 1)} for c in campaign_result],
         "referrers": [{"url": r["_id"], "count": r["count"]} for r in referrer_result],
-        "landing_pages": [{"url": l["_id"], "count": l["count"]} for l in landing_result],
+        "landing_pages": [{"url": lp["_id"], "count": lp["count"]} for lp in landing_result],
     }
 
 @router.get("/analytics/devices")
@@ -900,20 +905,29 @@ async def analytics_campaigns(admin=Depends(require_admin), days: int = Query(30
 @router.get("/leads")
 async def get_leads(admin=Depends(require_admin), page: int = Query(1, ge=1), limit: int = Query(25, le=100), status: Optional[str] = None, product_type: Optional[str] = None, budget: Optional[str] = None, source: Optional[str] = None, search: Optional[str] = None, date_from: Optional[str] = None, date_to: Optional[str] = None):
     query = {}
-    if status: query["status"] = status
-    if product_type: query["product_type"] = product_type
-    if budget: query["budget"] = budget
-    if source: query["attribution.utm_source"] = source
+    if status:
+        query["status"] = status
+    if product_type:
+        query["product_type"] = product_type
+    if budget:
+        query["budget"] = budget
+    if source:
+        query["attribution.utm_source"] = source
     if search:
         query["$or"] = [{"first_name": {"$regex": search, "$options": "i"}}, {"email": {"$regex": search, "$options": "i"}}, {"phone": {"$regex": search, "$options": "i"}}, {"lead_id": {"$regex": search, "$options": "i"}}]
     if date_from:
-        try: query["created_at"] = {"$gte": datetime.fromisoformat(date_from.replace("Z", "+00:00"))}
-        except: pass
+        try:
+            query["created_at"] = {"$gte": datetime.fromisoformat(date_from.replace("Z", "+00:00"))}
+        except Exception:
+            pass
     if date_to:
         dt_to = query.get("created_at", {})
-        try: dt_to["$lte"] = datetime.fromisoformat(date_to.replace("Z", "+00:00"))
-        except: pass
-        if dt_to: query["created_at"] = dt_to
+        try:
+            dt_to["$lte"] = datetime.fromisoformat(date_to.replace("Z", "+00:00"))
+        except Exception:
+            pass
+        if dt_to:
+            query["created_at"] = dt_to
 
     total = await db.leads.count_documents(query)
     skip = (page - 1) * limit
@@ -924,13 +938,18 @@ async def get_leads(admin=Depends(require_admin), page: int = Query(1, ge=1), li
 @router.get("/leads/export.csv")
 async def export_leads_csv(admin=Depends(require_admin), status: Optional[str] = None, date_from: Optional[str] = None, date_to: Optional[str] = None):
     query = {}
-    if status: query["status"] = status
+    if status:
+        query["status"] = status
     if date_from:
-        try: query.setdefault("created_at", {})["$gte"] = datetime.fromisoformat(date_from.replace("Z", "+00:00"))
-        except: pass
+        try:
+            query.setdefault("created_at", {})["$gte"] = datetime.fromisoformat(date_from.replace("Z", "+00:00"))
+        except Exception:
+            pass
     if date_to:
-        try: query.setdefault("created_at", {})["$lte"] = datetime.fromisoformat(date_to.replace("Z", "+00:00"))
-        except: pass
+        try:
+            query.setdefault("created_at", {})["$lte"] = datetime.fromisoformat(date_to.replace("Z", "+00:00"))
+        except Exception:
+            pass
 
     cursor = db.leads.find(query).sort("created_at", -1)
     fields = ["lead_id", "first_name", "phone", "email", "product_type", "diamond_shape", "carat_range", "priority", "metal", "budget", "status", "created_at", "notes"]
@@ -948,7 +967,8 @@ async def export_leads_csv(admin=Depends(require_admin), status: Optional[str] =
 @router.get("/leads/{lead_id}")
 async def get_lead_detail(lead_id: str, admin=Depends(require_admin)):
     lead = await db.leads.find_one({"lead_id": lead_id})
-    if not lead: raise HTTPException(404, "Lead not found")
+    if not lead:
+        raise HTTPException(404, "Lead not found")
     # Get quotes and notes
     quotes = [serialize_doc(q) async for q in db.quotes.find({"lead_id": lead_id}).sort("created_at", -1)]
     orders = [serialize_doc(o) async for o in db.orders.find({"lead_id": lead_id}).sort("created_at", -1)]
@@ -957,23 +977,27 @@ async def get_lead_detail(lead_id: str, admin=Depends(require_admin)):
 @router.patch("/leads/{lead_id}")
 async def update_lead_status(lead_id: str, req: LeadStatusUpdate, admin=Depends(require_admin)):
     valid = ["new", "contacted", "quoted", "won", "lost"]
-    if req.status not in valid: raise HTTPException(400, f"Status must be one of: {valid}")
+    if req.status not in valid:
+        raise HTTPException(400, f"Status must be one of: {valid}")
     result = await db.leads.update_one({"lead_id": lead_id}, {"$set": {"status": req.status, "updated_at": datetime.now(timezone.utc)}})
-    if result.matched_count == 0: raise HTTPException(404, "Lead not found")
+    if result.matched_count == 0:
+        raise HTTPException(404, "Lead not found")
     return {"status": "updated"}
 
 @router.post("/leads/{lead_id}/notes")
 async def add_lead_note(lead_id: str, req: NoteCreate, admin=Depends(require_admin)):
     note = {"text": req.text, "author": admin["email"], "created_at": datetime.now(timezone.utc)}
     result = await db.leads.update_one({"lead_id": lead_id}, {"$push": {"internal_notes": note}})
-    if result.matched_count == 0: raise HTTPException(404, "Lead not found")
+    if result.matched_count == 0:
+        raise HTTPException(404, "Lead not found")
     return {"status": "added", "note": serialize_doc(note)}
 
 @router.post("/leads/{lead_id}/comments")
 async def add_admin_comment(lead_id: str, req: NoteCreate, admin=Depends(require_admin)):
     comment = {"text": req.text, "author": "The Local Jewel", "role": "admin", "created_at": datetime.now(timezone.utc)}
     result = await db.leads.update_one({"lead_id": lead_id}, {"$push": {"comments": comment}})
-    if result.matched_count == 0: raise HTTPException(404, "Lead not found")
+    if result.matched_count == 0:
+        raise HTTPException(404, "Lead not found")
     return {"status": "added", "comment": serialize_doc(comment)}
 
 from fastapi import UploadFile, File
@@ -984,7 +1008,8 @@ UPLOAD_DIR_ADMIN = "/app/backend/uploads"
 @router.post("/leads/{lead_id}/renders")
 async def upload_cad_renders(lead_id: str, files: List[UploadFile] = File(...), admin=Depends(require_admin)):
     lead = await db.leads.find_one({"lead_id": lead_id})
-    if not lead: raise HTTPException(404, "Lead not found")
+    if not lead:
+        raise HTTPException(404, "Lead not found")
     uploaded = []
     for file in files[:5]:
         ext = os.path.splitext(file.filename)[1] if file.filename else ".png"
@@ -1001,13 +1026,17 @@ async def upload_cad_renders(lead_id: str, files: List[UploadFile] = File(...), 
 async def update_lead_stage(lead_id: str, req: dict, admin=Depends(require_admin)):
     stage = req.get("stage")
     valid_stages = ["design_quotation", "in_production", "shipped", "delivered"]
-    if stage not in valid_stages: raise HTTPException(400, f"Stage must be one of: {valid_stages}")
+    if stage not in valid_stages:
+        raise HTTPException(400, f"Stage must be one of: {valid_stages}")
     update = {"order_stage": stage, "updated_at": datetime.now(timezone.utc)}
     if stage == "shipped":
-        if req.get("tracking_number"): update["tracking_number"] = req["tracking_number"]
-        if req.get("shipping_provider"): update["shipping_provider"] = req["shipping_provider"]
+        if req.get("tracking_number"):
+            update["tracking_number"] = req["tracking_number"]
+        if req.get("shipping_provider"):
+            update["shipping_provider"] = req["shipping_provider"]
     result = await db.leads.update_one({"lead_id": lead_id}, {"$set": update})
-    if result.matched_count == 0: raise HTTPException(404, "Lead not found")
+    if result.matched_count == 0:
+        raise HTTPException(404, "Lead not found")
     return {"status": "updated"}
 
 # ── Quotation Management ─────────────────────────────────────
@@ -1015,7 +1044,8 @@ async def update_lead_stage(lead_id: str, req: dict, admin=Depends(require_admin
 @router.post("/leads/{lead_id}/quotes")
 async def create_quote(lead_id: str, req: QuoteCreate, admin=Depends(require_admin)):
     lead = await db.leads.find_one({"lead_id": lead_id})
-    if not lead: raise HTTPException(404, "Lead not found")
+    if not lead:
+        raise HTTPException(404, "Lead not found")
     quote = {"quote_id": f"q_{uuid.uuid4().hex[:10]}", "lead_id": lead_id, "items": req.items, "total": req.total, "currency": req.currency, "notes": req.notes, "template_name": req.template_name, "status": "draft", "created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)}
     await db.quotes.insert_one(quote)
     # Update lead status
@@ -1030,13 +1060,18 @@ async def get_lead_quotes(lead_id: str, admin=Depends(require_admin)):
 @router.patch("/quotes/{quote_id}")
 async def update_quote_status(quote_id: str, req: QuoteStatusUpdate, admin=Depends(require_admin)):
     valid = ["draft", "sent", "viewed", "accepted", "rejected"]
-    if req.status not in valid: raise HTTPException(400, f"Status must be one of: {valid}")
+    if req.status not in valid:
+        raise HTTPException(400, f"Status must be one of: {valid}")
     update = {"status": req.status, "updated_at": datetime.now(timezone.utc)}
-    if req.status == "sent": update["sent_at"] = datetime.now(timezone.utc)
-    elif req.status == "viewed": update["viewed_at"] = datetime.now(timezone.utc)
-    elif req.status == "accepted": update["accepted_at"] = datetime.now(timezone.utc)
+    if req.status == "sent":
+        update["sent_at"] = datetime.now(timezone.utc)
+    elif req.status == "viewed":
+        update["viewed_at"] = datetime.now(timezone.utc)
+    elif req.status == "accepted":
+        update["accepted_at"] = datetime.now(timezone.utc)
     result = await db.quotes.update_one({"quote_id": quote_id}, {"$set": update})
-    if result.matched_count == 0: raise HTTPException(404, "Quote not found")
+    if result.matched_count == 0:
+        raise HTTPException(404, "Quote not found")
     return {"status": "updated"}
 
 # ── Order Management ─────────────────────────────────────────
@@ -1044,7 +1079,8 @@ async def update_quote_status(quote_id: str, req: QuoteStatusUpdate, admin=Depen
 @router.post("/orders")
 async def create_order(req: OrderCreate, admin=Depends(require_admin)):
     quote = await db.quotes.find_one({"quote_id": req.quote_id})
-    if not quote: raise HTTPException(404, "Quote not found")
+    if not quote:
+        raise HTTPException(404, "Quote not found")
     order = {"order_id": f"ord_{uuid.uuid4().hex[:10]}", "lead_id": quote["lead_id"], "quote_id": req.quote_id, "notes": req.notes, "status": "processing", "tracking_number": "", "shipping_provider": "", "shipping_url": "", "created_at": datetime.now(timezone.utc), "updated_at": datetime.now(timezone.utc)}
     await db.orders.insert_one(order)
     # Update lead + quote
@@ -1055,7 +1091,8 @@ async def create_order(req: OrderCreate, admin=Depends(require_admin)):
 @router.get("/orders")
 async def get_orders(admin=Depends(require_admin), page: int = Query(1, ge=1), limit: int = Query(25, le=100), status: Optional[str] = None):
     query = {}
-    if status: query["status"] = status
+    if status:
+        query["status"] = status
     total = await db.orders.count_documents(query)
     skip = (page - 1) * limit
     cursor = db.orders.find(query).sort("created_at", -1).skip(skip).limit(limit)
@@ -1065,7 +1102,8 @@ async def get_orders(admin=Depends(require_admin), page: int = Query(1, ge=1), l
 @router.get("/orders/{order_id}")
 async def get_order(order_id: str, admin=Depends(require_admin)):
     order = await db.orders.find_one({"order_id": order_id})
-    if not order: raise HTTPException(404, "Order not found")
+    if not order:
+        raise HTTPException(404, "Order not found")
     return serialize_doc(order)
 
 @router.patch("/orders/{order_id}")
@@ -1073,13 +1111,18 @@ async def update_order(order_id: str, req: OrderUpdate, admin=Depends(require_ad
     update = {"updated_at": datetime.now(timezone.utc)}
     if req.status:
         valid = ["processing", "in_production", "shipped", "delivered"]
-        if req.status not in valid: raise HTTPException(400, f"Status must be one of: {valid}")
+        if req.status not in valid:
+            raise HTTPException(400, f"Status must be one of: {valid}")
         update["status"] = req.status
-    if req.tracking_number is not None: update["tracking_number"] = req.tracking_number
-    if req.shipping_provider is not None: update["shipping_provider"] = req.shipping_provider
-    if req.shipping_url is not None: update["shipping_url"] = req.shipping_url
+    if req.tracking_number is not None:
+        update["tracking_number"] = req.tracking_number
+    if req.shipping_provider is not None:
+        update["shipping_provider"] = req.shipping_provider
+    if req.shipping_url is not None:
+        update["shipping_url"] = req.shipping_url
     result = await db.orders.update_one({"order_id": order_id}, {"$set": update})
-    if result.matched_count == 0: raise HTTPException(404, "Order not found")
+    if result.matched_count == 0:
+        raise HTTPException(404, "Order not found")
     return {"status": "updated"}
 
 # ── Settings ─────────────────────────────────────────────────
@@ -1089,7 +1132,7 @@ async def get_settings_doc():
     if not doc:
         doc = {"_type": "site_settings", "phone_number": "+15857108292", "whatsapp_link": "https://wa.me/15857108292", "live_chat_enabled": False, "gia_logo_visible": True, "igi_logo_visible": True, "reviews_count": "70+", "customers_count": "100+", "avg_savings": "$5,000", "email_notify_new_lead": True, "email_notify_quote": True}
         await db.settings.insert_one(doc)
-    return doc
+    return serialize_doc(doc)
 
 @router.get("/settings")
 async def get_settings(admin=Depends(require_admin)):
@@ -1118,7 +1161,7 @@ async def get_tracking_doc():
     if not doc:
         doc = {"_type": "tracking_settings", "meta_pixel_id": "", "google_ads_tag": "", "tiktok_pixel_id": "", "google_analytics_id": ""}
         await db.settings.insert_one(doc)
-    return doc
+    return serialize_doc(doc)
 
 @router.get("/tracking")
 async def get_tracking(admin=Depends(require_admin)):
@@ -1150,7 +1193,7 @@ async def get_abtest_doc():
     if not doc:
         doc = {"_type": "abtest_settings", "lead_capture_mode": "auto", "variant_a_weight": 50}
         await db.settings.insert_one(doc)
-    return doc
+    return serialize_doc(doc)
 
 @router.get("/abtest")
 async def get_abtest(admin=Depends(require_admin)):
@@ -1235,8 +1278,7 @@ async def create_showcase_pair(
         "created_at": datetime.now(timezone.utc),
     }
     await db.showcase_pairs.insert_one(doc)
-    doc["_id"] = str(doc["_id"])
-    return doc
+    return serialize_doc(doc)
 
 @router.delete("/showcase-pairs/{pair_id}")
 async def delete_showcase_pair(pair_id: str, admin=Depends(require_admin)):
@@ -1611,7 +1653,8 @@ def _thread_public_view(doc: dict) -> dict:
 @router.get("/threads")
 async def admin_list_threads(admin=Depends(require_admin), q: Optional[str] = None, status: Optional[str] = None):
     query = {}
-    if status: query["status"] = status
+    if status:
+        query["status"] = status
     if q:
         query["$or"] = [
             {"user_email": {"$regex": q, "$options": "i"}},
@@ -1678,7 +1721,8 @@ async def admin_reply_thread(thread_id: str, req: ThreadReply, admin=Depends(req
                 )
                 sg_client.send(em)
             except Exception as e:
-                import logging; logging.getLogger(__name__).warning(f"thread email failed: {e}")
+                import logging
+                logging.getLogger(__name__).warning(f"thread email failed: {e}")
         if twilio_client and thread.get("user_phone") and TWILIO_PHONE:
             try:
                 sms_preview = text[:120] + ("..." if len(text) > 120 else "")
@@ -1688,9 +1732,11 @@ async def admin_reply_thread(thread_id: str, req: ThreadReply, admin=Depends(req
                     to=thread["user_phone"],
                 )
             except Exception as e:
-                import logging; logging.getLogger(__name__).warning(f"thread SMS failed: {e}")
+                import logging
+                logging.getLogger(__name__).warning(f"thread SMS failed: {e}")
     except Exception as e:
-        import logging; logging.getLogger(__name__).warning(f"thread notify import failed: {e}")
+        import logging
+        logging.getLogger(__name__).warning(f"thread notify import failed: {e}")
     return {"status": "sent", "message": {**msg, "created_at": now.isoformat()}}
 
 @router.patch("/threads/{thread_id}")
@@ -1714,7 +1760,8 @@ async def admin_list_contact_submissions(admin=Depends(require_admin)):
     async for doc in cursor:
         out = {k: v for k, v in doc.items()}
         for k, v in out.items():
-            if isinstance(v, datetime): out[k] = v.isoformat()
+            if isinstance(v, datetime):
+                out[k] = v.isoformat()
         items.append(out)
     return {"submissions": items, "total": len(items)}
 
