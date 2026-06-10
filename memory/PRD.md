@@ -143,3 +143,23 @@ See `/app/memory/test_credentials.md`
 
 **Original lead-gen backlog still pending:** SMS step notifications (Twilio), wire frontend social-proof to `/api/admin/settings`, `GET /api/projects/api/list` for HQ, Blog drafts tab, full Quotation/Order mgmt, Pinterest automation, scheduled blog publishing.
 
+
+---
+
+## Update 2026-06-10 — Projects = Products unification + Variation pricing + Site-wide Sale ✅ SHIPPED & TESTED (iteration_8: 16/16 backend pass, all FE flows pass)
+
+**User intent:** "Every project is a product — don't create two separate ones." Make each project buyable (with metal + carat variations) as soon as it's added to a collection, via a "Buy this piece" box. Add a site-wide sale with announcement bar + countdown timers. Expose it all over the automation API too.
+
+**Delivered:**
+- **Unified entity** — the separate `products` Mongo collection was DROPPED and folded into `projects` (`migrate_products_into_projects.py`). All storefront endpoints (`/api/collections`, `/api/collections/{slug}`, `/api/products`, `/api/products/{slug}`) now read `db.projects` where a project `is_buyable` (has ≥1 collection + a price matrix). Admin "Products" menu removed; only **Projects** remains. Old `/products/:slug` → redirects to `/projects/:slug`.
+- **Variation pricing (30-cell matrix)** — `price_matrix = {metal_tier: {carat: price}}`. Metal tiers: `silver, 10k, 14k, 18k, platinum` (5). Carats: `1, 2, 2.5, 3, 3.5, 4` (6). Gold **colour** (White/Rose/Yellow) is a FREE style choice and never changes price. Lowest filled cell = the "From" price. Shared helpers in `backend/variant_options.py` + `frontend/src/utils/variantOptions.js`.
+- **Buy box** (`components/store/BuyBox.js`) on buyable project pages — metal tier + gold-colour swatches + carat selectors → exact matrix price; Add to Bag + Buy It Now (Stripe). Non-buyable projects keep the "Start a piece like this" quote CTA. `PublicHeader` is now cart-aware (cart icon + CartDrawer). Checkout payload now uses `metal_tier` + `carat`; price is recomputed **server-side** from the matrix (never trusts client).
+- **Site-wide Sale** — `db.settings {key:'global_sale'}`: enabled + percent + ends_at + headline. Admin page `/admin/sale` (`SalePage.js`). Public `GET /api/shop/sale` (auto-expires past `ends_at`). `SaleAnnouncementBar.js` (announcement bar + countdown), Buy box shows struck original + sale price + countdown, checkout discounts server-side, product cards show compare-at + % off.
+- **Admin Projects editor** — new "Shop — Collections & Variation Pricing" card: collection toggle chips + a 30-cell price-matrix table + quick-fill/clear.
+- **Automation API** — `POST /api/projects/api/create` & `PUT /api/projects/api/{slug}` now accept `collections` + `price_matrix` (documented in `PROJECTS_API.md`).
+- **Cleanup** — removed dead `ShopProductDetailPage.js`, `ProductsAdminPage.js`, stale `test_commerce.py`, `seed_commerce.py`. New regression: `backend/tests/test_unified_shop.py`.
+
+**Data:** 3 real projects (`3-40-carat-oval-side-stone` $1500, `5-carat-oval-solitaire` $1800, `4-41-carat-radiant-hidden-halo` $2850) in the **engagement-rings** collection, each seeded with a flat 30-cell matrix at its from-price — admin should set true per-variant prices.
+
+**Backlog / next for commerce:** per-variant true pricing (admin to fill matrix), order confirmation email on paid + admin Shop Orders UI, sitemap to include `/collections/*`, variant-aware product cards, abandoned cart.
+
