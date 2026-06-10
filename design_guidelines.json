@@ -1,0 +1,123 @@
+{
+  "theme": "light",
+  "archetype": "5 (Luxury) infused with 1 (Organic & Earthy)",
+  "brand": {
+    "name": "The Local Jewel",
+    "vibe": "Premium, Modern D2C, High-Converting, Sophisticated",
+    "description": "Custom lab-grown diamond / engagement ring brand transitioning to a robust sales engine.",
+    "css_variables": {
+      "--lj-bg": "#FDFBF7",
+      "--lj-accent": "#0F5E4C",
+      "--lj-surface": "#FFFFFF",
+      "--lj-border": "#E5E7EB",
+      "--lj-text": "#111827",
+      "--lj-muted": "#6B7280"
+    }
+  },
+  "typography": {
+    "fonts": {
+      "headings": "Cormorant Garamond, serif",
+      "body": "Outfit, sans-serif"
+    },
+    "hierarchy": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl font-serif tracking-tight leading-none text-[var(--lj-accent)]",
+      "h2": "text-2xl sm:text-3xl lg:text-4xl font-serif tracking-tight leading-tight",
+      "h3": "text-xl sm:text-2xl font-serif",
+      "h4": "text-lg sm:text-xl font-sans font-medium",
+      "body": "text-base font-sans text-[var(--lj-text)] leading-relaxed",
+      "labels": "text-xs font-sans uppercase tracking-[0.2em] text-[var(--lj-muted)]",
+      "price": "text-lg font-sans font-semibold text-[var(--lj-text)]"
+    },
+    "rules": [
+      "Use Cormorant Garamond exclusively for large emotional headings (H1, H2, H3).",
+      "Use Outfit for all UI elements: buttons, navigation links, prices, product titles, and body copy.",
+      "Never center text by default; align left for D2C readability unless in a specific symmetrical hero section."
+    ]
+  },
+  "colors": {
+    "primary": "var(--lj-accent)",
+    "background": "var(--lj-bg)",
+    "surface": "var(--lj-surface)",
+    "text": "var(--lj-text)",
+    "border": "var(--lj-border)",
+    "muted": "var(--lj-muted)",
+    "states": {
+      "hover_accent": "#0B4A3C",
+      "sale_badge": "#991B1B",
+      "trust_badge": "#F3F4F6"
+    }
+  },
+  "spacing_and_layout": {
+    "philosophy": "Generous spacing. Allow the jewelry photography to breathe.",
+    "sections": "py-20 md:py-32 px-4 md:px-8 max-w-7xl mx-auto",
+    "grids": {
+      "product_grid": "grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8",
+      "bento_features": "grid-cols-1 md:grid-cols-12 gap-8"
+    },
+    "borders_and_radius": "radius-none or extremely subtle (rounded-sm). Luxury jewelry avoids heavily rounded 'tech' corners. Sharp, elegant lines."
+  },
+  "components": {
+    "header_mega_menu": {
+      "layout": "Sticky header (backdrop-blur-xl bg-[var(--lj-bg)]/90 z-50). Condensed on scroll.",
+      "desktop_interaction": "Navigation links open a full-width or large dropdown. The dropdown contains 2-3 columns of sub-links on the left, and a dedicated image container on the right (w-1/3 or w-80).",
+      "hover_logic": "React state tracks the hovered sub-link. The right-side image smoothly swaps (fade transition) to match the hovered link's preview image.",
+      "mobile": "Accordion-style slide-out menu.",
+      "admin_editable": "Ensure the menu data structure allows an admin panel to define { label, href, hoverImageUrl } for each link."
+    },
+    "product_card": {
+      "aspect_ratio": "aspect-[4/5] for the image container to showcase vertical ring proportions.",
+      "image_behavior": "overflow-hidden. Image scales up (hover:scale-105) on card hover with a slow transition (duration-700).",
+      "badges": "Absolute positioned top-left. Minimalist rectangular badges (e.g., 'Best Seller', 'New').",
+      "typography": "Product name in Outfit medium (text-sm or text-base).",
+      "pricing": "Flex row. Current price in bold. Compare-at price in var(--lj-muted) with line-through.",
+      "action": "Quick 'Add to Cart' button appearing on hover over the image, or a clean '+' icon button."
+    },
+    "product_detail_page": {
+      "layout": "Split screen desktop. Left: Sticky image gallery (grid of images or large main image + thumbnails). Right: Scrollable product info.",
+      "sticky_buy_box": "On mobile, a sticky bar at the bottom with Price and 'Add to Cart' to ensure high conversion.",
+      "selectors": "Visual swatches for Metal (Gold, Silver, Rose colors in a circle). Pill-shaped buttons for Carat sizes.",
+      "trust_signals": "Place trust badges (Free Shipping, Lifetime Warranty, Secure Checkout) directly under the Buy button."
+    },
+    "cart_drawer": {
+      "layout": "Slide-in from right. Fixed width (e.g., w-full sm:w-[400px]).",
+      "express_checkout": "Prominent Apple Pay / Google Pay dynamic button at the top of the summary area (black/white high contrast) to reduce friction.",
+      "standard_checkout": "Secondary 'Checkout with Stripe' button below.",
+      "upsell": "Include a small 'You might also like' or 'Add a matching band' section within the drawer."
+    }
+  },
+  "media": {
+    "guidelines": "Images must be high-contrast, sharp, and premium. Use subtle grey or var(--lj-bg) backgrounds for isolated products.",
+    "image_urls": [
+      {
+        "category": "hero_or_model",
+        "url": "https://images.pexels.com/photos/14806356/pexels-photo-14806356.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Elegant model in pink gown wearing jewelry, perfect for emotional hero banners."
+      },
+      {
+        "category": "engagement_lifestyle",
+        "url": "https://images.unsplash.com/photo-1529519195486-16945f0fb37f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1Mjh8MHwxfHNlYXJjaHwxfHxkaWFtb25kJTIwZW5nYWdlbWVudCUyMHJpbmclMjBvbiUyMGhhbmR8ZW58MHx8fHwxNzgxMTIxMDE3fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Couple holding hands with engagement ring in focus. Use for 'Engagement Rings' section."
+      },
+      {
+        "category": "product_isolated_1",
+        "url": "https://images.unsplash.com/photo-1605100804763-247f67b3557e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MjJ8MHwxfHNlYXJjaHwxfHxkaWFtb25kJTIwcmluZ3xlbnwwfHx8fDE3ODExMjEwMjd8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Silver diamond ring on dark box. Perfect for product card or mega-menu hover preview."
+      },
+      {
+        "category": "product_isolated_2",
+        "url": "https://images.pexels.com/photos/32988751/pexels-photo-32988751.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Exquisite diamond ring on soft blue stand. Good for product highlights."
+      }
+    ]
+  },
+  "instructions_to_main_agent": [
+    "Do NOT use TypeScript (.tsx). Write all components in JavaScript (.js or .jsx).",
+    "Apply data-testid attributes to ALL interactive elements (e.g., data-testid='mega-menu-link', data-testid='add-to-cart-btn', data-testid='express-checkout-btn').",
+    "Implement the Mega Menu logic: Create a state variable 'activeImage' that updates onMouseEnter of sub-links. Use absolute positioning and opacity transitions for the image swap.",
+    "Integrate Shadcn UI elements but heavily customize them to remove the 'tech/Vercel' look. Use square corners (rounded-none) and the provided CSS variables.",
+    "Ensure 'lucide-react' is used for icons (e.g., ShoppingBag, Search, Menu, ChevronDown).",
+    "For the express checkout, create dummy UI elements that visually represent Apple Pay/Google Pay buttons (black bg, white text, rounded-full) to demonstrate the D2C conversion flow.",
+    "The Collections page and Homepage sections must use the mapped CSS variables (--lj-bg, --lj-accent, etc.) to seamlessly blend with the existing lead-gen app.",
+    "Do not use generic placeholder image URLs; map the provided URLs from the 'media' section."
+  ]
+}
