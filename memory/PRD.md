@@ -36,6 +36,16 @@ FARM stack — FastAPI · React (CRA) · MongoDB. Cloudflare R2 storage via boto
 
 ## Implemented (most recent first)
 
+### Jun 2026 — Storefront polish & unified PDP layout
+- **Pricing table API docs**: `/app/backend/PRICING_API.md` — full `price_matrix` write/read reference (automation API + admin), card payload fields, sale + checkout repricing rules.
+- **Project detail page (buyable)**: desktop now renders a stacked editorial gallery (left, `project-gallery-stack`) with a sticky right column (title + BuyBox, `lg:sticky lg:top-24`) — fixes white-space gap. Mobile keeps active-image + thumbnail strip.
+- **Header switch**: buyable project pages use the shop `MegaMenuHeader` (cart + collections menu) + `StoreFooter`; non-buyable keep `PublicHeader` + quote CTA + sticky mobile CTA.
+- **Wording**: "Send the jeweler a message" → "Message The Local Jewel"; "Master-jeweler handcrafted" → "Crafted by The Local Jewel"; MessagesPanel/inquiry success copy now brand-voiced. (Note: "trusted independent jewelers" text seen by user is PRODUCTION DB collection content — edit in Admin → Collections.)
+- **Modern product cards** (`ProductCard.js`, used on collections / homepage / related items): hover crossfade to 2nd photo or autoplaying gallery video (lazy-mounted), slide-up "View piece" bar, metal swatch dots, carat range (e.g. "1–4 ct"), "From $X" price, staggered entrance animation (`.lj-card-reveal`).
+- **Backend card payload** (`_project_card` in commerce_routes.py): added `hover_media`, `metal_tiers`, `carat_range`.
+- **Collection page**: sticky sort/count toolbar with backdrop blur; related items on PDP now reuse ProductCard via new `projectToCard()` helper in `variantOptions.js`.
+- **Tested**: iteration_9.json — frontend 100% pass (desktop + mobile, purchase flow to Stripe redirect, regression on cart/homepage).
+
 ### Feb 2026 — Phase 1: Past Projects (SEO foundation)
 - **Public routes**: `/projects` (index w/ tag filter chips) and `/projects/:slug` (detail w/ gallery, specs, 5-step journey timeline, customer story, related projects, sticky mobile CTA).
 - **Backend**: `GET /api/projects` (filterable list), `GET /api/projects/{slug}` (public), full admin CRUD at `/api/admin/projects/*`. Mongo `projects` collection with indexes on slug/published/tags.
