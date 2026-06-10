@@ -1,0 +1,68 @@
+{
+  "summary": "Full e-commerce backend + frontend testing for new TLJ D2C storefront (mega-menu, collections, products, Stripe checkout, admin CRUD). 26/26 backend tests pass. All major frontend flows pass: collections grid + detail, product detail + Add to Bag, cart drawer +/- + remove + Secure Checkout (verified successful redirect to checkout.stripe.com), mega-menu hover with image swap, /admin/menu /admin/products /admin/collections all load, From-Project select present, homepage retains lead-gen wizard and shows home-engagement-section.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "admin pages (MenuBuilder/Collections)", "issues": ["React dev console warns: 'In HTML, <span> cannot be a child of <select>/<option>' — hydration warning from a Shadcn-style select component placing spans inside native <option>. Cosmetic in prod but produces hydration errors in dev. Likely in /admin/menu and /admin/collections editor selects."]}
+    ]
+  },
+  "passed_tests": [
+    "GET /api/menu returns mega-menu with Engagement Rings (type=mega, columns, featured_image_url)",
+    "GET /api/collections returns 11 collections each with product_count",
+    "GET /api/collections/engagement-rings returns collection + 7 products",
+    "GET /api/collections/engagement-rings?sort=price_asc and price_desc both order correctly",
+    "GET /api/collections/{bad-slug} returns 404",
+    "GET /api/products list, filter by collection, filter featured=true, search=oval all work",
+    "GET /api/products/oval-hidden-halo-engagement-ring returns product + related[] array",
+    "GET /api/products/{bad-slug} returns 404",
+    "POST /api/checkout/session with oval-hidden-halo-engagement-ring qty=1 returns Stripe URL + session_id, amount=1450 (server-computed)",
+    "Server-side price authority: qty=2 returns amount=2900; invalid product -> 400; empty cart -> 400",
+    "GET /api/checkout/status/{session_id} returns payment_status (pending) without error; payment_transactions row created",
+    "Admin login + GET /api/admin/products, /api/admin/collections (with product_count), /api/admin/menu, /api/admin/shop-orders",
+    "PUT /api/admin/menu persists items (label edit + revert works)",
+    "Admin product CRUD: POST creates, GET verifies, PUT updates, public /api/products/{slug} sees it, DELETE removes it (subsequent GET 404)",
+    "Admin collection CRUD: POST/PUT/DELETE all 200",
+    "POST /api/admin/products/from-project/{project_id} creates a draft product with source_project_id set",
+    "Unauth admin request returns 401/403",
+    "FRONTEND /collections: collections-grid rendered with 11 collection-card-<slug> tiles; clicking engagement-rings navigates to /collections/engagement-rings showing 7 product cards + collection-sort dropdown",
+    "FRONTEND /products/oval-hidden-halo-engagement-ring: add-to-cart-btn opens cart-drawer; cart-subtotal=$1,450; cart-qty-plus updates to $2,900; cart-checkout-btn triggers POST /api/checkout/session and redirects browser to checkout.stripe.com (verified live)",
+    "FRONTEND mega-menu: hovering Engagement Rings opens mega-panel-engagement with 8 mega-menu-link items + mega-menu-featured; hovering different sub-links swaps the featured <img> src (unsplash <-> pexels)",
+    "FRONTEND /: home-engagement-section present AND the lead-gen wizard form (paste link / attach images / record audio / Get me a quote CTA) remains intact",
+    "ADMIN UI: login OK, /admin/menu loads with save-menu-btn, /admin/products loads with New product button + from-project-select, /admin/collections loads the grid of editable collection cards"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_commerce.py",
+    "/app/test_reports/pytest/commerce_results.xml"
+  ],
+  "action_items": [
+    "LOW: Fix hydration warning 'span cannot be a child of select/option' in admin select components (likely a Shadcn Select wrapping <option><span/></option>). Cosmetic dev-mode noise; does not affect functionality.",
+    "INFO: Homepage hero CTA label is 'Get me a quote', not 'Get My Free Quote' as referenced in the spec — wizard still works; verify whether copy update is desired."
+  ],
+  "critical_code_review_comments": [
+    "commerce_routes.py /api/checkout/session: STRIPE_API_KEY is read at module import. If env is loaded later, key may be empty and route 503s. Consider reading inside the request or after explicit load_dotenv at top of server.py — current code is fine since server.py imports dotenv first, but worth a defensive note.",
+    "commerce_routes.py _slugify is duplicated logic that already likely exists in admin_routes/server.py — DRY candidate.",
+    "admin_update_collection rewrites collections.$ via positional update — this only updates the FIRST matching slug per document. If a product is ever in the same collection twice it leaves a stale ref. Use arrayFilters or $[] for safety.",
+    "commerce_routes.py: ProductPayload.price has no >=0 validation. Negative price would create a 'free' or negative-amount product; checkout already guards (total<=0 -> 400), but admin create/update should reject negatives explicitly.",
+    "commerce_routes.py admin_create_product_from_project blindly trusts proj.price and creates a published=False product with published flag default — OK, but slug collision uses random 4-char suffix; under concurrency two simultaneous calls could still collide. Use a retry loop.",
+    "Cart persistence key tlj_cart_v1 in localStorage — verified cart hydrates across reloads. No SSR issue observed.",
+    "MegaMenuHeader: the mega-menu-featured anchor is a <button> tag — fine for hover image swap; however, button wrapping an <a>-like nav target should use <Link> or onClick→navigate; verify it actually navigates on click (was not directly tested)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_commerce.py"
+  ],
+  "success_rate": {
+    "backend": "100% (26/26)",
+    "frontend": "100% of tested flows (collections, product detail, cart drawer, Stripe redirect, mega-menu hover+image swap, admin pages load)"
+  },
+  "test_credentials": "Admin: ansh@thelocaljewel.com / Rakesh@2709. Stripe sk_test_emergent (test mode). Test buyer email: TEST_buyer@example.com.",
+  "seed_data_creation": "Created during testing: 2 payment_transactions (pending state, qty=1 and qty=2 of oval-hidden-halo-engagement-ring), 2 transient admin Products (TEST_Product/TEST_Updated — deleted), 1 transient admin Collection (TEST_Coll — deleted), 1 transient product-from-project (deleted), 1 transient menu label edit (reverted).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All commerce backend endpoints are green via pytest /app/backend/tests/test_commerce.py (26 tests, ~3.4s). Frontend storefront fully functional end-to-end including live Stripe redirect. Only outstanding nit is a dev-mode React hydration warning for span-in-option inside admin selects (cosmetic). The lead-gen wizard on / still works alongside the new home-engagement-section. Use products: oval-hidden-halo-engagement-ring (price 1450), round-solitaire-engagement-ring, diamond-eternity-wedding-band; collections: engagement-rings, round-engagement-rings, wedding-bands.",
+  "rca_of_issue": "No blocking issues. Span-in-option hydration warning: a Shadcn-style Select wraps each option's label in <span>, but native <option> only accepts text — replace span wrapper with raw text or switch the admin selects to a fully Radix-based listbox (non-native)."
+}

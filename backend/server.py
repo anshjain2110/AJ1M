@@ -132,6 +132,10 @@ app.mount("/api/uploads/files", StaticFiles(directory=UPLOAD_DIR), name="uploads
 from admin_routes import router as admin_router
 app.include_router(admin_router)
 
+# Include commerce routes (products, collections, mega-menu, Stripe checkout)
+from commerce_routes import router as commerce_router
+app.include_router(commerce_router)
+
 # ── Helpers ──────────────────────────────────────────────────
 
 def serialize_doc(doc):

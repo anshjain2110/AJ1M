@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
-import { BarChart3, Users, Package, Settings, Activity, LogOut, Menu, X, Image, FolderOpen, MessageCircle, BookOpen } from 'lucide-react';
+import { BarChart3, Users, Package, Settings, Activity, LogOut, Menu, X, Image, FolderOpen, MessageCircle, BookOpen, ShoppingBag, LayoutGrid, PanelTop } from 'lucide-react';
 
-const NAV = [{ to: '/admin', label: 'Analytics', icon: BarChart3, end: true }, { to: '/admin/leads', label: 'Leads', icon: Users }, { to: '/admin/messages', label: 'Messages', icon: MessageCircle }, { to: '/admin/orders', label: 'Orders', icon: Package }, { to: '/admin/projects', label: 'Projects', icon: FolderOpen }, { to: '/admin/blog', label: 'Journal', icon: BookOpen }, { to: '/admin/showcase', label: 'Showcase', icon: Image }, { to: '/admin/settings', label: 'Settings', icon: Settings }, { to: '/admin/tracking', label: 'Tracking', icon: Activity }];
+const NAV = [{ to: '/admin', label: 'Analytics', icon: BarChart3, end: true }, { to: '/admin/leads', label: 'Leads', icon: Users }, { to: '/admin/messages', label: 'Messages', icon: MessageCircle }, { to: '/admin/orders', label: 'Orders', icon: Package }, { to: '/admin/products', label: 'Products', icon: ShoppingBag }, { to: '/admin/collections', label: 'Collections', icon: LayoutGrid }, { to: '/admin/menu', label: 'Header / Menu', icon: PanelTop }, { to: '/admin/projects', label: 'Projects', icon: FolderOpen }, { to: '/admin/blog', label: 'Journal', icon: BookOpen }, { to: '/admin/showcase', label: 'Showcase', icon: Image }, { to: '/admin/settings', label: 'Settings', icon: Settings }, { to: '/admin/tracking', label: 'Tracking', icon: Activity }];
 
 export default function AdminLayout() {
   const { token, logout } = useAdmin();

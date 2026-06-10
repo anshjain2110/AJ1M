@@ -5,6 +5,7 @@ import { trackEvent } from '../../../utils/analytics';
 import { RenderShowcase } from '../../RenderShowcase';
 import QuickQuoteHero from '../QuickQuoteHero';
 import FeaturedProjectsSection from '../../FeaturedProjectsSection';
+import ShopEngagementSection from '../../store/ShopEngagementSection';
 
 const HERO_IMAGE = '/hero-photo.jpeg';
 
@@ -136,7 +137,7 @@ export default function LandingScreen() {
             Same ring. <span style={{ color: 'var(--lj-accent)' }}>{ex.savings} less.</span>
           </h3>
           <p className="text-[13px] text-center mb-5" style={{ color: 'var(--lj-muted)' }}>
-            Side-by-side: a recent client's piece vs. comparable retail listings.
+            Side-by-side: a recent client&apos;s piece vs. comparable retail listings.
           </p>
 
           {/* Two-column cards with center 'vs' badge on desktop */}
@@ -244,11 +245,14 @@ export default function LandingScreen() {
           Get My Free Quote <ArrowRight size={18} />
         </button>
         <CtaReassurance testid="cta-reassurance-hero" />
-        <a href="https://shop.thelocaljewel.com/" target="_blank" rel="noopener noreferrer"
+        <a href="/collections"
           className="mt-4 text-[13px] leading-[18px] flex items-center gap-1 transition-colors duration-300" style={{ color: 'var(--lj-muted)' }}>
           or browse our collection <ChevronRight size={14} />
         </a>
       </div>
+
+      {/* Engagement Rings shop section */}
+      <ShopEngagementSection />
 
       {/* Render → Product Showcase Slideshow */}
       <RenderShowcase />
@@ -301,7 +305,7 @@ export default function LandingScreen() {
                 </div>
 
                 {/* Review text */}
-                <p className="text-[15px] leading-[22px] mb-3" style={{ color: 'var(--lj-text)' }}>"{review.text}"</p>
+                <p className="text-[15px] leading-[22px] mb-3" style={{ color: 'var(--lj-text)' }}>&ldquo;{review.text}&rdquo;</p>
 
                 {/* Product + customer photos */}
                 <div className="flex items-center gap-3">

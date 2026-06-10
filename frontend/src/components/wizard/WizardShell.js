@@ -3,6 +3,7 @@ import { ArrowLeft, Phone, User, Menu, X, FolderOpen, BookOpen, MessageCircle } 
 import { useNavigate } from 'react-router-dom';
 import { useWizard } from '../../context/WizardContext';
 import { getCurrentStepNumber } from '../../utils/wizardConfig';
+import MegaMenuHeader from '../store/MegaMenuHeader';
 
 const NAV_LINKS = [
   { to: '/projects', label: 'Projects', icon: FolderOpen },
@@ -35,6 +36,7 @@ export default function WizardShell({ children, showBack = true, showProgress = 
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--lj-bg)' }}>
+      {showPublicNav ? <MegaMenuHeader /> : (
       <header className="sticky top-0 z-40 px-4 py-3 flex items-center justify-between" style={{ background: 'var(--lj-bg)', borderBottom: '1px solid var(--lj-border)' }}>
         <div className="flex items-center gap-3">
           {showBack && canGoBack && (
@@ -101,6 +103,7 @@ export default function WizardShell({ children, showBack = true, showProgress = 
           </button>
         </div>
       </header>
+      )}
 
       {showProgress && isWizardScreen && currentScreen !== 'thank_you' && (
         <div className="px-4 pt-2 pb-1">

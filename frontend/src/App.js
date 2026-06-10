@@ -3,6 +3,15 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { WizardProvider } from './context/WizardContext';
 import { AdminProvider } from './context/AdminContext';
+import { CartProvider } from './context/CartContext';
+import CollectionsIndexPage from './pages/store/CollectionsIndexPage';
+import CollectionDetailPage from './pages/store/CollectionDetailPage';
+import ShopProductDetailPage from './pages/store/ShopProductDetailPage';
+import CartPage from './pages/store/CartPage';
+import CheckoutSuccessPage from './pages/store/CheckoutSuccessPage';
+import ProductsAdminPage from './pages/admin/ProductsAdminPage';
+import CollectionsAdminPage from './pages/admin/CollectionsAdminPage';
+import MenuBuilderPage from './pages/admin/MenuBuilderPage';
 import WizardPage from './pages/WizardPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
@@ -32,6 +41,7 @@ function App() {
   return (
     <HelmetProvider>
       <Router>
+        <CartProvider>
         <Routes>
           {/* Customer-facing routes */}
           <Route path="/" element={
@@ -54,6 +64,12 @@ function App() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/blog" element={<BlogIndexPage />} />
           <Route path="/blog/:slug" element={<BlogDetailPage />} />
+          {/* Storefront / commerce routes */}
+          <Route path="/collections" element={<CollectionsIndexPage />} />
+          <Route path="/collections/:slug" element={<CollectionDetailPage />} />
+          <Route path="/products/:slug" element={<ShopProductDetailPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
           <Route path="/pitch/login" element={<PitchLoginPage />} />
           <Route path="/pitch" element={<PitchPage />} />
 
@@ -67,6 +83,9 @@ function App() {
                   <Route path="leads" element={<LeadsCRM />} />
                   <Route path="orders" element={<OrdersPage />} />
                   <Route path="projects" element={<ProjectsAdminPage />} />
+                  <Route path="products" element={<ProductsAdminPage />} />
+                  <Route path="collections" element={<CollectionsAdminPage />} />
+                  <Route path="menu" element={<MenuBuilderPage />} />
                   <Route path="blog" element={<BlogAdminPage />} />
                   <Route path="messages" element={<MessagesAdminPage />} />
                   <Route path="settings" element={<SettingsPage />} />
@@ -77,6 +96,7 @@ function App() {
             </AdminProvider>
           } />
         </Routes>
+        </CartProvider>
       </Router>
     </HelmetProvider>
   );
