@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 const CartContext = createContext(null);
 const STORAGE_KEY = 'tlj_cart_v1';
 
-const lineKey = (i) => `${i.product_slug}|${i.metal || ''}|${i.carat || ''}|${i.size || ''}`;
+const lineKey = (i) => `${i.product_slug}|${i.metal_tier || ''}|${i.metal_color || ''}|${i.carat || ''}|${i.size || ''}`;
 
 export function CartProvider({ children }) {
   const [items, setItems] = useState(() => {

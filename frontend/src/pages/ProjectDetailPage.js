@@ -10,6 +10,8 @@ import PublicHeader from '../components/PublicHeader';
 import PriceTag from '../components/PriceTag';
 import ProjectInquiryChat from '../components/ProjectInquiryChat';
 import QuickQuoteModal from '../components/wizard/QuickQuoteModal';
+import BuyBox from '../components/store/BuyBox';
+import SaleAnnouncementBar from '../components/SaleAnnouncementBar';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -158,6 +160,7 @@ export default function ProjectDetailPage() {
       {/* JSON-LD outside Helmet to avoid react-helmet-async script-child quirk */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString }} />
 
+      <SaleAnnouncementBar />
       <PublicHeader />
 
       {/* Breadcrumb */}
@@ -274,26 +277,34 @@ export default function ProjectDetailPage() {
               </p>
             )}
 
-            {/* Price tag — prominent, eye-catching */}
-            {(project.price !== null && project.price !== undefined && project.price !== '') && (
-              <div className="mb-6" data-testid="project-detail-price">
-                <PriceTag price={project.price} prefix={project.price_prefix} currency={project.price_currency} size="lg" testid="project-detail-price-tag" />
-                <p className="mt-1.5 text-[12px]" style={{ color: 'var(--lj-muted)' }}>
-                  Final price varies with size, metal & customization — locked in your written quote.
-                </p>
+            {project.buyable ? (
+              <div data-testid="project-buy-section">
+                <BuyBox project={project} />
               </div>
-            )}
+            ) : (
+              <>
+                {/* Price tag — prominent, eye-catching */}
+                {(project.price !== null && project.price !== undefined && project.price !== '') && (
+                  <div className="mb-6" data-testid="project-detail-price">
+                    <PriceTag price={project.price} prefix={project.price_prefix} currency={project.price_currency} size="lg" testid="project-detail-price-tag" />
+                    <p className="mt-1.5 text-[12px]" style={{ color: 'var(--lj-muted)' }}>
+                      Final price varies with size, metal &amp; customization — locked in your written quote.
+                    </p>
+                  </div>
+                )}
 
-            {/* CTA */}
-            <button
-              onClick={openQuickQuote}
-              data-testid="project-detail-cta"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 min-h-[52px] px-7 rounded-[14px] font-medium text-[16px] transition-all duration-300 active:scale-[0.99] hover:opacity-95"
-              style={{ background: 'var(--lj-accent)', color: '#FFFFFF', boxShadow: '0 4px 20px rgba(15,94,76,0.22)' }}
-            >
-              Start a piece like this <ArrowRight size={18} />
-            </button>
-            <p className="mt-2 text-[12px]" style={{ color: 'var(--lj-muted)' }}>Takes about 90 seconds · No payment required</p>
+                {/* CTA */}
+                <button
+                  onClick={openQuickQuote}
+                  data-testid="project-detail-cta"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 min-h-[52px] px-7 rounded-[14px] font-medium text-[16px] transition-all duration-300 active:scale-[0.99] hover:opacity-95"
+                  style={{ background: 'var(--lj-accent)', color: '#FFFFFF', boxShadow: '0 4px 20px rgba(15,94,76,0.22)' }}
+                >
+                  Start a piece like this <ArrowRight size={18} />
+                </button>
+                <p className="mt-2 text-[12px]" style={{ color: 'var(--lj-muted)' }}>Takes about 90 seconds · No payment required</p>
+              </>
+            )}
 
             {/* Marketplace-style inquiry chat */}
             <div className="mt-6">
@@ -558,19 +569,23 @@ export default function ProjectDetailPage() {
         </div>
       </footer>
 
-      {/* Sticky mobile CTA */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 px-4 py-3"
-        style={{ background: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(10px)', borderTop: '1px solid var(--lj-border)' }}>
-        <button
-          onClick={openQuickQuote}
-          data-testid="project-detail-sticky-cta"
-          className="w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-6 rounded-[12px] font-medium text-[15px]"
-          style={{ background: 'var(--lj-accent)', color: '#FFFFFF', boxShadow: '0 4px 14px rgba(15,94,76,0.22)' }}
-        >
-          Get a piece like this <ArrowRight size={16} />
-        </button>
-      </div>
-      <div className="lg:hidden" style={{ height: '80px' }} aria-hidden="true" />
+      {/* Sticky mobile CTA — quote flow only (buyable pieces have the in-page Buy box) */}
+      {!project.buyable && (
+        <>
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 px-4 py-3"
+            style={{ background: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(10px)', borderTop: '1px solid var(--lj-border)' }}>
+            <button
+              onClick={openQuickQuote}
+              data-testid="project-detail-sticky-cta"
+              className="w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-6 rounded-[12px] font-medium text-[15px]"
+              style={{ background: 'var(--lj-accent)', color: '#FFFFFF', boxShadow: '0 4px 14px rgba(15,94,76,0.22)' }}
+            >
+              Get a piece like this <ArrowRight size={16} />
+            </button>
+          </div>
+          <div className="lg:hidden" style={{ height: '80px' }} aria-hidden="true" />
+        </>
+      )}
 
       {/* Quick Quote modal — pre-filled with this project */}
       {quickQuoteOpen && project && (

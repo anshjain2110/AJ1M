@@ -4,7 +4,7 @@ import csv
 import io
 import hashlib
 from datetime import datetime, timezone, timedelta
-from typing import Optional, List
+from typing import Optional, List, Dict
 from dotenv import load_dotenv
 load_dotenv("/app/backend/.env")
 from fastapi import APIRouter, HTTPException, Depends, Header, Query
@@ -1343,10 +1343,13 @@ class ProjectPayload(BaseModel):
     published: bool = True
     featured: bool = False
     position: int = 0
-    # Pricing — optional
+    # Pricing — optional legacy "Starting at" display tag
     price: Optional[float] = None
     price_prefix: Optional[str] = "Starting at"  # "Starting at", "From", or "" for none
     price_currency: Optional[str] = "USD"
+    # Commerce — a project becomes buyable once it's in a collection and has a price matrix
+    collections: List[str] = []                  # collection slugs
+    price_matrix: Dict[str, Dict[str, float]] = {}  # {metal_tier: {carat: price}}
 
 def _project_public_view(doc: dict) -> dict:
     """Strip _id, format dates, return JSON-safe dict."""

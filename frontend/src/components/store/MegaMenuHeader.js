@@ -4,6 +4,7 @@ import axios from 'axios';
 import { ShoppingBag, Menu, X, ChevronDown, ChevronRight, User, Phone, Search } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import CartDrawer from './CartDrawer';
+import SaleAnnouncementBar from '../SaleAnnouncementBar';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -56,11 +57,8 @@ export default function MegaMenuHeader() {
 
   return (
     <div className="store" style={{ fontFamily: "'Outfit', Inter, sans-serif" }}>
-      {/* Announcement bar */}
-      <div className="w-full text-center text-[11px] sm:text-[12px] tracking-[0.18em] uppercase py-2 px-3"
-        style={{ background: 'var(--lj-accent)', color: '#fff' }} data-testid="announcement-bar">
-        Hand-crafted · Lab-grown &amp; conflict-free · Free design consultation
-      </div>
+      {/* Announcement bar (dynamic — shows the active site-wide sale + countdown) */}
+      <SaleAnnouncementBar />
 
       <header
         className="sticky top-0 z-50 transition-all duration-300"

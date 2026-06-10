@@ -15,6 +15,10 @@ from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel, Field
 
 from admin_routes import db, serialize_doc, require_admin
+from variant_options import (
+    METAL_TIERS, CARAT_WEIGHTS, GOLD_COLORS,
+    variant_price, project_from_price, is_buyable, normalize_sale, apply_sale,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["commerce"])
@@ -33,6 +37,47 @@ def _slugify(text: str) -> str:
     while "--" in out:
         out = out.replace("--", "-")
     return out.strip("-")
+
+
+async def _get_sale():
+    """Active site-wide sale (or None) from the settings collection."""
+    doc = await db.settings.find_one({"key": "global_sale"}, {"_id": 0})
+    return normalize_sale(doc)
+
+
+def _project_card(p: dict, sale: Optional[dict]) -> dict:
+    """Map a Project document into the product-card shape the storefront expects.
+
+    Price is the lowest matrix cell ("from"); when a sale is active the sale price
+    becomes `price` and the original becomes `compare_at_price` (strike-through).
+    """
+    base = project_from_price(p)
+    on_sale = bool(sale) and base > 0
+    price = apply_sale(base, sale) if on_sale else base
+    gallery = p.get("gallery") or []
+    images = [
+        {"url": g.get("url"), "alt": g.get("caption", "")}
+        for g in gallery
+        if g.get("url") and g.get("media_type", "image") != "video"
+    ]
+    return {
+        "slug": p.get("slug"),
+        "title": p.get("title"),
+        "subtitle": p.get("subtitle", ""),
+        "hero_image_url": p.get("hero_image_url", ""),
+        "images": images,
+        "price": price,
+        "compare_at_price": base if on_sale else None,
+        "currency": p.get("price_currency", "USD"),
+        "on_sale": on_sale,
+        "badge": p.get("badge", ""),
+        "rating": p.get("rating"),
+        "review_count": p.get("review_count", 0),
+        "featured": bool(p.get("featured")),
+        "collections": p.get("collections") or [],
+        "tags": p.get("tags") or [],
+        "from_price": base,
+    }
 
 
 # ---- Models ----
@@ -114,8 +159,10 @@ class MenuPayload(BaseModel):
 class CartLine(BaseModel):
     product_slug: str
     quantity: int = 1
-    metal: Optional[str] = ""
-    carat: Optional[str] = ""
+    metal_tier: Optional[str] = ""        # silver | 10k | 14k | 18k | platinum
+    metal_color: Optional[str] = ""       # White | Rose | Yellow (gold only)
+    carat: Optional[str] = ""             # "1" | "2" | "2.5" | "3" | "3.5" | "4"
+    metal: Optional[str] = ""             # display label, e.g. "14K Yellow Gold"
     size: Optional[str] = ""
 
 
@@ -187,7 +234,14 @@ async def admin_update_menu(req: MenuPayload, admin=Depends(require_admin)):
 # ============================================================
 
 async def _collection_product_count(slug: str) -> int:
-    return await db.products.count_documents({"published": True, "collections": slug})
+    count = 0
+    async for p in db.projects.find(
+        {"published": True, "collections": slug},
+        {"_id": 0, "price_matrix": 1, "collections": 1, "price": 1},
+    ):
+        if is_buyable(p):
+            count += 1
+    return count
 
 
 @router.get("/api/collections")
@@ -214,13 +268,15 @@ async def get_public_collection(slug: str, sort: Optional[str] = None):
     doc = await db.collections.find_one({"slug": slug, "published": True}, {"_id": 0})
     if not doc:
         raise HTTPException(404, "Collection not found")
-    sort_spec = [("featured", -1), ("position", 1), ("created_at", -1)]
+    sale = await _get_sale()
+    pcursor = db.projects.find(
+        {"published": True, "collections": slug}, {"_id": 0}
+    ).sort([("featured", -1), ("position", 1), ("created_at", -1)])
+    cards = [_project_card(p, sale) async for p in pcursor if is_buyable(p)]
     if sort == "price_asc":
-        sort_spec = [("price", 1)]
+        cards.sort(key=lambda c: c["from_price"])
     elif sort == "price_desc":
-        sort_spec = [("price", -1)]
-    pcursor = db.products.find({"published": True, "collections": slug}, {"_id": 0, "description_html": 0}).sort(sort_spec)
-    products = [serialize_doc(p) async for p in pcursor]
+        cards.sort(key=lambda c: c["from_price"], reverse=True)
     # sub-collections (children)
     ccursor = db.collections.find({"published": True, "parent_slug": slug}, {"_id": 0}).sort([("position", 1), ("created_at", -1)])
     children = []
@@ -228,7 +284,7 @@ async def get_public_collection(slug: str, sort: Optional[str] = None):
         cc = serialize_doc(c)
         cc["product_count"] = await _collection_product_count(c.get("slug", ""))
         children.append(cc)
-    return {"collection": serialize_doc(doc), "products": products, "children": children, "total": len(products)}
+    return {"collection": serialize_doc(doc), "products": cards, "children": children, "total": len(cards)}
 
 
 # ============================================================
@@ -243,7 +299,7 @@ async def get_public_products(
     search: Optional[str] = None,
     limit: int = 60,
 ):
-    query = {"published": True}
+    query = {"published": True, "collections": {"$exists": True, "$ne": []}}
     if collection:
         query["collections"] = collection
     if tag:
@@ -256,29 +312,38 @@ async def get_public_products(
             {"subtitle": {"$regex": search, "$options": "i"}},
             {"tags": {"$regex": search, "$options": "i"}},
         ]
-    cursor = db.products.find(query, {"_id": 0, "description_html": 0}).sort(
+    cursor = db.projects.find(query, {"_id": 0}).sort(
         [("featured", -1), ("position", 1), ("created_at", -1)]
     ).limit(min(limit, 200))
-    items = [serialize_doc(p) async for p in cursor]
+    sale = await _get_sale()
+    items = [_project_card(p, sale) async for p in cursor if is_buyable(p)]
     return {"products": items, "total": len(items)}
 
 
 @router.get("/api/products/{slug}")
 async def get_public_product(slug: str):
-    doc = await db.products.find_one({"slug": slug, "published": True}, {"_id": 0})
-    if not doc:
+    p = await db.projects.find_one({"slug": slug, "published": True}, {"_id": 0})
+    if not p:
         raise HTTPException(404, "Product not found")
+    sale = await _get_sale()
+    card = _project_card(p, sale)
+    card["price_matrix"] = p.get("price_matrix") or {}
+    card["description_html"] = f"<p>{p.get('description', '')}</p>" if p.get("description") else ""
+    card["meta_title"] = p.get("meta_title", "")
+    card["meta_description"] = p.get("meta_description", "")
     related = []
-    cols = doc.get("collections") or []
+    cols = p.get("collections") or []
     if cols:
-        rcursor = db.products.find(
-            {"published": True, "slug": {"$ne": slug}, "collections": {"$in": cols}},
-            {"_id": 0, "description_html": 0},
-        ).limit(4)
-        related = [serialize_doc(p) async for p in rcursor]
-    out = serialize_doc(doc)
-    out["related"] = related
-    return out
+        rcursor = db.projects.find(
+            {"published": True, "slug": {"$ne": slug}, "collections": {"$in": cols}}, {"_id": 0}
+        ).limit(8)
+        async for r in rcursor:
+            if is_buyable(r):
+                related.append(_project_card(r, sale))
+            if len(related) >= 4:
+                break
+    card["related"] = related
+    return card
 
 
 # ============================================================
@@ -394,7 +459,7 @@ async def admin_list_collections(admin=Depends(require_admin)):
     items = []
     async for doc in cursor:
         clean = serialize_doc(doc)
-        clean["product_count"] = await db.products.count_documents({"collections": doc.get("slug", "")})
+        clean["product_count"] = await _collection_product_count(doc.get("slug", ""))
         items.append(clean)
     return {"collections": items}
 
@@ -458,6 +523,54 @@ async def admin_delete_collection(collection_id: str, admin=Depends(require_admi
 
 
 # ============================================================
+# PUBLIC + ADMIN: Site-wide Sale & Variant options
+# ============================================================
+
+class SalePayload(BaseModel):
+    enabled: bool = False
+    percent: float = 0.0
+    headline: str = ""
+    ends_at: Optional[str] = ""
+
+
+@router.get("/api/shop/sale")
+async def public_get_sale():
+    return {"sale": await _get_sale()}
+
+
+@router.get("/api/shop/variant-options")
+async def public_variant_options():
+    return {"metal_tiers": METAL_TIERS, "carat_weights": CARAT_WEIGHTS, "gold_colors": GOLD_COLORS}
+
+
+@router.get("/api/admin/sale")
+async def admin_get_sale(admin=Depends(require_admin)):
+    doc = await db.settings.find_one({"key": "global_sale"}, {"_id": 0})
+    if not doc:
+        return {"enabled": False, "percent": 0, "headline": "", "ends_at": ""}
+    return {
+        "enabled": bool(doc.get("enabled")),
+        "percent": doc.get("percent", 0),
+        "headline": doc.get("headline", ""),
+        "ends_at": doc.get("ends_at", ""),
+    }
+
+
+@router.put("/api/admin/sale")
+async def admin_update_sale(req: SalePayload, admin=Depends(require_admin)):
+    update = {
+        "key": "global_sale",
+        "enabled": bool(req.enabled),
+        "percent": float(req.percent or 0),
+        "headline": req.headline or "",
+        "ends_at": req.ends_at or "",
+        "updated_at": _now(),
+    }
+    await db.settings.update_one({"key": "global_sale"}, {"$set": update}, upsert=True)
+    return {"enabled": req.enabled, "percent": req.percent, "headline": req.headline, "ends_at": req.ends_at}
+
+
+# ============================================================
 # STRIPE CHECKOUT
 # ============================================================
 
@@ -477,23 +590,33 @@ async def create_checkout_session(req: CheckoutRequest, request: Request):
         raise HTTPException(503, "Payments are not configured")
 
     # Server-side price computation — never trust the client.
+    # Price = exact metal-tier x carat matrix cell, then the active site-wide sale.
     total = 0.0
     currency = "usd"
     line_summary = []
+    sale = await _get_sale()
     for line in req.items:
-        product = await db.products.find_one({"slug": line.product_slug, "published": True}, {"_id": 0})
-        if not product:
+        project = await db.projects.find_one({"slug": line.product_slug, "published": True}, {"_id": 0})
+        if not project:
             raise HTTPException(400, f"Product not available: {line.product_slug}")
         qty = max(1, int(line.quantity or 1))
-        unit = float(product.get("price") or 0.0)
+        unit = variant_price(project, line.metal_tier or "", line.carat or "")
+        if unit <= 0:
+            unit = project_from_price(project)
+        if unit <= 0:
+            raise HTTPException(400, f"Price unavailable for {line.product_slug}")
+        if sale:
+            unit = apply_sale(unit, sale)
         total += unit * qty
-        currency = (product.get("currency") or "USD").lower()
+        currency = (project.get("price_currency") or "USD").lower()
         line_summary.append({
             "slug": line.product_slug,
-            "title": product.get("title", ""),
+            "title": project.get("title", ""),
             "qty": qty,
             "unit": unit,
             "metal": line.metal or "",
+            "metal_tier": line.metal_tier or "",
+            "metal_color": line.metal_color or "",
             "carat": line.carat or "",
             "size": line.size or "",
         })

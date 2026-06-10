@@ -84,6 +84,20 @@ Wrong/missing key → `401 Unauthorized`.
   "featured":  false,   // default false
   "position":  0,       // smaller number sorts first
 
+  // ─── COMMERCE (makes the piece buyable in the storefront) ───
+  // Add the piece to one or more collection slugs. Empty = not buyable (lead-gen only).
+  "collections": ["engagement-rings"],
+  // Exact price per metal-tier x carat. Gold colour (White/Rose/Yellow) is a free
+  // choice and does NOT change price. Metal tiers: silver | 10k | 14k | 18k | platinum.
+  // Carats: "1" | "2" | "2.5" | "3" | "3.5" | "4". Omit a cell to mark it unavailable.
+  // The lowest filled price becomes the "From" price on cards.
+  "price_matrix": {
+    "silver":   {"1": 900,  "2": 1100, "3": 1400},
+    "14k":      {"1": 1500, "2": 1800, "2.5": 2100, "3": 2500, "3.5": 2900, "4": 3300},
+    "18k":      {"2": 2200, "3": 2900, "4": 3700},
+    "platinum": {"3": 3400, "4": 4200}
+  },
+
   // Optional — captions aligned by index to uploaded files
   "gallery_captions":  ["Final, studio shot", "Hand shot"],
   "render_captions":   ["3D render"]

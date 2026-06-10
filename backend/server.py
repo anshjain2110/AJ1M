@@ -422,7 +422,16 @@ async def get_public_project_by_slug(slug: str):
     doc = await db.projects.find_one({"slug": slug, "published": True}, {"_id": 0})
     if not doc:
         raise HTTPException(404, "Project not found")
-    return _project_strip_internal(doc)
+    out = _project_strip_internal(doc)
+    # Attach commerce buy-data so the project detail page can render the Buy box
+    from variant_options import project_from_price, is_buyable, normalize_sale
+    sale_doc = await db.settings.find_one({"key": "global_sale"}, {"_id": 0})
+    out["buyable"] = is_buyable(doc)
+    out["from_price"] = project_from_price(doc)
+    out["price_matrix"] = doc.get("price_matrix") or {}
+    out["collections"] = doc.get("collections") or []
+    out["sale"] = normalize_sale(sale_doc)
+    return out
 
 
 # ── API: Public Blog ─────────────────────────────────────────
@@ -849,6 +858,9 @@ async def projects_api_create(
         "price": _coerce_price(data.get("price")),
         "price_prefix": data.get("price_prefix", "Starting at"),
         "price_currency": data.get("price_currency", "USD"),
+        # Commerce — buyable once in a collection with a price matrix
+        "collections": data.get("collections") or [],
+        "price_matrix": data.get("price_matrix") or {},
         "created_at": now,
         "updated_at": now,
     }
@@ -993,7 +1005,7 @@ async def projects_api_update(
     update = {}
     for k in ["title", "subtitle", "description", "meta_title", "meta_description", "tags",
               "specs", "customer_story", "published", "featured", "position",
-              "price", "price_prefix", "price_currency"]:
+              "price", "price_prefix", "price_currency", "collections", "price_matrix"]:
         if k in data:
             update[k] = data[k]
     if "price" in update:

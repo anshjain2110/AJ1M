@@ -1,15 +1,14 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { WizardProvider } from './context/WizardContext';
 import { AdminProvider } from './context/AdminContext';
 import { CartProvider } from './context/CartContext';
 import CollectionsIndexPage from './pages/store/CollectionsIndexPage';
 import CollectionDetailPage from './pages/store/CollectionDetailPage';
-import ShopProductDetailPage from './pages/store/ShopProductDetailPage';
 import CartPage from './pages/store/CartPage';
 import CheckoutSuccessPage from './pages/store/CheckoutSuccessPage';
-import ProductsAdminPage from './pages/admin/ProductsAdminPage';
+import SalePage from './pages/admin/SalePage';
 import CollectionsAdminPage from './pages/admin/CollectionsAdminPage';
 import MenuBuilderPage from './pages/admin/MenuBuilderPage';
 import WizardPage from './pages/WizardPage';
@@ -36,6 +35,12 @@ import BlogAdminPage from './pages/admin/BlogAdminPage';
 import MessagesAdminPage from './pages/admin/MessagesAdminPage';
 import PitchLoginPage from './pages/PitchLoginPage';
 import PitchPage from './pages/PitchPage';
+
+// Old shop product URLs now resolve to the unified project (= product) page
+function ProductRedirect() {
+  const { slug } = useParams();
+  return <Navigate to={`/projects/${slug}`} replace />;
+}
 
 function App() {
   return (
@@ -67,7 +72,7 @@ function App() {
           {/* Storefront / commerce routes */}
           <Route path="/collections" element={<CollectionsIndexPage />} />
           <Route path="/collections/:slug" element={<CollectionDetailPage />} />
-          <Route path="/products/:slug" element={<ShopProductDetailPage />} />
+          <Route path="/products/:slug" element={<ProductRedirect />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
           <Route path="/pitch/login" element={<PitchLoginPage />} />
@@ -83,7 +88,7 @@ function App() {
                   <Route path="leads" element={<LeadsCRM />} />
                   <Route path="orders" element={<OrdersPage />} />
                   <Route path="projects" element={<ProjectsAdminPage />} />
-                  <Route path="products" element={<ProductsAdminPage />} />
+                  <Route path="sale" element={<SalePage />} />
                   <Route path="collections" element={<CollectionsAdminPage />} />
                   <Route path="menu" element={<MenuBuilderPage />} />
                   <Route path="blog" element={<BlogAdminPage />} />

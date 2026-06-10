@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import { Plus, Trash2, Edit2, Loader2, Image, ArrowLeft, Upload, Star, X, Film, ArrowUp, ArrowDown, Eye, Maximize2, EyeOff } from 'lucide-react';
+import { METAL_TIERS, CARAT_WEIGHTS } from '../../utils/variantOptions';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -43,6 +44,9 @@ const EMPTY = {
   price: '',
   price_prefix: 'Starting at',
   price_currency: 'USD',
+  // Commerce — buyable once in a collection with a price matrix
+  collections: [],
+  price_matrix: {},
 };
 
 export default function ProjectsAdminPage() {
@@ -57,6 +61,8 @@ export default function ProjectsAdminPage() {
   const [uploadingField, setUploadingField] = useState('');
   const [filterTab, setFilterTab] = useState('published'); // 'published' | 'drafts' | 'all'
   const [togglingId, setTogglingId] = useState(null);
+  const [allCollections, setAllCollections] = useState([]);
+  const [bulkPrice, setBulkPrice] = useState('');
 
   // Counts per status
   const counts = useMemo(() => {
@@ -105,6 +111,11 @@ export default function ProjectsAdminPage() {
   }, [api]);
 
   useEffect(() => { fetchProjects(); }, [fetchProjects]);
+
+  // Collections for the shop picker
+  useEffect(() => {
+    api('get', '/api/admin/collections').then((r) => setAllCollections(r.data.collections || [])).catch(() => {});
+  }, [api]);
 
   // ── File upload to R2 via /api/uploads ─────────────────
   const uploadFile = async (file) => {
@@ -169,6 +180,27 @@ export default function ProjectsAdminPage() {
   const updateSpec = (k, v) => setForm(f => ({ ...f, specs: { ...f.specs, [k]: v } }));
   const updateStory = (k, v) => setForm(f => ({ ...f, customer_story: { ...f.customer_story, [k]: v } }));
 
+  // ── Shop / variation pricing helpers ───────────────────
+  const toggleCollection = (slug) => setForm(f => ({
+    ...f,
+    collections: (f.collections || []).includes(slug)
+      ? f.collections.filter(s => s !== slug)
+      : [...(f.collections || []), slug],
+  }));
+  const updateMatrixCell = (tier, carat, value) => setForm(f => {
+    const pm = { ...(f.price_matrix || {}) };
+    const row = { ...(pm[tier] || {}) };
+    if (value === '' || value === null) delete row[carat]; else row[carat] = value;
+    pm[tier] = row;
+    return { ...f, price_matrix: pm };
+  });
+  const fillAllMatrix = () => {
+    if (bulkPrice === '') { setForm(f => ({ ...f, price_matrix: {} })); return; }
+    const pm = {};
+    METAL_TIERS.forEach(m => { pm[m.id] = {}; CARAT_WEIGHTS.forEach(c => { pm[m.id][c] = bulkPrice; }); });
+    setForm(f => ({ ...f, price_matrix: pm }));
+  };
+
   // ── Reorder helpers ────────────────────────────────────
   const moveItem = (arr, fromIdx, toIdx) => {
     if (toIdx < 0 || toIdx >= arr.length) return arr;
@@ -205,6 +237,8 @@ export default function ProjectsAdminPage() {
       gallery: p.gallery || [],
       journey: p.journey || [],
       tags: p.tags || [],
+      collections: p.collections || [],
+      price_matrix: p.price_matrix || {},
     });
     setErr('');
     setView('form');
@@ -216,11 +250,19 @@ export default function ProjectsAdminPage() {
     if (!form.slug.trim()) { setErr('Slug is required'); return; }
     setSaving(true);
     try {
+      const cleanMatrix = {};
+      Object.entries(form.price_matrix || {}).forEach(([tier, row]) => {
+        const r = {};
+        Object.entries(row || {}).forEach(([c, v]) => { const n = Number(v); if (n > 0) r[c] = n; });
+        if (Object.keys(r).length) cleanMatrix[tier] = r;
+      });
       const payload = {
         ...form,
         slug: toSlug(form.slug),
         position: Number(form.position) || 0,
         price: form.price === '' || form.price === null ? null : Number(form.price),
+        collections: form.collections || [],
+        price_matrix: cleanMatrix,
       };
       if (editing) {
         await api('put', `/api/admin/projects/${editing.project_id}`, payload);
@@ -342,6 +384,80 @@ export default function ProjectsAdminPage() {
           </div>
           <p className="text-[11.5px] mt-1" style={{ color: 'var(--lj-muted)' }}>
             Leave price blank to hide the price tag entirely.
+          </p>
+        </Card>
+
+        {/* Shop — Collections & Variation Pricing */}
+        <Card title="Shop — Collections & Variation Pricing">
+          <p className="text-[12px] mb-3" style={{ color: 'var(--lj-muted)' }}>
+            Add this piece to a collection to make it <strong>buyable</strong> with metal + carat options. Enter the exact price for each metal-tier × carat. Gold colour (White / Rose / Yellow) is a free style choice and doesn't change price. Leave a cell blank if that combination isn't offered.
+          </p>
+          <Field label="Collections (pick at least one to make it buyable)">
+            {allCollections.length === 0 ? (
+              <p className="text-[12px]" style={{ color: 'var(--lj-muted)' }}>No collections yet — create one under the Collections tab first.</p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5" data-testid="admin-projects-collections">
+                {allCollections.map(c => {
+                  const on = (form.collections || []).includes(c.slug);
+                  return (
+                    <button key={c.slug} type="button" onClick={() => toggleCollection(c.slug)}
+                      data-testid={`admin-collection-toggle-${c.slug}`}
+                      className="text-[12.5px] px-3 py-1.5 rounded-full transition-colors"
+                      style={{ background: on ? 'var(--lj-accent)' : 'var(--lj-bg)', color: on ? '#fff' : 'var(--lj-text)', border: '1px solid ' + (on ? 'var(--lj-accent)' : 'var(--lj-border)') }}>
+                      {c.title}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </Field>
+
+          {/* Quick fill */}
+          <div className="flex flex-wrap items-center gap-2 mb-3 mt-1">
+            <span className="text-[12px]" style={{ color: 'var(--lj-muted)' }}>Quick-fill every cell:</span>
+            <input type="number" min="0" step="50" value={bulkPrice} onChange={e => setBulkPrice(e.target.value)}
+              data-testid="admin-matrix-bulk-input" placeholder="$ price"
+              className="w-[110px] px-2.5 py-1.5 rounded-[8px] text-[13px]" style={{ background: 'var(--lj-bg)', border: '1px solid var(--lj-border)', color: 'var(--lj-text)' }} />
+            <button type="button" onClick={fillAllMatrix} data-testid="admin-matrix-bulk-apply"
+              className="px-3 py-1.5 rounded-[8px] text-[12.5px] font-medium" style={{ background: 'var(--lj-accent)', color: '#fff' }}>
+              {bulkPrice === '' ? 'Clear all' : 'Fill all'}
+            </button>
+          </div>
+
+          {/* Price matrix */}
+          <div className="overflow-x-auto rounded-[10px]" style={{ border: '1px solid var(--lj-border)' }}>
+            <table className="w-full text-[13px]" data-testid="admin-price-matrix">
+              <thead>
+                <tr style={{ background: 'var(--lj-bg)' }}>
+                  <th className="text-left p-2.5 text-[11px] uppercase tracking-wide" style={{ color: 'var(--lj-muted)' }}>Metal \ Carat</th>
+                  {CARAT_WEIGHTS.map(c => <th key={c} className="p-2 text-center text-[11px] uppercase tracking-wide" style={{ color: 'var(--lj-muted)' }}>{c} ct</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {METAL_TIERS.map(m => (
+                  <tr key={m.id} style={{ borderTop: '1px solid var(--lj-border)' }}>
+                    <td className="p-2.5 font-medium whitespace-nowrap" style={{ color: 'var(--lj-text)' }}>{m.label}</td>
+                    {CARAT_WEIGHTS.map(c => {
+                      const cell = ((form.price_matrix || {})[m.id] || {})[c];
+                      return (
+                        <td key={c} className="p-1 text-center">
+                          <input type="number" min="0" step="50"
+                            value={cell === undefined || cell === null ? '' : cell}
+                            onChange={e => updateMatrixCell(m.id, c, e.target.value)}
+                            data-testid={`matrix-${m.id}-${c}`}
+                            placeholder="—"
+                            className="w-[76px] px-1.5 py-1.5 rounded-[7px] text-center text-[13px]"
+                            style={{ background: 'var(--lj-bg)', border: '1px solid var(--lj-border)', color: 'var(--lj-text)' }} />
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-[11.5px] mt-2" style={{ color: 'var(--lj-muted)' }}>
+            Tip: the lowest filled price shows as the "From" price on cards. A buyer can only check out combinations you've priced.
           </p>
         </Card>
 

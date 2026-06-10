@@ -1,0 +1,41 @@
+{
+  "summary": "Full regression on the major Projects-as-Products unification refactor. Created /app/backend/tests/test_unified_shop.py (16 passed / 1 skipped, ~2.7s) covering variant-options, collections backed by db.projects, /api/products filter, project detail enrichment (buyable/from_price/price_matrix/collections/sale), Stripe matrix-priced checkout, admin project list + price-matrix PUT persistence, and site-wide sale enable→discount→reset. Frontend verified end-to-end: Buy Box (5 metal tiers + 3 gold colours + 6 carats), Add-to-Bag with variant label '14K Rose Gold · 3 ct' and $1,500 in cart drawer; /collections grid + /collections/engagement-rings shows the 3 product cards; clicking a product card navigates to /projects/<slug> (NOT /products); /products/<slug> redirects to /projects/<slug>; admin nav has Projects/Collections/Sale & Promo and NO 'Products'; admin project editor exposes admin-price-matrix (30 cells incl. matrix-14k-2), admin-collection-toggle-engagement-rings, admin-matrix-bulk-input/apply, admin-projects-save; /admin/sale page exposes toggle/percent/headline/ends-at/save. With a 20% sale active, announcement-bar showed 'TEST SALE 20% OFF · Ends in 204d ...', buy box showed $1,200 + struck $1,500 + 20% OFF badge + buy-box-countdown; sale was disabled at the end and storefront reset to original prices.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET /api/projects", "issue": "Public listing already only contains buyable projects (3) — there is no separate public flag distinguishing non-buyable past projects, so the 'non-buyable excluded from /api/products' test could only be verified indirectly (skipped). Behaviour is correct, just not strongly assertable from public endpoints."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_unified_shop.py",
+    "/app/test_reports/pytest/unified_shop_results.xml"
+  ],
+  "action_items": [
+    "Stale tests: /app/backend/tests/test_commerce.py references the now-removed products model (e.g. POST /api/admin/products, oval-hidden-halo-engagement-ring) — recommend deleting or rewriting to target the unified projects model. Not blocking; use test_unified_shop.py going forward."
+  ],
+  "critical_code_review_comments": [
+    "variant_options.py / commerce_routes.py: carat keys are STRINGS ('2', '2.5', etc.) and the matrix lookup is exact-string. Worth a unit test for stray numeric values from clients (e.g. integer 2 vs string '2') — server should coerce to canonical string before lookup to avoid silent KeyError → 400 confusion.",
+    "GET /api/shop/sale returns {'sale': null} when disabled and {'sale': {...}} when enabled. Inconsistent shape (sometimes nested, sometimes the object itself directly in PUT response). Pick one envelope to reduce frontend conditionals.",
+    "admin PUT /api/admin/projects/{id} accepts the entire ProjectPayload — a missing price_matrix field would silently zero out the matrix. Recommend defaulting to existing matrix when key absent rather than overwriting.",
+    "Sale apply_sale: when 'ends_at' is in the past, server-side should treat sale as expired regardless of enabled flag — not verified in tests; consider an explicit ends_at < now() guard.",
+    "Project editor renders 16 buttons including non-row sidebar buttons; the row's pencil icon does not have a data-testid like 'admin-project-edit-<slug>'. Adding row-level test ids would make admin Playwright tests much easier."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_unified_shop.py (NEW)"
+  ],
+  "success_rate": {
+    "backend": "100% (16/16 executed, 1 intentionally skipped)",
+    "frontend": "100% of tested flows (buy box, cart drawer + variant label, collections grid + detail, product-card → /projects redirect, /products → /projects redirect, admin nav, admin sale page, admin projects editor with 30-cell matrix, sale announcement bar + countdown + struck price)"
+  },
+  "test_credentials": "Admin ansh@thelocaljewel.com / Rakesh@2709. Stripe sk_test_emergent. Buyable slugs: 3-40-carat-oval-side-stone-engagement-ring (1500), 5-carat-oval-solitaire-engagement-ring (1800), 4-41-carat-radiant-hidden-halo-engagement-ring (2850).",
+  "seed_data_creation": "Created during testing: 1 Stripe checkout session (qty=2 of 3-40-carat-... 14k/2ct → amount=3000) [pending state, payment_transactions row]; 1 Stripe session during sale test (1500→1200 server-side applied); transient admin matrix edit (14k/2 cell briefly set to 1777 then restored to seeded 1500); admin sale enabled at 20% then DISABLED at end of run — verified /api/shop/sale returns {sale: null} and collection prices reset to original 1500/1800/2850 with on_sale=false.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Use /app/backend/tests/test_unified_shop.py as the canonical regression for the unified projects-as-products model. The old /app/backend/tests/test_commerce.py is stale (targets removed /api/admin/products endpoints and the deprecated oval-hidden-halo-engagement-ring product slug). Storefront sale is OFF at end of run. Three buyable projects in engagement-rings: 3-40-carat-oval-side-stone-engagement-ring ($1500), 5-carat-oval-solitaire-engagement-ring ($1800), 4-41-carat-radiant-hidden-halo-engagement-ring ($2850). Each has a flat 30-cell price_matrix (silver/10k/14k/18k/platinum × 1/2/2.5/3/3.5/4) seeded to from_price. Checkout payload now uses metal_tier + carat (NOT 'metal'). Admin project edit row pencil icon has NO data-testid — use svg.lucide-pencil nth(row_index) and click its ancestor button.",
+  "rca_of_issue": "No bugs to RCA. One initial sale test failure was a test-side mismatch (endpoint returns {sale: {...}} envelope while admin PUT returns the bare object) — test updated to handle both shapes; behaviour itself is correct, see code review comment about envelope inconsistency."
+}

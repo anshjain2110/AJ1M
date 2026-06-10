@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Phone, User, Menu, X, FolderOpen, BookOpen, MessageCircle } from 'lucide-react';
+import { Phone, User, Menu, X, FolderOpen, BookOpen, MessageCircle, ShoppingBag } from 'lucide-react';
+import { useCart } from '../context/CartContext';
+import CartDrawer from './store/CartDrawer';
 
 const NAV_LINKS = [
   { to: '/projects', label: 'Projects', icon: FolderOpen },
@@ -11,6 +13,7 @@ const NAV_LINKS = [
 // Shared lightweight header for standalone public pages (Projects, Blog, Contact)
 export default function PublicHeader() {
   const navigate = useNavigate();
+  const { count, openCart } = useCart();
   const isLoggedIn = typeof window !== 'undefined' && !!localStorage.getItem('tlj_token');
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -74,6 +77,15 @@ export default function PublicHeader() {
           style={{ color: 'var(--lj-accent)' }}>
           <Phone size={15} /><span className="hidden sm:inline">Call</span>
         </a>
+        <button onClick={openCart} aria-label="Cart" data-testid="public-header-cart"
+          className="relative flex items-center px-3 py-2 rounded-full text-sm transition-colors duration-300 hover:bg-[#F0F0EE]"
+          style={{ color: 'var(--lj-accent)' }}>
+          <ShoppingBag size={16} />
+          {count > 0 && (
+            <span className="absolute -top-0.5 -right-0 min-w-[16px] h-[16px] px-1 flex items-center justify-center text-[10px] font-semibold rounded-full"
+              style={{ background: 'var(--lj-accent)', color: '#fff' }} data-testid="public-header-cart-count">{count}</span>
+          )}
+        </button>
         <button onClick={() => navigate(isLoggedIn ? '/dashboard' : '/login')}
           data-testid="public-header-account"
           className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-colors duration-300 hover:bg-[#F0F0EE]"
@@ -82,6 +94,7 @@ export default function PublicHeader() {
           <span className="hidden sm:inline">{isLoggedIn ? 'Account' : 'Login'}</span>
         </button>
       </div>
+      <CartDrawer />
     </header>
   );
 }
