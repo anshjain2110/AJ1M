@@ -49,7 +49,7 @@ export default function ShopEngagementSection() {
 
         {/* Featured products */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
-          {products.map((p) => <ProductCard key={p.slug} product={p} />)}
+          {products.map((p, i) => <ProductCard key={p.slug} product={p} index={i} />)}
         </div>
 
         <div className="mt-9 text-center sm:hidden">

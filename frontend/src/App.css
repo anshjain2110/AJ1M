@@ -60,9 +60,24 @@ select:focus {
   animation: pulse-subtle 2s ease-in-out infinite;
 }
 
+/* Staggered entrance for product cards (delay set inline per card) */
+@keyframes ljCardReveal {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.lj-card-reveal {
+  opacity: 0;
+  animation: ljCardReveal 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in-up,
   .animate-pulse-subtle {
+    animation: none;
+  }
+  .lj-card-reveal {
+    opacity: 1;
     animation: none;
   }
 }

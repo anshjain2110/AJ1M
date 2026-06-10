@@ -44,3 +44,35 @@ export const metalLabel = (tier, color) => {
 
 export const applySale = (price, sale) =>
   sale && sale.percent ? Math.round(Number(price) * (1 - Number(sale.percent) / 100)) : Number(price);
+
+// Map a raw Project document into the product-card shape (used for "More like
+// this" and anywhere we only have the full project doc, not the card API).
+export const projectToCard = (p, sale = null) => {
+  if (!p) return null;
+  const matrix = p.price_matrix || {};
+  const base = fromPrice(matrix);
+  const onSale = !!sale && base > 0;
+  const price = onSale ? applySale(base, sale) : base;
+  const gallery = p.gallery || [];
+  const hero = p.hero_image_url || (gallery[0] && gallery[0].url) || '';
+  const video = gallery.find((g) => g.url && g.media_type === 'video');
+  const altImg = gallery.find((g) => g.url && g.media_type !== 'video' && g.url !== hero);
+  const tiers = availableTiers(matrix).map((t) => t.id);
+  const carats = CARAT_WEIGHTS.filter((c) => tiers.some((t) => variantPrice(matrix, t, c) > 0));
+  return {
+    slug: p.slug,
+    title: p.title,
+    subtitle: p.subtitle || '',
+    hero_image_url: hero,
+    hover_media: video
+      ? { url: video.url, media_type: 'video' }
+      : (altImg ? { url: altImg.url, media_type: 'image' } : null),
+    price,
+    compare_at_price: onSale ? base : null,
+    badge: p.badge || '',
+    rating: p.rating,
+    review_count: p.review_count || 0,
+    metal_tiers: tiers,
+    carat_range: carats.length ? [carats[0], carats[carats.length - 1]] : null,
+  };
+};

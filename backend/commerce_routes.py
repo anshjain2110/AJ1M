@@ -60,6 +60,21 @@ def _project_card(p: dict, sale: Optional[dict]) -> dict:
         for g in gallery
         if g.get("url") and g.get("media_type", "image") != "video"
     ]
+    # Hover media for cards: prefer the first gallery video, else the first
+    # gallery image that differs from the hero shot.
+    hero_url = p.get("hero_image_url", "")
+    video = next((g for g in gallery if g.get("url") and g.get("media_type") == "video"), None)
+    alt_img = next(
+        (g for g in gallery if g.get("url") and g.get("media_type", "image") != "video" and g.get("url") != hero_url),
+        None,
+    )
+    hover_media = (
+        {"url": video["url"], "media_type": "video"} if video
+        else ({"url": alt_img["url"], "media_type": "image"} if alt_img else None)
+    )
+    # Variant summary for cards (metal swatch dots + carat range)
+    tiers = [m["id"] for m in METAL_TIERS if any(variant_price(p, m["id"], c) > 0 for c in CARAT_WEIGHTS)]
+    carats = [c for c in CARAT_WEIGHTS if any(variant_price(p, t, c) > 0 for t in tiers)]
     return {
         "slug": p.get("slug"),
         "title": p.get("title"),
@@ -77,6 +92,9 @@ def _project_card(p: dict, sale: Optional[dict]) -> dict:
         "collections": p.get("collections") or [],
         "tags": p.get("tags") or [],
         "from_price": base,
+        "hover_media": hover_media,
+        "metal_tiers": tiers,
+        "carat_range": [carats[0], carats[-1]] if carats else None,
     }
 
 

@@ -83,14 +83,16 @@ export default function CollectionDetailPage() {
         </section>
       )}
 
-      {/* Toolbar */}
-      <section className="max-w-7xl mx-auto px-4 md:px-8 pt-8 flex items-center justify-between">
-        <span className="text-[13px]" style={{ color: 'var(--lj-muted)' }} data-testid="collection-count">{products.length} {products.length === 1 ? 'piece' : 'pieces'}</span>
-        <select value={sort} onChange={(e) => setSort(e.target.value)} data-testid="collection-sort" className="text-[13px] px-3 py-2 bg-transparent" style={{ border: '1px solid var(--lj-border)', color: 'var(--lj-text)' }}>
-          <option value="">Featured</option>
-          <option value="price_asc">Price: Low to High</option>
-          <option value="price_desc">Price: High to Low</option>
-        </select>
+      {/* Toolbar — sticky under the shop header */}
+      <section className="sticky z-30" style={{ top: 57, background: 'rgba(253,251,247,0.88)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid var(--lj-border)' }}>
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-2.5 flex items-center justify-between">
+          <span className="text-[12px] uppercase tracking-[0.14em]" style={{ color: 'var(--lj-muted)' }} data-testid="collection-count">{products.length} {products.length === 1 ? 'piece' : 'pieces'}</span>
+          <select value={sort} onChange={(e) => setSort(e.target.value)} data-testid="collection-sort" className="text-[13px] px-3 py-2 bg-transparent" style={{ border: '1px solid var(--lj-border)', color: 'var(--lj-text)' }}>
+            <option value="">Featured</option>
+            <option value="price_asc">Price: Low to High</option>
+            <option value="price_desc">Price: High to Low</option>
+          </select>
+        </div>
       </section>
 
       {/* Grid */}
@@ -105,8 +107,8 @@ export default function CollectionDetailPage() {
             <button onClick={() => navigate('/collections')} className="px-6 py-3 text-[13px] font-medium" style={{ background: 'var(--lj-accent)', color: '#fff' }}>Browse all collections</button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8" data-testid="collection-products-grid">
-            {products.map((p) => <ProductCard key={p.slug} product={p} />)}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-x-8 md:gap-y-12" data-testid="collection-products-grid">
+            {products.map((p, i) => <ProductCard key={p.slug} product={p} index={i} />)}
           </div>
         )}
       </section>

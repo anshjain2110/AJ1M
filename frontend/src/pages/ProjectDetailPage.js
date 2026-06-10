@@ -11,7 +11,11 @@ import PriceTag from '../components/PriceTag';
 import ProjectInquiryChat from '../components/ProjectInquiryChat';
 import QuickQuoteModal from '../components/wizard/QuickQuoteModal';
 import BuyBox from '../components/store/BuyBox';
+import MegaMenuHeader from '../components/store/MegaMenuHeader';
+import StoreFooter from '../components/store/StoreFooter';
+import ProductCard from '../components/store/ProductCard';
 import SaleAnnouncementBar from '../components/SaleAnnouncementBar';
+import { projectToCard } from '../utils/variantOptions';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -160,8 +164,15 @@ export default function ProjectDetailPage() {
       {/* JSON-LD outside Helmet to avoid react-helmet-async script-child quirk */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString }} />
 
-      <SaleAnnouncementBar />
-      <PublicHeader />
+      {/* Buyable pieces get the shop header (cart + collections menu); lead-gen pieces keep the classic header */}
+      {project.buyable ? (
+        <MegaMenuHeader />
+      ) : (
+        <>
+          <SaleAnnouncementBar />
+          <PublicHeader />
+        </>
+      )}
 
       {/* Breadcrumb */}
       <nav className="px-4 pt-5 max-w-6xl mx-auto w-full" aria-label="Breadcrumb">
@@ -176,9 +187,35 @@ export default function ProjectDetailPage() {
 
       {/* Hero */}
       <section className="px-4 pt-5 pb-8 max-w-6xl mx-auto w-full">
-        <div className="grid lg:grid-cols-2 gap-6 lg:gap-10">
-          {/* Image side */}
+        <div className="grid lg:grid-cols-2 gap-6 lg:gap-10 lg:items-start">
+          {/* Media side — desktop: stacked editorial gallery; mobile: active image + thumbs */}
           <div>
+            {/* Desktop stacked gallery */}
+            <div className="hidden lg:flex flex-col gap-4" data-testid="project-gallery-stack">
+              {[
+                ...(project.hero_image_url ? [{ url: project.hero_image_url, caption: 'Hero', type: 'final', media_type: 'image' }] : []),
+                ...gallery.filter(g => g.url && g.url !== project.hero_image_url),
+              ].map((m, i) => (
+                <div key={i} className="relative rounded-[18px] overflow-hidden"
+                  style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}
+                  data-testid={`gallery-stack-${i}`}>
+                  {m.media_type === 'video' ? (
+                    <video src={m.url} controls muted loop playsInline preload="metadata" className="w-full h-auto block" />
+                  ) : (
+                    <img src={m.url} alt={m.caption || `${project.title} — view ${i + 1}`} className="w-full h-auto block" loading={i > 1 ? 'lazy' : 'eager'} />
+                  )}
+                  {m.type === 'render' && m.media_type !== 'video' && (
+                    <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-[0.1em]"
+                      style={{ background: 'rgba(0,0,0,0.55)', color: '#fff', backdropFilter: 'blur(8px)' }}>
+                      3D render
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Mobile / tablet gallery */}
+            <div className="lg:hidden">
             <div
               className="relative rounded-[18px] overflow-hidden aspect-[4/5] sm:aspect-square"
               style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}
@@ -240,10 +277,11 @@ export default function ProjectDetailPage() {
                 })}
               </div>
             )}
+            </div>
           </div>
 
-          {/* Title / specs / CTA side */}
-          <div>
+          {/* Title / specs / CTA side — sticky on desktop so it tracks the gallery scroll */}
+          <div className="lg:sticky lg:top-24 lg:self-start">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-4"
               style={{ background: 'rgba(15,94,76,0.08)', border: '1px solid rgba(15,94,76,0.15)' }}>
               <Sparkles size={13} style={{ color: 'var(--lj-accent)' }} />
@@ -344,7 +382,7 @@ export default function ProjectDetailPage() {
               style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}>
               <h3 className="text-[14px] font-semibold mb-3" style={{ color: 'var(--lj-text)' }}>What you get</h3>
               {[
-                { icon: Gem, text: 'Master-jeweler handcrafted' },
+                { icon: Gem, text: 'Crafted by The Local Jewel' },
                 { icon: ShieldCheck, text: 'IGI / GIA certified diamond' },
                 { icon: Diamond, text: 'Unlimited 3D render revisions' },
                 { icon: MapPin, text: 'Free insured worldwide shipping' },
@@ -478,22 +516,9 @@ export default function ProjectDetailPage() {
           >
             More like this
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
-            {related.map(r => (
-              <Link key={r.project_id} to={`/projects/${r.slug}`}
-                data-testid={`related-${r.slug}`}
-                className="group block rounded-[16px] overflow-hidden transition-all duration-300 hover:-translate-y-1"
-                style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}>
-                <div className="aspect-[4/3] overflow-hidden" style={{ background: 'var(--lj-bg)' }}>
-                  {r.hero_image_url && <img src={r.hero_image_url} alt={r.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />}
-                </div>
-                <div className="p-4">
-                  <div className="text-[15px] font-semibold mb-1" style={{ color: 'var(--lj-text)', fontFamily: 'var(--lj-serif, "Cormorant Garamond", "Playfair Display", Georgia, serif)' }}>
-                    {r.title}
-                  </div>
-                  <div className="text-[12px]" style={{ color: 'var(--lj-muted)' }}>{r.subtitle || (r.tags || []).slice(0, 2).map(labelFor).join(' · ')}</div>
-                </div>
-              </Link>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
+            {related.map((r, i) => (
+              <ProductCard key={r.slug || r.project_id} product={projectToCard(r, project.sale)} index={i} />
             ))}
           </div>
         </section>
@@ -553,21 +578,25 @@ export default function ProjectDetailPage() {
       </section>
 
       {/* Footer */}
-      <footer className="px-4 py-8 text-center" style={{ borderTop: '1px solid var(--lj-border)' }}>
-        <div className="flex items-center justify-center gap-3 text-[12px] flex-wrap" style={{ color: 'var(--lj-muted)' }}>
-          <a href="/" className="hover:underline">Home</a>
-          <span>·</span>
-          <a href="/projects" className="hover:underline">Projects</a>
-          <span>·</span>
-          <a href="/blog" className="hover:underline">Journal</a>
-          <span>·</span>
-          <a href="/contact" className="hover:underline">Contact</a>
-          <span>·</span>
-          <a href="/privacy" className="hover:underline">Privacy</a>
-          <span>·</span>
-          <a href="/terms" className="hover:underline">Terms</a>
-        </div>
-      </footer>
+      {project.buyable ? (
+        <StoreFooter />
+      ) : (
+        <footer className="px-4 py-8 text-center" style={{ borderTop: '1px solid var(--lj-border)' }}>
+          <div className="flex items-center justify-center gap-3 text-[12px] flex-wrap" style={{ color: 'var(--lj-muted)' }}>
+            <a href="/" className="hover:underline">Home</a>
+            <span>·</span>
+            <a href="/projects" className="hover:underline">Projects</a>
+            <span>·</span>
+            <a href="/blog" className="hover:underline">Journal</a>
+            <span>·</span>
+            <a href="/contact" className="hover:underline">Contact</a>
+            <span>·</span>
+            <a href="/privacy" className="hover:underline">Privacy</a>
+            <span>·</span>
+            <a href="/terms" className="hover:underline">Terms</a>
+          </div>
+        </footer>
+      )}
 
       {/* Sticky mobile CTA — quote flow only (buyable pieces have the in-page Buy box) */}
       {!project.buyable && (

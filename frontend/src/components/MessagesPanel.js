@@ -75,7 +75,7 @@ export default function MessagesPanel({ headers }) {
         <MessageCircle size={40} className="mx-auto mb-4 opacity-30" style={{ color: 'var(--lj-muted)' }} />
         <h3 className="text-[18px] font-semibold mb-2" style={{ color: 'var(--lj-text)' }}>No messages yet</h3>
         <p className="text-[13.5px] leading-[1.55]" style={{ color: 'var(--lj-muted)' }}>
-          Asked about a project on our site? Replies from the jeweler will show up here.
+          Asked about a piece on our site? Replies from The Local Jewel will show up here.
         </p>
         <a href="/projects" className="inline-flex items-center gap-1.5 mt-4 text-[13.5px] font-medium" style={{ color: 'var(--lj-accent)' }}>
           Browse projects →

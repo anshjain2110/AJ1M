@@ -85,7 +85,7 @@ export default function ProjectInquiryChat({ project, defaultMessage = "Hi - is 
             <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: 'rgba(15,94,76,0.10)' }}>
               <MessageCircle size={14} style={{ color: 'var(--lj-accent)' }} />
             </div>
-            <div className="text-[14px] font-medium" style={{ color: 'var(--lj-text)' }}>Send the jeweler a message</div>
+            <div className="text-[14px] font-medium" style={{ color: 'var(--lj-text)' }}>Message The Local Jewel</div>
           </div>
         )}
         <form onSubmit={(e) => { e.preventDefault(); openSheet(); }} className="flex items-center gap-1.5">
@@ -205,7 +205,7 @@ export default function ProjectInquiryChat({ project, defaultMessage = "Hi - is 
                   </div>
                   <h3 className="text-[22px] font-semibold mb-2" style={{ color: 'var(--lj-text)' }}>Sent!</h3>
                   <p className="text-[14px] leading-[1.55] max-w-sm mx-auto mb-6" style={{ color: 'var(--lj-muted)' }}>
-                    A jeweler will reply within a few hours — by email, text, or right here in your account.
+                    The Local Jewel will reply within a few hours — by email, text, or right here in your account.
                   </p>
                   <a href="/dashboard" data-testid="inquiry-sheet-dashboard"
                     className="inline-flex items-center gap-2 min-h-[48px] px-6 rounded-[12px] font-medium text-[15px] transition-all active:scale-[0.99]"
