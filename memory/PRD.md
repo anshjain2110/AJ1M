@@ -116,3 +116,30 @@ See `/app/memory/test_credentials.md`
 
 ## Integrations
 - Twilio (SMS OTP), SendGrid (Email OTP), Cloudflare R2 (boto3)
+
+
+---
+
+## Update 2026-06-10 — E-commerce Storefront (Phase 1) ✅ SHIPPED & TESTED (iteration_7: 26/26 backend, all FE flows pass)
+
+**Goal:** Turn the lead-gen site into a transactional D2C sales engine with best-in-class SEO. Reference: diamondrensu.com.
+
+**Delivered:**
+- **Admin-editable Mega-Menu header** (`MegaMenuHeader.js`) — desktop dropdowns with a preview image that swaps as you hover each sub-link; mobile slide-out accordion; sticky condense-on-scroll; announcement bar; cart icon. Replaces the landing header (wizard still intact below).
+- **Sellable Product catalog + Collections** — `products` & `collections` Mongo collections. Public pages: `/collections`, `/collections/:slug` (grid + sort), `/products/:slug` (gallery, metal/carat/size variants, sticky buy box, related, JSON-LD Product schema).
+- **Stripe full-price checkout** (emergentintegrations) — slide-in `CartDrawer` (localStorage `tlj_cart_v1`), Apple/Google Pay express buttons, `/api/checkout/session` (amount computed SERVER-SIDE), `/api/checkout/status/:id` polling, `/api/webhook/stripe`, idempotent `shop_orders` on paid. `STRIPE_API_KEY=sk_test_emergent`.
+- **Homepage "Engagement Rings" section** (`ShopEngagementSection.js`) — shop-by-shape circles + featured product cards.
+- **Admin panels** — `/admin/products` (CRUD + "From a Project" → buyable), `/admin/collections` (CRUD), `/admin/menu` (mega-menu builder with per-link hover image upload). Added to AdminLayout nav.
+
+**New backend file:** `commerce_routes.py` (mounted in `server.py`). **Seed:** `seed_commerce.py` (11 collections, 10 products).
+**Fonts:** added Cormorant Garamond + Outfit (scoped to `.store`). Design per `/app/design_guidelines.json`.
+
+**Backlog / next for commerce (P1/P2):**
+- P1: Customer order confirmation email (Resend/SendGrid) on paid; admin Shop Orders UI page (data exists at `/api/admin/shop-orders`).
+- P1: Repoint sitemap.xml to include `/collections/*` and `/products/*` for SEO.
+- P2: Embedded Payment/Express Element in the drawer (vs hosted redirect) for fewer steps; real Apple/Google Pay wiring.
+- P2: Product reviews UGC, inventory/stock, discount codes, abandoned-cart capture.
+- P2: Variant-level pricing (carat upcharges) — currently single price per product.
+
+**Original lead-gen backlog still pending:** SMS step notifications (Twilio), wire frontend social-proof to `/api/admin/settings`, `GET /api/projects/api/list` for HQ, Blog drafts tab, full Quotation/Order mgmt, Pinterest automation, scheduled blog publishing.
+

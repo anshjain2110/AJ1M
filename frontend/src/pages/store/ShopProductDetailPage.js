@@ -24,10 +24,10 @@ export default function ShopProductDetailPage() {
   const [qty, setQty] = useState(1);
 
   const load = useCallback(() => {
-    setLoading(true);
     axios.get(`${BACKEND_URL}/api/products/${slug}`)
       .then((r) => {
         const p = r.data;
+        setNotFound(false);
         setProduct(p);
         document.title = p.meta_title || `${p.title} | The Local Jewel`;
         setMetal((p.metals && p.metals[0]) || '');

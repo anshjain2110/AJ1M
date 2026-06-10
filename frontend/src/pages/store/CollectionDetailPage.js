@@ -17,9 +17,9 @@ export default function CollectionDetailPage() {
   const [sort, setSort] = useState('');
 
   const load = useCallback(() => {
-    setLoading(true);
     axios.get(`${BACKEND_URL}/api/collections/${slug}${sort ? `?sort=${sort}` : ''}`)
       .then((r) => {
+        setNotFound(false);
         setData(r.data);
         if (r.data.collection) document.title = (r.data.collection.meta_title || `${r.data.collection.title} | The Local Jewel`);
       })
