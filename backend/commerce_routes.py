@@ -7,7 +7,6 @@ with the rest of the backend and avoid circular imports with server.py.
 """
 import os
 import uuid
-import json
 import logging
 from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
@@ -23,7 +22,7 @@ router = APIRouter(tags=["commerce"])
 STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY", "")
 
 
-# ── Helpers ──────────────────────────────────────────────────
+# ---- Helpers ----
 
 def _now():
     return datetime.now(timezone.utc)
@@ -36,7 +35,7 @@ def _slugify(text: str) -> str:
     return out.strip("-")
 
 
-# ── Models ───────────────────────────────────────────────────
+# ---- Models ----
 
 class ProductImage(BaseModel):
     url: str
@@ -76,6 +75,7 @@ class CollectionPayload(BaseModel):
     title: str
     subtitle: Optional[str] = ""
     description: Optional[str] = ""
+    parent_slug: Optional[str] = ""        # for sub-collections (e.g. under "engagement-rings")
     hero_image_url: str = ""
     image_url: str = ""
     published: bool = True
@@ -125,62 +125,19 @@ class CheckoutRequest(BaseModel):
     email: Optional[str] = ""
 
 
-# ── Default mega-menu (used until an admin customizes it) ────
+# ---- Default mega-menu (used until an admin customizes it) ----
 
 DEFAULT_MENU = {
     "items": [
         {
-            "id": "engagement",
-            "label": "Engagement Rings",
-            "href": "/collections/engagement-rings",
+            "id": "engagement", "label": "Engagement Rings", "href": "/collections/engagement-rings",
             "type": "mega",
-            "columns": [
-                {
-                    "heading": "Shop by Shape",
-                    "links": [
-                        {"label": "Round", "href": "/collections/round-engagement-rings", "hover_image_url": "https://images.unsplash.com/photo-1605100804763-247f67b3557e?crop=entropy&cs=srgb&fm=jpg&q=85&w=900"},
-                        {"label": "Oval", "href": "/collections/oval-engagement-rings", "hover_image_url": "https://images.pexels.com/photos/32988751/pexels-photo-32988751.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"},
-                        {"label": "Emerald", "href": "/collections/emerald-engagement-rings", "hover_image_url": "https://images.unsplash.com/photo-1605100804763-247f67b3557e?crop=entropy&cs=srgb&fm=jpg&q=85&w=900"},
-                        {"label": "Pear", "href": "/collections/pear-engagement-rings", "hover_image_url": "https://images.pexels.com/photos/32988751/pexels-photo-32988751.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"},
-                    ],
-                },
-                {
-                    "heading": "Shop by Style",
-                    "links": [
-                        {"label": "Solitaire", "href": "/collections/solitaire-rings", "hover_image_url": "https://images.unsplash.com/photo-1605100804763-247f67b3557e?crop=entropy&cs=srgb&fm=jpg&q=85&w=900"},
-                        {"label": "Hidden Halo", "href": "/collections/hidden-halo-rings", "hover_image_url": "https://images.pexels.com/photos/32988751/pexels-photo-32988751.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"},
-                        {"label": "Three Stone", "href": "/collections/three-stone-rings", "hover_image_url": "https://images.unsplash.com/photo-1605100804763-247f67b3557e?crop=entropy&cs=srgb&fm=jpg&q=85&w=900"},
-                        {"label": "Vintage", "href": "/collections/vintage-rings", "hover_image_url": "https://images.pexels.com/photos/32988751/pexels-photo-32988751.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"},
-                    ],
-                },
-            ],
-            "featured_image_url": "https://images.unsplash.com/photo-1529519195486-16945f0fb37f?crop=entropy&cs=srgb&fm=jpg&q=85&w=900",
-            "featured_label": "Shop all Engagement Rings",
-            "featured_href": "/collections/engagement-rings",
-        },
-        {
-            "id": "wedding",
-            "label": "Wedding Bands",
-            "href": "/collections/wedding-bands",
-            "type": "mega",
-            "columns": [
-                {
-                    "heading": "For Her",
-                    "links": [
-                        {"label": "Eternity Bands", "href": "/collections/eternity-bands", "hover_image_url": "https://images.pexels.com/photos/32988751/pexels-photo-32988751.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"},
-                        {"label": "Curved Bands", "href": "/collections/curved-bands", "hover_image_url": "https://images.unsplash.com/photo-1605100804763-247f67b3557e?crop=entropy&cs=srgb&fm=jpg&q=85&w=900"},
-                    ],
-                },
-                {
-                    "heading": "For Him",
-                    "links": [
-                        {"label": "Classic Bands", "href": "/collections/mens-bands", "hover_image_url": "https://images.unsplash.com/photo-1605100804763-247f67b3557e?crop=entropy&cs=srgb&fm=jpg&q=85&w=900"},
-                    ],
-                },
-            ],
-            "featured_image_url": "https://images.pexels.com/photos/32988751/pexels-photo-32988751.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
-            "featured_label": "Shop all Wedding Bands",
-            "featured_href": "/collections/wedding-bands",
+            "columns": [{
+                "heading": "Shop", "links": [
+                    {"label": "All Engagement Rings", "href": "/collections/engagement-rings", "hover_image_url": ""},
+                ],
+            }],
+            "featured_image_url": "", "featured_label": "Shop all Engagement Rings", "featured_href": "/collections/engagement-rings",
         },
         {"id": "collections", "label": "Collections", "href": "/collections", "type": "link", "columns": []},
         {"id": "custom", "label": "Custom Design", "href": "/", "type": "link", "columns": []},
@@ -190,9 +147,9 @@ DEFAULT_MENU = {
 }
 
 
-# ════════════════════════════════════════════════════════════
+# ============================================================
 # PUBLIC: Menu
-# ════════════════════════════════════════════════════════════
+# ============================================================
 
 @router.get("/api/menu")
 async def get_public_menu():
@@ -225,19 +182,24 @@ async def admin_update_menu(req: MenuPayload, admin=Depends(require_admin)):
     return {"items": items}
 
 
-# ════════════════════════════════════════════════════════════
+# ============================================================
 # PUBLIC: Collections
-# ════════════════════════════════════════════════════════════
+# ============================================================
 
 async def _collection_product_count(slug: str) -> int:
     return await db.products.count_documents({"published": True, "collections": slug})
 
 
 @router.get("/api/collections")
-async def get_public_collections(featured: Optional[bool] = None):
+async def get_public_collections(featured: Optional[bool] = None, parent: Optional[str] = None, all: Optional[bool] = None):
     query = {"published": True}
     if featured is True:
         query["featured"] = True
+    if parent is not None:
+        query["parent_slug"] = parent
+    elif not all:
+        # default: only top-level collections (no parent)
+        query["$or"] = [{"parent_slug": {"$in": ["", None]}}, {"parent_slug": {"$exists": False}}]
     cursor = db.collections.find(query, {"_id": 0}).sort([("featured", -1), ("position", 1), ("created_at", -1)])
     items = []
     async for doc in cursor:
@@ -259,12 +221,19 @@ async def get_public_collection(slug: str, sort: Optional[str] = None):
         sort_spec = [("price", -1)]
     pcursor = db.products.find({"published": True, "collections": slug}, {"_id": 0, "description_html": 0}).sort(sort_spec)
     products = [serialize_doc(p) async for p in pcursor]
-    return {"collection": serialize_doc(doc), "products": products, "total": len(products)}
+    # sub-collections (children)
+    ccursor = db.collections.find({"published": True, "parent_slug": slug}, {"_id": 0}).sort([("position", 1), ("created_at", -1)])
+    children = []
+    async for c in ccursor:
+        cc = serialize_doc(c)
+        cc["product_count"] = await _collection_product_count(c.get("slug", ""))
+        children.append(cc)
+    return {"collection": serialize_doc(doc), "products": products, "children": children, "total": len(products)}
 
 
-# ════════════════════════════════════════════════════════════
+# ============================================================
 # PUBLIC: Products
-# ════════════════════════════════════════════════════════════
+# ============================================================
 
 @router.get("/api/products")
 async def get_public_products(
@@ -312,9 +281,9 @@ async def get_public_product(slug: str):
     return out
 
 
-# ════════════════════════════════════════════════════════════
+# ============================================================
 # ADMIN: Products CRUD
-# ════════════════════════════════════════════════════════════
+# ============================================================
 
 @router.get("/api/admin/products")
 async def admin_list_products(admin=Depends(require_admin)):
@@ -415,9 +384,9 @@ async def admin_create_product_from_project(project_id: str, admin=Depends(requi
     return serialize_doc({k: v for k, v in doc.items() if k != "_id"})
 
 
-# ════════════════════════════════════════════════════════════
+# ============================================================
 # ADMIN: Collections CRUD
-# ════════════════════════════════════════════════════════════
+# ============================================================
 
 @router.get("/api/admin/collections")
 async def admin_list_collections(admin=Depends(require_admin)):
@@ -470,6 +439,7 @@ async def admin_update_collection(collection_id: str, req: CollectionPayload, ad
             {"collections": old_slug},
             {"$set": {"collections.$": req.slug}},
         )
+        await db.collections.update_many({"parent_slug": old_slug}, {"$set": {"parent_slug": req.slug}})
     doc = await db.collections.find_one({"collection_id": collection_id}, {"_id": 0})
     return serialize_doc(doc)
 
@@ -483,12 +453,13 @@ async def admin_delete_collection(collection_id: str, admin=Depends(require_admi
     await db.collections.delete_one({"collection_id": collection_id})
     if slug:
         await db.products.update_many({"collections": slug}, {"$pull": {"collections": slug}})
+        await db.collections.update_many({"parent_slug": slug}, {"$set": {"parent_slug": ""}})
     return {"status": "deleted"}
 
 
-# ════════════════════════════════════════════════════════════
+# ============================================================
 # STRIPE CHECKOUT
-# ════════════════════════════════════════════════════════════
+# ============================================================
 
 def _stripe(request: Request):
     from emergentintegrations.payments.stripe.checkout import StripeCheckout
@@ -570,7 +541,7 @@ async def create_checkout_session(req: CheckoutRequest, request: Request):
 
 async def _finalize_order_if_paid(txn: dict):
     """Idempotently create a shop_order once a transaction is paid."""
-    if txn.get("order_created"):
+    if not txn or txn.get("order_created"):
         return
     order = {
         "order_id": f"so_{uuid.uuid4().hex[:12]}",
@@ -641,9 +612,9 @@ async def stripe_webhook(request: Request):
     return {"received": True}
 
 
-# ════════════════════════════════════════════════════════════
+# ============================================================
 # ADMIN: Shop Orders
-# ════════════════════════════════════════════════════════════
+# ============================================================
 
 @router.get("/api/admin/shop-orders")
 async def admin_list_shop_orders(admin=Depends(require_admin)):

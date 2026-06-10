@@ -65,6 +65,24 @@ export default function CollectionDetailPage() {
         </div>
       </section>
 
+      {/* Sub-collections */}
+      {data?.children && data.children.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 md:px-8 pt-8" data-testid="collection-children">
+          <div className="text-[11px] uppercase tracking-[0.2em] mb-4" style={{ color: 'var(--lj-muted)' }}>Explore</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-5">
+            {data.children.map((c) => (
+              <button key={c.slug} onClick={() => navigate(`/collections/${c.slug}`)} className="group text-center" data-testid={`child-collection-${c.slug}`}>
+                <div className="relative overflow-hidden rounded-full mx-auto" style={{ aspectRatio: '1', width: '100%', maxWidth: 140, background: 'var(--lj-surface)' }}>
+                  {c.image_url && <img src={c.image_url} alt={c.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />}
+                </div>
+                <span className="block mt-2.5 text-[13px] font-medium" style={{ color: 'var(--lj-text)' }}>{c.title}</span>
+                <span className="block text-[11px]" style={{ color: 'var(--lj-muted)' }}>{c.product_count} {c.product_count === 1 ? 'piece' : 'pieces'}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Toolbar */}
       <section className="max-w-7xl mx-auto px-4 md:px-8 pt-8 flex items-center justify-between">
         <span className="text-[13px]" style={{ color: 'var(--lj-muted)' }} data-testid="collection-count">{products.length} {products.length === 1 ? 'piece' : 'pieces'}</span>

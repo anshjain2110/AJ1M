@@ -5,25 +5,15 @@ import { ChevronRight, ArrowRight } from 'lucide-react';
 import ProductCard from './ProductCard';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
-const SHAPES = [
-  { slug: 'round-engagement-rings', label: 'Round' },
-  { slug: 'oval-engagement-rings', label: 'Oval' },
-  { slug: 'emerald-engagement-rings', label: 'Emerald' },
-  { slug: 'pear-engagement-rings', label: 'Pear' },
-];
 
 export default function ShopEngagementSection() {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
-  const [shapeImgs, setShapeImgs] = useState({});
+  const [subCollections, setSubCollections] = useState([]);
 
   useEffect(() => {
     axios.get(`${BACKEND_URL}/api/products?collection=engagement-rings&limit=4`).then((r) => setProducts(r.data.products || [])).catch(() => {});
-    axios.get(`${BACKEND_URL}/api/collections`).then((r) => {
-      const map = {};
-      (r.data.collections || []).forEach((c) => { map[c.slug] = c.image_url; });
-      setShapeImgs(map);
-    }).catch(() => {});
+    axios.get(`${BACKEND_URL}/api/collections?parent=engagement-rings`).then((r) => setSubCollections(r.data.collections || [])).catch(() => {});
   }, []);
 
   if (products.length === 0) return null;
@@ -43,17 +33,19 @@ export default function ShopEngagementSection() {
           </button>
         </div>
 
-        {/* Shop by shape */}
-        <div className="grid grid-cols-4 gap-3 md:gap-6 mb-10">
-          {SHAPES.map((s) => (
-            <button key={s.slug} onClick={() => navigate(`/collections/${s.slug}`)} className="group text-center" data-testid={`home-shape-${s.label.toLowerCase()}`}>
-              <div className="relative overflow-hidden rounded-full mx-auto" style={{ aspectRatio: '1', width: '100%', maxWidth: 130, background: 'var(--lj-surface)' }}>
-                {shapeImgs[s.slug] && <img src={shapeImgs[s.slug]} alt={s.label} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />}
-              </div>
-              <span className="block mt-2.5 text-[13px] font-medium" style={{ color: 'var(--lj-text)' }}>{s.label}</span>
-            </button>
-          ))}
-        </div>
+        {/* Shop by sub-collection (dynamic) */}
+        {subCollections.length > 0 && (
+          <div className="grid grid-cols-4 gap-3 md:gap-6 mb-10">
+            {subCollections.slice(0, 5).map((s) => (
+              <button key={s.slug} onClick={() => navigate(`/collections/${s.slug}`)} className="group text-center" data-testid={`home-subcol-${s.slug}`}>
+                <div className="relative overflow-hidden rounded-full mx-auto" style={{ aspectRatio: '1', width: '100%', maxWidth: 130, background: 'var(--lj-surface)' }}>
+                  {s.image_url && <img src={s.image_url} alt={s.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />}
+                </div>
+                <span className="block mt-2.5 text-[13px] font-medium" style={{ color: 'var(--lj-text)' }}>{s.title}</span>
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Featured products */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">

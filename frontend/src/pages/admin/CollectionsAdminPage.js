@@ -3,7 +3,7 @@ import { useAdmin } from '../../context/AdminContext';
 import { Plus, Edit2, Trash2, X, Upload, Sparkles } from 'lucide-react';
 
 const slugify = (s) => (s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-const emptyForm = () => ({ slug: '', title: '', subtitle: '', description: '', image_url: '', hero_image_url: '', published: true, featured: false, position: 0, meta_title: '', meta_description: '' });
+const emptyForm = () => ({ slug: '', title: '', subtitle: '', description: '', parent_slug: '', image_url: '', hero_image_url: '', published: true, featured: false, position: 0, meta_title: '', meta_description: '' });
 
 export default function CollectionsAdminPage() {
   const { api } = useAdmin();
