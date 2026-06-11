@@ -45,14 +45,16 @@ export function CartProvider({ children }) {
   }, []);
 
   const clearCart = useCallback(() => setItems([]), []);
+  const openCart = useCallback(() => setOpen(true), []);
+  const closeCart = useCallback(() => setOpen(false), []);
 
   const count = items.reduce((s, i) => s + i.quantity, 0);
   const subtotal = items.reduce((s, i) => s + (i.price || 0) * i.quantity, 0);
 
   const value = {
     items, count, subtotal, open,
-    openCart: () => setOpen(true),
-    closeCart: () => setOpen(false),
+    openCart,
+    closeCart,
     addItem, updateQty, removeItem, clearCart, lineKey,
   };
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
