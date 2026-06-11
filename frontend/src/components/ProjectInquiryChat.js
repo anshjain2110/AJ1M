@@ -14,14 +14,39 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
  * Props:
  *   compact: bool — render slimmer (no header/footnote) for grid cards
  */
-export default function ProjectInquiryChat({ project, defaultMessage = "Hi - is this available?", compact = false }) {
+const PLACEHOLDER_SUGGESTIONS = [
+  "Hi — is this available?",
+  "Can I change the center stone shape?",
+  "How long would it take to get to Chicago?",
+  "Send me a picture of the certificate please",
+  "Do you offer financing or layaway?",
+  "Can I see this in white gold instead?",
+  "What's the diamond clarity grade?",
+  "Could you size this to a 6.5?",
+  "Is this ready to ship or made to order?",
+  "Can we hop on a quick call?",
+];
+
+export default function ProjectInquiryChat({ project, defaultMessage = "", compact = false }) {
   const [message, setMessage] = useState(defaultMessage);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [contact, setContact] = useState({ name: '', email: '', phone: '' });
   const [sending, setSending] = useState(false);
   const [err, setErr] = useState('');
   const [success, setSuccess] = useState(null);
+  const [placeholderIdx, setPlaceholderIdx] = useState(() => Math.floor(Math.random() * PLACEHOLDER_SUGGESTIONS.length));
   const inputRef = useRef(null);
+
+  // Rotate the placeholder while the user hasn't typed anything yet
+  useEffect(() => {
+    if (message.trim()) return; // pause rotation once user starts typing
+    const id = setInterval(() => {
+      setPlaceholderIdx((i) => (i + 1) % PLACEHOLDER_SUGGESTIONS.length);
+    }, 2800);
+    return () => clearInterval(id);
+  }, [message]);
+
+  const currentPlaceholder = PLACEHOLDER_SUGGESTIONS[placeholderIdx];
 
   // If a user JWT already exists, pre-fill from localStorage user
   useEffect(() => {
@@ -39,7 +64,10 @@ export default function ProjectInquiryChat({ project, defaultMessage = "Hi - is 
   }, []);
 
   const openSheet = () => {
-    if (!message.trim()) { inputRef.current?.focus(); return; }
+    if (!message.trim()) {
+      // Use the currently-displayed rotating suggestion if user hits send on an empty input
+      setMessage(currentPlaceholder);
+    }
     setErr('');
     setSheetOpen(true);
   };
@@ -95,16 +123,15 @@ export default function ProjectInquiryChat({ project, defaultMessage = "Hi - is 
             onChange={(e) => setMessage(e.target.value)}
             onClick={(e) => e.stopPropagation()}
             data-testid="project-inquiry-input"
-            placeholder="Hi - is this available?"
+            placeholder={currentPlaceholder}
             className={(compact ? "min-h-[38px] text-[13.5px] px-3 " : "min-h-[44px] text-[14.5px] px-4 ") + "flex-1 rounded-full outline-none transition-colors"}
             style={{ background: 'var(--lj-bg)', border: '1.5px solid var(--lj-border)', color: 'var(--lj-text)' }}
           />
           <button
             type="submit"
             data-testid="project-inquiry-send"
-            disabled={!message.trim()}
             aria-label="Send message"
-            className={(compact ? "w-9 h-9" : "w-11 h-11") + " rounded-full flex-shrink-0 flex items-center justify-center transition-transform active:scale-95 disabled:opacity-50"}
+            className={(compact ? "w-9 h-9" : "w-11 h-11") + " rounded-full flex-shrink-0 flex items-center justify-center transition-transform active:scale-95"}
             style={{ background: 'var(--lj-accent)', color: '#FFFFFF' }}
           >
             <Send size={compact ? 14 : 16} />
