@@ -17,9 +17,12 @@ export default function CartDrawer() {
     setError('');
     setLoading(true);
     try {
+      let email = '';
+      try { const u = JSON.parse(localStorage.getItem('tlj_user') || 'null'); email = (u && u.email) || ''; } catch { /* ignore */ }
       const payload = {
         items: items.map((i) => ({ product_slug: i.product_slug, quantity: i.quantity, metal_tier: i.metal_tier || '', metal_color: i.metal_color || '', carat: i.carat || '', metal: i.metal || '', size: i.size || '' })),
         origin_url: window.location.origin,
+        email,
       };
       const r = await axios.post(`${BACKEND_URL}/api/checkout/session`, payload);
       if (r.data && r.data.url) {

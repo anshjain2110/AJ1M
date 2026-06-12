@@ -1,9 +1,10 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { WizardProvider } from './context/WizardContext';
 import { AdminProvider } from './context/AdminContext';
 import { CartProvider } from './context/CartContext';
+import AuthCallback from './pages/AuthCallback';
 import CollectionsIndexPage from './pages/store/CollectionsIndexPage';
 import CollectionDetailPage from './pages/store/CollectionDetailPage';
 import CartPage from './pages/store/CartPage';
@@ -47,6 +48,21 @@ function App() {
     <HelmetProvider>
       <Router>
         <CartProvider>
+        <AppRoutes />
+        </CartProvider>
+      </Router>
+    </HelmetProvider>
+  );
+}
+
+function AppRoutes() {
+  const location = useLocation();
+  // Emergent Google Auth return leg: process #session_id BEFORE any route renders.
+  // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+  if (location.hash && location.hash.includes('session_id=')) {
+    return <AuthCallback />;
+  }
+  return (
         <Routes>
           {/* Customer-facing routes */}
           <Route path="/" element={
@@ -102,9 +118,6 @@ function App() {
             </AdminProvider>
           } />
         </Routes>
-        </CartProvider>
-      </Router>
-    </HelmetProvider>
   );
 }
 

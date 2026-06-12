@@ -1,0 +1,47 @@
+{
+  "summary": "Session 11 (auth+account+invoices+About-this-piece) end-to-end testing. Backend pytest: 7/7 existing + 4/4 NEW = 11/11 passing. Frontend: on-screen OTP login, Google redirect, dashboard portal (greeting/tabs/overview-stats/orders-empty/profile save+persist+logout+redirect), product V2 About-this-piece (highlights with 'Winter Park, Florida', shipping accordion), and FULL Stripe test-card purchase (4242...) producing invoice INV-2026-0001 with order_success/invoice number/items/total/invoice-download/next-steps, plus shop-order-card visible in /dashboard?tab=orders, all PASS. Admin Settings page shows the new 'Business & Invoice Details' and 'Product Page Details' sections. No blocking issues.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "tests_executed": {
+    "backend_pytest_auth_orders_invoices": "PASS 7/7 (request-otp returns otp, verify-otp issues JWT, google/session 400/401, /api/me, profile PUT persistence, /api/me/shop-orders + invoice PDF magic bytes + cross-user 404, /api/admin/settings/public has product-info fields)",
+    "backend_pytest_session11_extras": "PASS 4/4 (OTP 429 immediate-second-request, /api/checkout/status includes order with invoice_number+items, PATCH /api/admin/settings persists ships_from/business_name/lead_time, GET /api/admin/shop-orders/{id}/invoice returns %PDF with admin JWT)",
+    "frontend_login_otp_on_screen": "PASS — fresh email, OTP appears in data-testid=otp-display-code, auto-verifies and lands on /dashboard. Greeting 'Hi, ...' present.",
+    "frontend_google_login_redirect": "PASS — clicking data-testid=google-login-button navigates to https://auth.emergentagent.com/?redirect=...%2Fdashboard (did not complete OAuth per instructions).",
+    "frontend_dashboard_tabs_and_overview": "PASS — all 5 tabs (overview/quotes/orders/messages/profile) present; overview-stat-quotes/orders/messages render after API load with values 0/0/→; orders tab shows orders-empty for fresh user.",
+    "frontend_profile_save_and_persist": "PASS — first name 'SdetFirst', ring size '6.5', city 'Orlando' saved, button text becomes 'Saved', survives full page reload.",
+    "frontend_logout_and_dashboard_redirect": "PASS — Log out returns to '/', then visiting /dashboard redirects back to /login as expected.",
+    "frontend_v2_about_this_piece": "PASS — On /projects/5-carat-oval-solitaire-engagement-ring: v2-about-piece present, v2-highlights contains all 7 rows (Made by, Ships from 'Winter Park, Florida · free insured delivery', Materials, Gemstone, Style, Certification, Personalization). v2-acc-shipping accordion expands and contains 'Winter Park, Florida'. v2-add-to-bag works.",
+    "frontend_v2_about_readmore": "CONDITIONAL — v2-about-readmore not rendered because the seeded product's description is short. Code is correctly conditional on description length; this is expected, not a bug.",
+    "frontend_full_purchase_with_stripe": "PASS — logged-in buyer, add to bag, cart-checkout-btn, redirect to checkout.stripe.com, paid with 4242 4242 4242 4242 (12/34, 123, 32801), redirect back to /checkout/success, data-testid=order-success rendered with invoice INV-2026-0001, items, total $1,800, Download invoice button, and 'What happens next' timeline.",
+    "frontend_order_in_dashboard": "PASS — /dashboard?tab=orders shows shop-order-card with INV-2026-0001, status chip 'Being crafted', and order-invoice-download button.",
+    "frontend_admin_settings_page": "PASS — /admin/settings has 'Business & Invoice Details' (Business Name/Address/Phone/Email) and 'Product Page Details' (Ships From = Winter Park, Florida) sections rendered."
+  },
+  "critical_code_review_comments": [
+    "On-screen OTP exposes the code in the API JSON response (`otp` field) AND on the UI. This is an intentional demo/test-mode choice per /app/auth_testing.md and /app/memory/test_credentials.md, BUT in any production rollout this must be gated behind an env flag (e.g. RETURN_OTP_INLINE=true) so the 6-digit code is never returned to the client in real deployments.",
+    "AccountOverview.js: fires two API calls (/api/me/leads, /api/me/shop-orders) on mount without a loading skeleton for the stat cards — stat cards only render after both promises resolve, which can leave the page blank for a moment on slow connections. A skeleton row would polish the perceived performance.",
+    "checkout-status `order` payload is enriched server-side from db.shop_orders — good. Recommend asserting in the success page that items[].image is never empty (fallback to a placeholder) to avoid broken thumbnails in the order summary if a product image is missing."
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_auth_orders_invoices.py",
+    "/app/backend/tests/test_session11_extras.py",
+    "/app/test_reports/pytest/session11_extras_results.xml"
+  ],
+  "action_items": [
+    "(Optional) Gate the `otp` field in /api/auth/request-otp behind a feature flag for production builds.",
+    "(Optional) Add a small skeleton placeholder for the Overview stat cards while /api/me/leads + /api/me/shop-orders load.",
+    "(Optional) Fallback placeholder image for order-items thumbnails if items[].image is empty."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_session11_extras.py (new — 4 additional regression tests)"
+  ],
+  "success_rate": { "backend": "100% (11/11 pytest)", "frontend": "100% on all requested scenarios" },
+  "test_credentials": "Admin ansh@thelocaljewel.com / Rakesh@2709 used; customer test users created dynamically via on-screen OTP. Stripe test card 4242 4242 4242 4242 used for full purchase.",
+  "seed_data_creation": "Pytest fixture seeded one shop_orders + payment_transactions doc (so_pytest…/pytest_sess_…) and tore them down. UI run produced real test orders (buyer1781304020@example.com → INV-2026-0001). These are TEST-mode Stripe purchases; no real funds moved. Test users (buyer*, sdettest*) remain in db.users (cleanup via existing pytest cleanup runs on emails starting 'pytest.').",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All Session 11 deliverables verified end-to-end. Add data-testid='v2-highlight-<key>' on each highlight row inside v2-highlights if future tests want to count rows precisely (currently only the parent v2-highlights testid is exposed). The buyable engagement-rings slugs in the preview env are: 5-carat-oval-solitaire-engagement-ring, 3-40-carat-oval-side-stone-engagement-ring, 4-41-carat-radiant-hidden-halo-engagement-ring. Stripe full-purchase flow works in this environment and reliably issues invoice number INV-2026-XXXX from the persistent invoice_counter."
+}

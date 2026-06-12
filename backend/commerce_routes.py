@@ -637,6 +637,7 @@ async def create_checkout_session(req: CheckoutRequest, request: Request):
         line_summary.append({
             "slug": line.product_slug,
             "title": project.get("title", ""),
+            "image": project.get("hero_image_url", ""),
             "qty": qty,
             "unit": unit,
             "metal": line.metal or "",
@@ -674,7 +675,7 @@ async def create_checkout_session(req: CheckoutRequest, request: Request):
         "session_id": session.session_id,
         "amount": float(total),
         "currency": currency,
-        "email": req.email or "",
+        "email": (req.email or "").strip().lower(),
         "items": line_summary,
         "metadata": metadata,
         "payment_status": "pending",
@@ -691,8 +692,15 @@ async def _finalize_order_if_paid(txn: dict):
     """Idempotently create a shop_order once a transaction is paid."""
     if not txn or txn.get("order_created"):
         return
+    from pymongo import ReturnDocument
+    counter = await db.counters.find_one_and_update(
+        {"_id": "shop_invoice"}, {"$inc": {"seq": 1}},
+        upsert=True, return_document=ReturnDocument.AFTER,
+    )
+    invoice_number = f"INV-{_now().year}-{int(counter['seq']):04d}"
     order = {
         "order_id": f"so_{uuid.uuid4().hex[:12]}",
+        "invoice_number": invoice_number,
         "session_id": txn.get("session_id"),
         "email": txn.get("email", ""),
         "items": txn.get("items", []),
@@ -717,7 +725,12 @@ async def get_checkout_status(session_id: str, request: Request):
 
     # Already finalized — return cached state, do not re-process.
     if txn.get("payment_status") == "paid":
-        return {"payment_status": "paid", "status": "complete", "amount": txn.get("amount"), "currency": txn.get("currency")}
+        order = await db.shop_orders.find_one({"session_id": session_id}, {"_id": 0})
+        return {
+            "payment_status": "paid", "status": "complete",
+            "amount": txn.get("amount"), "currency": txn.get("currency"),
+            "order": serialize_doc(order) if order else None,
+        }
 
     stripe_checkout = _stripe(request)
     status = await stripe_checkout.get_checkout_status(session_id)
@@ -727,15 +740,18 @@ async def get_checkout_status(session_id: str, request: Request):
         {"$set": {"payment_status": status.payment_status, "status": status.status, "updated_at": _now()}},
     )
 
+    order = None
     if status.payment_status == "paid":
         fresh = await db.payment_transactions.find_one({"session_id": session_id}, {"_id": 0})
         await _finalize_order_if_paid(fresh)
+        order = await db.shop_orders.find_one({"session_id": session_id}, {"_id": 0})
 
     return {
         "payment_status": status.payment_status,
         "status": status.status,
         "amount": status.amount_total / 100.0 if status.amount_total else txn.get("amount"),
         "currency": status.currency or txn.get("currency"),
+        "order": serialize_doc(order) if order else None,
     }
 
 
@@ -761,6 +777,23 @@ async def stripe_webhook(request: Request):
 
 
 # ============================================================
+# INVOICES
+# ============================================================
+
+@router.get("/api/checkout/invoice/{session_id}")
+async def checkout_invoice(session_id: str):
+    """Invoice download from the order-confirmation page (session_id is unguessable)."""
+    from fastapi.responses import Response as FastResponse
+    from invoices import build_invoice_pdf, get_business
+    order = await db.shop_orders.find_one({"session_id": session_id}, {"_id": 0})
+    if not order:
+        raise HTTPException(404, "Order not found")
+    pdf = build_invoice_pdf(order, await get_business(db))
+    filename = f"{order.get('invoice_number') or order.get('order_id')}.pdf"
+    return FastResponse(content=pdf, media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+# ============================================================
 # ADMIN: Shop Orders
 # ============================================================
 
@@ -769,3 +802,15 @@ async def admin_list_shop_orders(admin=Depends(require_admin)):
     cursor = db.shop_orders.find({}, {"_id": 0}).sort("created_at", -1).limit(300)
     items = [serialize_doc(o) async for o in cursor]
     return {"orders": items, "total": len(items)}
+
+
+@router.get("/api/admin/shop-orders/{order_id}/invoice")
+async def admin_shop_order_invoice(order_id: str, admin=Depends(require_admin)):
+    from fastapi.responses import Response as FastResponse
+    from invoices import build_invoice_pdf, get_business
+    order = await db.shop_orders.find_one({"order_id": order_id}, {"_id": 0})
+    if not order:
+        raise HTTPException(404, "Order not found")
+    pdf = build_invoice_pdf(order, await get_business(db))
+    filename = f"{order.get('invoice_number') or order_id}.pdf"
+    return FastResponse(content=pdf, media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="{filename}"'})

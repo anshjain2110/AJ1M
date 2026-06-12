@@ -104,6 +104,18 @@ class SettingsUpdate(BaseModel):
     avg_savings: Optional[str] = None
     email_notify_new_lead: Optional[bool] = None
     email_notify_quote: Optional[bool] = None
+    # Business & invoice details
+    business_name: Optional[str] = None
+    business_address: Optional[str] = None
+    business_phone: Optional[str] = None
+    business_email: Optional[str] = None
+    # Product-page details (PDP highlights / policies)
+    ships_from: Optional[str] = None
+    lead_time: Optional[str] = None
+    returns_policy: Optional[str] = None
+    warranty_text: Optional[str] = None
+    care_text: Optional[str] = None
+    maker_text: Optional[str] = None
 
 class TrackingUpdate(BaseModel):
     meta_pixel_id: Optional[str] = None
@@ -1127,11 +1139,28 @@ async def update_order(order_id: str, req: OrderUpdate, admin=Depends(require_ad
 
 # ── Settings ─────────────────────────────────────────────────
 
+# Defaults merged into the settings doc at read time so existing databases
+# pick up newly-added fields without a migration.
+SETTINGS_EXTRA_DEFAULTS = {
+    "business_name": "The Local Jewel",
+    "business_address": "480 N Orlando Ave, Winter Park, Florida 32771",
+    "business_phone": "+1 (585) 710-8292",
+    "business_email": "ansh@thelocaljewel.com",
+    "ships_from": "Winter Park, Florida",
+    "lead_time": "2–3 weeks",
+    "returns_policy": "30-day exchanges, hassle-free",
+    "warranty_text": "Lifetime warranty on every piece",
+    "care_text": "Clean with warm soapy water and a soft brush. Avoid harsh chemicals, chlorine, and ultrasonic cleaners for diamonds with halos or pavé. We offer complimentary lifetime cleaning and inspection for every piece we make.",
+    "maker_text": "The Local Jewel is an independent custom jewelry studio specializing in lab-grown diamond engagement rings and fine jewelry. Every piece is designed, rendered, and hand-set by us — no middlemen, no chain-store markups. We've delivered hundreds of custom pieces nationwide with a 4.9★ average rating.",
+}
+
 async def get_settings_doc():
     doc = await db.settings.find_one({"_type": "site_settings"})
     if not doc:
         doc = {"_type": "site_settings", "phone_number": "+15857108292", "whatsapp_link": "https://wa.me/15857108292", "live_chat_enabled": False, "gia_logo_visible": True, "igi_logo_visible": True, "reviews_count": "70+", "customers_count": "100+", "avg_savings": "$5,000", "email_notify_new_lead": True, "email_notify_quote": True}
         await db.settings.insert_one(doc)
+    for k, v in SETTINGS_EXTRA_DEFAULTS.items():
+        doc.setdefault(k, v)
     return serialize_doc(doc)
 
 @router.get("/settings")
@@ -1152,7 +1181,23 @@ async def update_settings(req: SettingsUpdate, admin=Depends(require_admin)):
 @router.get("/settings/public")
 async def get_public_settings():
     doc = await get_settings_doc()
-    return {"phone_number": doc.get("phone_number", ""), "whatsapp_link": doc.get("whatsapp_link", ""), "live_chat_enabled": doc.get("live_chat_enabled", False), "gia_logo_visible": doc.get("gia_logo_visible", True), "igi_logo_visible": doc.get("igi_logo_visible", True), "reviews_count": doc.get("reviews_count", "70+"), "customers_count": doc.get("customers_count", "100+"), "avg_savings": doc.get("avg_savings", "$5,000")}
+    return {
+        "phone_number": doc.get("phone_number", ""),
+        "whatsapp_link": doc.get("whatsapp_link", ""),
+        "live_chat_enabled": doc.get("live_chat_enabled", False),
+        "gia_logo_visible": doc.get("gia_logo_visible", True),
+        "igi_logo_visible": doc.get("igi_logo_visible", True),
+        "reviews_count": doc.get("reviews_count", "70+"),
+        "customers_count": doc.get("customers_count", "100+"),
+        "avg_savings": doc.get("avg_savings", "$5,000"),
+        # Product-page details
+        "ships_from": doc.get("ships_from", ""),
+        "lead_time": doc.get("lead_time", ""),
+        "returns_policy": doc.get("returns_policy", ""),
+        "warranty_text": doc.get("warranty_text", ""),
+        "care_text": doc.get("care_text", ""),
+        "maker_text": doc.get("maker_text", ""),
+    }
 
 # ── Tracking Configuration ───────────────────────────────────
 

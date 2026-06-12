@@ -1,415 +1,115 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FileText, Package, Plus, LogOut, Clock, Loader2, ChevronDown, ChevronUp, Send, Gem, Truck, CheckCircle, PenTool, Factory, Image as ImageIcon, MessageCircle, ExternalLink, Check } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { LayoutDashboard, FileText, Package, MessageCircle, UserRound, LogOut } from 'lucide-react';
 import axios from 'axios';
+import MegaMenuHeader from '../components/store/MegaMenuHeader';
+import StoreFooter from '../components/store/StoreFooter';
 import MessagesPanel from '../components/MessagesPanel';
+import AccountOverview from '../components/account/AccountOverview';
+import QuotesTab from '../components/account/QuotesTab';
+import OrdersTab from '../components/account/OrdersTab';
+import ProfileTab from '../components/account/ProfileTab';
+
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
-const STAGES = [
-  { key: 'design_quotation', label: 'Design & Quotation', icon: PenTool, color: '#0F5E4C' },
-  { key: 'in_production', label: 'In Production', icon: Factory, color: '#2563EB' },
-  { key: 'shipped', label: 'Shipped', icon: Truck, color: '#7C3AED' },
-  { key: 'delivered', label: 'Delivered', icon: CheckCircle, color: '#16A34A' },
+const TABS = [
+  { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { id: 'quotes', label: 'My Quotes', icon: FileText },
+  { id: 'orders', label: 'My Orders', icon: Package },
+  { id: 'messages', label: 'Messages', icon: MessageCircle },
+  { id: 'profile', label: 'Profile', icon: UserRound },
 ];
-
-function getStageIndex(stage) {
-  const idx = STAGES.findIndex(s => s.key === stage);
-  return idx >= 0 ? idx : 0;
-}
-
-function formatValue(val) {
-  if (!val) return '';
-  const m = { engagement_ring: 'Engagement Ring', wedding_bands: 'Wedding Bands', tennis_bracelet: 'Tennis Bracelet', studs_earrings: 'Studs / Earrings', necklace_pendant: 'Necklace / Pendant', loose_diamond: 'Loose Diamond', price_checking: 'Price Check', '0.5_0.9': '0.5–0.9 ct', '1.0_1.4': '1.0–1.4 ct', '1.5_1.9': '1.5–1.9 ct', '2.0_2.9': '2.0–2.9 ct', '3.0_plus': '3.0+ ct', not_sure: 'Not sure', under_2000: 'Under $2,000', '2000_5000': '$2,000–$5,000', '5000_10000': '$5,000–$10,000', '10000_15000': '$10,000–$15,000', '15000_plus': '$15,000+', '14k_white_gold': '14k White Gold', '14k_yellow_gold': '14k Yellow Gold', '14k_rose_gold': '14k Rose Gold', '18k_gold': '18k Gold', platinum: 'Platinum', solitaire: 'Solitaire', halo: 'Halo', three_stone: 'Three-Stone', pave_side_stones: 'Pavé / Side Stones', vintage_art_deco: 'Vintage / Art Deco', hidden_halo: 'Hidden Halo', best_value: 'Best Value', best_sparkle: 'Best Sparkle', biggest_look: 'Biggest Look', whitest_color: 'Whitest Color', cleanest_clarity: 'Cleanest Clarity' };
-  return m[val] || val.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-}
-
-function formatDate(d) { if (!d) return ''; return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
-function formatTime(d) { if (!d) return ''; return new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('quotations');
-  const [leads, setLeads] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
-  const [expandedLead, setExpandedLead] = useState(null);
-  const [leadDetail, setLeadDetail] = useState(null);
-  const [commentText, setCommentText] = useState('');
-  const [sendingComment, setSendingComment] = useState(false);
+  const [params] = useSearchParams();
+  const requested = params.get('tab');
+  const [activeTab, setActiveTab] = useState(TABS.some((t) => t.id === requested) ? requested : 'overview');
+  const [user, setUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('tlj_user') || 'null'); } catch { return null; }
+  });
 
   const token = localStorage.getItem('tlj_token');
   const headers = { Authorization: `Bearer ${token}` };
 
   useEffect(() => {
     if (!token) { navigate('/login'); return; }
-    const su = localStorage.getItem('tlj_user');
-    if (su) setUser(JSON.parse(su));
-    fetchData();
-  }, [navigate, token]);
+    axios.get(`${BACKEND_URL}/api/me`, { headers })
+      .then((r) => {
+        setUser(r.data.user);
+        localStorage.setItem('tlj_user', JSON.stringify(r.data.user));
+      })
+      .catch((err) => {
+        if (err.response?.status === 401) {
+          localStorage.removeItem('tlj_token');
+          localStorage.removeItem('tlj_user');
+          navigate('/login');
+        }
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
-  const fetchData = async () => {
-    try {
-      const [lr, or] = await Promise.all([
-        axios.get(`${BACKEND_URL}/api/me/leads`, { headers }),
-        axios.get(`${BACKEND_URL}/api/me/orders`, { headers }).catch(() => ({ data: { orders: [] } })),
-      ]);
-      setLeads(lr.data.leads || []);
-      setOrders(or.data.orders || []);
-    } catch (err) {
-      if (err.response?.status === 401) { localStorage.removeItem('tlj_token'); navigate('/login'); }
-    } finally { setLoading(false); }
+  const handleLogout = () => {
+    localStorage.removeItem('tlj_token');
+    localStorage.removeItem('tlj_user');
+    navigate('/');
   };
 
-  const toggleDetail = async (lead) => {
-    if (expandedLead === lead.lead_id) {
-      setExpandedLead(null); setLeadDetail(null); return;
-    }
-    setExpandedLead(lead.lead_id);
-    try {
-      const res = await axios.get(`${BACKEND_URL}/api/me/leads/${lead.lead_id}`, { headers });
-      setLeadDetail(res.data);
-    } catch (e) { console.error(e); }
-  };
+  if (!token) return null;
 
-  const addComment = async () => {
-    if (!commentText.trim() || !expandedLead) return;
-    setSendingComment(true);
-    try {
-      await axios.post(`${BACKEND_URL}/api/me/leads/${expandedLead}/comments`, { text: commentText }, { headers });
-      setCommentText('');
-      const res = await axios.get(`${BACKEND_URL}/api/me/leads/${expandedLead}`, { headers });
-      setLeadDetail(res.data);
-    } catch (e) { console.error(e); }
-    setSendingComment(false);
-  };
-
-  const [approving, setApproving] = useState(false);
-  const approveAndMoveToProduction = async () => {
-    if (!expandedLead || approving) return;
-    if (!window.confirm('Approve this design and move to production? This will lock the current renders and start fabrication.')) return;
-    setApproving(true);
-    try {
-      await axios.post(`${BACKEND_URL}/api/me/leads/${expandedLead}/approve`, {}, { headers });
-      const [d, l] = await Promise.all([
-        axios.get(`${BACKEND_URL}/api/me/leads/${expandedLead}`, { headers }),
-        axios.get(`${BACKEND_URL}/api/me/leads`, { headers }),
-      ]);
-      setLeadDetail(d.data);
-      setLeads(l.data.leads || []);
-    } catch (e) {
-      alert('Could not approve right now. Please try again or contact us.');
-      console.error(e);
-    }
-    setApproving(false);
-  };
-
-  const handleLogout = () => { localStorage.removeItem('tlj_token'); localStorage.removeItem('tlj_user'); navigate('/'); };
+  const firstName = user?.first_name || (user?.email ? user.email.split('@')[0] : 'there');
+  const initial = (user?.first_name?.[0] || user?.email?.[0] || 'T').toUpperCase();
+  const memberSince = user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '';
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'var(--lj-bg)' }}>
-      {/* Header */}
-      <header className="sticky top-0 z-40 px-4 py-3 flex items-center justify-between" style={{ background: 'var(--lj-bg)', borderBottom: '1px solid var(--lj-border)' }}>
-        <a href="/"><img src="/logo-main.png" alt="The Local Jewel" className="h-10 object-contain" /></a>
-        <div className="flex items-center gap-3">
-          {user && <span className="text-[13px]" style={{ color: 'var(--lj-muted)' }}>{user.first_name || user.email}</span>}
-          <button onClick={handleLogout} data-testid="dashboard-logout-button" className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#F0F0EE] transition-colors" aria-label="Logout">
-            <LogOut size={18} style={{ color: 'var(--lj-muted)' }} />
+    <div className="store min-h-screen flex flex-col" style={{ background: '#FBF7F0', fontFamily: "'Outfit', Inter, system-ui, sans-serif" }} data-testid="account-portal">
+      <MegaMenuHeader />
+
+      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-8 pb-16">
+        {/* Greeting */}
+        <div className="flex items-center justify-between mb-7 flex-wrap gap-3">
+          <div className="flex items-center gap-4">
+            {user?.picture ? (
+              <img src={user.picture} alt="" className="w-14 h-14 rounded-full object-cover" style={{ border: '2px solid #0F5E4C' }} data-testid="account-avatar" referrerPolicy="no-referrer" />
+            ) : (
+              <div className="w-14 h-14 rounded-full flex items-center justify-center text-[20px] font-bold" style={{ background: '#E9F5EE', color: '#0F5E4C', border: '2px solid #0F5E4C' }} data-testid="account-avatar">{initial}</div>
+            )}
+            <div>
+              <h1 className="text-[26px] sm:text-[32px] leading-tight" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", color: '#1A2520' }} data-testid="account-greeting">
+                Hi, {firstName}
+              </h1>
+              {memberSince && <p className="text-[13px]" style={{ color: '#6B746F' }}>Member since {memberSince}</p>}
+            </div>
+          </div>
+          <button onClick={handleLogout} data-testid="dashboard-logout-button"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-medium transition-colors hover:bg-[#F0EBE0]"
+            style={{ border: '1px solid #D3CDC1', color: '#3F4A45', background: '#fff' }}>
+            <LogOut size={15} /> Log out
           </button>
         </div>
-      </header>
 
-      {/* Tabs */}
-      <div className="px-4 flex gap-1 pt-4" data-testid="dashboard-tabs">
-        {[{ id: 'quotations', label: 'Quotations', icon: FileText }, { id: 'orders', label: 'Orders', icon: Package }, { id: 'messages', label: 'Messages', icon: MessageCircle }].map(tab => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)} data-testid={`dashboard-tab-${tab.id}`}
-            className="flex-1 min-h-[44px] px-3 py-2.5 rounded-t-[14px] flex items-center justify-center gap-1.5 text-[14.5px] sm:text-[16px] font-medium transition-colors duration-300"
-            style={{ background: activeTab === tab.id ? 'var(--lj-surface)' : 'transparent', color: activeTab === tab.id ? 'var(--lj-text)' : 'var(--lj-muted)', borderBottom: activeTab === tab.id ? '2px solid var(--lj-accent)' : '2px solid transparent' }}>
-            <tab.icon size={17} />{tab.label}
-          </button>
-        ))}
-      </div>
+        {/* Tab pills */}
+        <div className="flex gap-2 overflow-x-auto pb-1 mb-7" data-testid="dashboard-tabs" style={{ scrollbarWidth: 'none' }}>
+          {TABS.map((t) => (
+            <button key={t.id} onClick={() => setActiveTab(t.id)} data-testid={`dashboard-tab-${t.id}`}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-full text-[13.5px] font-medium whitespace-nowrap transition-all"
+              style={activeTab === t.id
+                ? { background: '#0F5E4C', color: '#fff' }
+                : { background: '#fff', color: '#3F4A45', border: '1px solid #E5E0D7' }}>
+              <t.icon size={15} /> {t.label}
+            </button>
+          ))}
+        </div>
 
-      {/* Content */}
-      <div className="flex-1 px-4 py-6">
-        {loading ? (
-          <div className="flex items-center justify-center py-20"><Loader2 size={24} className="animate-spin" style={{ color: 'var(--lj-accent)' }} /></div>
-        ) : activeTab === 'quotations' ? (
-          leads.length === 0 ? (
-            <EmptyState title="No quotations yet" subtitle="Start your custom quote to get personalized pricing" onAction={() => navigate('/')} />
-          ) : (
-            <div className="space-y-4 max-w-2xl mx-auto">
-              {leads.map(lead => {
-                const isExpanded = expandedLead === lead.lead_id;
-                const detail = isExpanded ? leadDetail : null;
-                const stage = lead.order_stage || 'design_quotation';
-                const stageIdx = getStageIndex(stage);
+        {/* Content */}
+        {activeTab === 'overview' && <AccountOverview user={user} headers={headers} onGoTab={setActiveTab} />}
+        {activeTab === 'quotes' && <QuotesTab headers={headers} />}
+        {activeTab === 'orders' && <OrdersTab headers={headers} />}
+        {activeTab === 'messages' && <MessagesPanel headers={headers} />}
+        {activeTab === 'profile' && <ProfileTab headers={headers} onUserUpdated={setUser} />}
+      </main>
 
-                return (
-                  <div key={lead.lead_id} className="rounded-[14px] overflow-hidden" style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}>
-                    {/* Card header */}
-                    <button onClick={() => toggleDetail(lead)} className="w-full text-left p-4 flex items-center justify-between" data-testid="dashboard-quotation-card">
-                      <div>
-                        <h3 className="text-[16px] font-medium" style={{ color: 'var(--lj-text)' }}>{formatValue(lead.product_type)}</h3>
-                        <p className="text-[13px] flex items-center gap-1.5 mt-1" style={{ color: 'var(--lj-muted)' }}>
-                          <Clock size={12} /> {formatDate(lead.created_at)}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="px-2.5 py-1 rounded-full text-[12px] font-medium capitalize" style={{ background: 'rgba(15,94,76,0.08)', color: 'var(--lj-accent)' }}>{lead.status || 'new'}</span>
-                        {isExpanded ? <ChevronUp size={18} style={{ color: 'var(--lj-muted)' }} /> : <ChevronDown size={18} style={{ color: 'var(--lj-muted)' }} />}
-                      </div>
-                    </button>
-
-                    {/* Expanded detail */}
-                    {isExpanded && detail && (
-                      <div className="px-4 pb-5" style={{ borderTop: '1px solid var(--lj-border)' }}>
-                        {/* Stage Timeline */}
-                        <div className="py-5">
-                          <div className="flex items-center justify-between relative">
-                            {/* Connection line */}
-                            <div className="absolute top-5 left-6 right-6 h-0.5" style={{ background: 'var(--lj-border)' }}>
-                              <div className="h-full transition-all duration-500" style={{ width: `${(stageIdx / (STAGES.length - 1)) * 100}%`, background: STAGES[stageIdx].color }} />
-                            </div>
-                            {STAGES.map((s, i) => {
-                              const isActive = i <= stageIdx;
-                              const isCurrent = i === stageIdx;
-                              return (
-                                <div key={s.key} className="flex flex-col items-center relative z-10" style={{ flex: 1 }}>
-                                  <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${isCurrent ? 'ring-4' : ''}`}
-                                    style={{ background: isActive ? s.color : 'var(--lj-surface)', border: `2px solid ${isActive ? s.color : 'var(--lj-border)'}`, ringColor: isCurrent ? `${s.color}30` : 'transparent' }}>
-                                    <s.icon size={18} style={{ color: isActive ? '#FFFFFF' : 'var(--lj-muted)' }} />
-                                  </div>
-                                  <span className="text-[11px] mt-2 text-center font-medium leading-tight max-w-[70px]" style={{ color: isActive ? s.color : 'var(--lj-muted)' }}>{s.label}</span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        {/* Working on it status — shows when no quotes yet */}
-                        {(!detail.quotes || detail.quotes.length === 0) && stage === 'design_quotation' && (
-                          <div className="mb-4 p-5 rounded-[14px] text-center" style={{ background: 'rgba(15,94,76,0.03)', border: '1px solid rgba(15,94,76,0.1)' }}>
-                            <div className="flex justify-center mb-3">
-                              <div className="relative">
-                                <div className="w-14 h-14 rounded-full flex items-center justify-center text-[22px] font-bold" style={{ background: 'rgba(15,94,76,0.1)', color: 'var(--lj-accent)' }}>AJ</div>
-                                <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'var(--lj-accent)' }}>
-                                  <PenTool size={10} style={{ color: '#FFFFFF' }} />
-                                </div>
-                              </div>
-                            </div>
-                            <p className="text-[16px] font-medium mb-1" style={{ color: 'var(--lj-text)' }}>Ansh is working on your design & quotation</p>
-                            <p className="text-[13px] mb-4" style={{ color: 'var(--lj-muted)' }}>We're crafting something special for you. You'll be notified once it's ready.</p>
-                            <div className="flex justify-center gap-1.5">
-                              <span className="w-2 h-2 rounded-full" style={{ background: 'var(--lj-accent)', animation: 'bounce 1.4s infinite 0s' }} />
-                              <span className="w-2 h-2 rounded-full" style={{ background: 'var(--lj-accent)', animation: 'bounce 1.4s infinite 0.2s' }} />
-                              <span className="w-2 h-2 rounded-full" style={{ background: 'var(--lj-accent)', animation: 'bounce 1.4s infinite 0.4s' }} />
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Stage update messages */}
-                        {stage === 'in_production' && (
-                          <div className="mb-4 p-4 rounded-[10px] flex items-center gap-3" style={{ background: 'rgba(37,99,235,0.04)', border: '1px solid rgba(37,99,235,0.12)' }}>
-                            <Factory size={20} style={{ color: '#2563EB' }} />
-                            <div>
-                              <p className="text-[14px] font-medium" style={{ color: 'var(--lj-text)' }}>Your piece is in production</p>
-                              <p className="text-[13px]" style={{ color: 'var(--lj-muted)' }}>Our master craftsmen are bringing your design to life.</p>
-                            </div>
-                          </div>
-                        )}
-
-                        {stage === 'shipped' && (
-                          <div className="mb-4 p-4 rounded-[10px] flex items-center gap-3" style={{ background: 'rgba(124,58,237,0.04)', border: '1px solid rgba(124,58,237,0.12)' }}>
-                            <Truck size={20} style={{ color: '#7C3AED' }} />
-                            <div>
-                              <p className="text-[14px] font-medium" style={{ color: 'var(--lj-text)' }}>Your piece has been shipped!</p>
-                              <p className="text-[13px]" style={{ color: 'var(--lj-muted)' }}>It's on its way to you. Check tracking details below.</p>
-                            </div>
-                          </div>
-                        )}
-
-                        {stage === 'delivered' && (
-                          <div className="mb-4 p-4 rounded-[10px] flex items-center gap-3" style={{ background: 'rgba(22,163,74,0.04)', border: '1px solid rgba(22,163,74,0.12)' }}>
-                            <CheckCircle size={20} style={{ color: '#16A34A' }} />
-                            <div>
-                              <p className="text-[14px] font-medium" style={{ color: 'var(--lj-text)' }}>Delivered — Enjoy your piece!</p>
-                              <p className="text-[13px]" style={{ color: 'var(--lj-muted)' }}>We hope you love it. Feel free to leave us a review.</p>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Quotation section */}
-                        {detail.quotes && detail.quotes.length > 0 && (
-                          <div className="mb-4 p-4 rounded-[10px]" style={{ background: 'var(--lj-bg)', border: '1px solid var(--lj-border)' }}>
-                            <h4 className="text-[14px] font-medium mb-3 flex items-center gap-2" style={{ color: 'var(--lj-text)' }}>
-                              <Gem size={16} style={{ color: 'var(--lj-accent)' }} /> Quotation
-                            </h4>
-                            {detail.quotes.map((q, qi) => (
-                              <div key={qi} className="flex items-center justify-between py-2" style={{ borderBottom: qi < detail.quotes.length - 1 ? '1px solid var(--lj-border)' : 'none' }}>
-                                <div>
-                                  <span className="text-[18px] font-semibold" style={{ color: 'var(--lj-text)' }}>${q.total?.toLocaleString()}</span>
-                                  {q.notes && <p className="text-[13px] mt-0.5" style={{ color: 'var(--lj-muted)' }}>{q.notes}</p>}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Your Selections */}
-                        <div className="mb-4 p-4 rounded-[10px]" style={{ background: 'var(--lj-bg)', border: '1px solid var(--lj-border)' }}>
-                          <h4 className="text-[14px] font-medium mb-3" style={{ color: 'var(--lj-text)' }}>Your Selections</h4>
-                          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[13px]">
-                            {['product_type', 'occasion', 'setting_style', 'diamond_shape', 'carat_range', 'priority', 'metal', 'ring_size', 'budget'].map(field => {
-                              const val = detail.lead[field];
-                              if (!val) return null;
-                              return <div key={field}><span style={{ color: 'var(--lj-muted)' }}>{field.replace(/_/g, ' ')}:</span> <span className="font-medium" style={{ color: 'var(--lj-text)' }}>{formatValue(val)}</span></div>;
-                            })}
-                          </div>
-                          {/* Inspiration files from user */}
-                          {detail.lead.inspiration_files && detail.lead.inspiration_files.length > 0 && (
-                            <div className="mt-3">
-                              <span className="text-[13px] font-medium" style={{ color: 'var(--lj-muted)' }}>Your Inspiration:</span>
-                              <div className="flex gap-2 mt-2">
-                                {detail.lead.inspiration_files.map((f, fi) => (
-                                  <a key={fi} href={`${BACKEND_URL}${f.url}`} target="_blank" rel="noopener noreferrer" className="w-16 h-16 rounded-[8px] overflow-hidden" style={{ border: '1px solid var(--lj-border)' }}>
-                                    <img src={`${BACKEND_URL}${f.url}`} alt="Inspiration" className="w-full h-full object-cover" />
-                                  </a>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* CAD & Renders (from admin) */}
-                        {detail.lead.cad_renders && detail.lead.cad_renders.length > 0 && (
-                          <div className="mb-4 p-4 rounded-[10px]" style={{ background: 'var(--lj-bg)', border: '1px solid var(--lj-border)' }}>
-                            <h4 className="text-[14px] font-medium mb-3 flex items-center gap-2" style={{ color: 'var(--lj-text)' }}>
-                              <ImageIcon size={16} style={{ color: 'var(--lj-accent)' }} /> CAD & Renders
-                            </h4>
-                            <div className="grid grid-cols-3 gap-2">
-                              {detail.lead.cad_renders.map((r, ri) => (
-                                <a key={ri} href={`${BACKEND_URL}${r.url}`} target="_blank" rel="noopener noreferrer" className="aspect-square rounded-[8px] overflow-hidden" style={{ border: '1px solid var(--lj-border)' }}>
-                                  <img src={`${BACKEND_URL}${r.url}`} alt={r.original_name || 'CAD Render'} className="w-full h-full object-cover" />
-                                </a>
-                              ))}
-                            </div>
-
-                            {/* Approve & move to production */}
-                            {(detail.lead.order_stage || 'design_quotation') === 'design_quotation' && (
-                              <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--lj-border)' }}>
-                                <p className="text-[13px] mb-3 leading-[1.5]" style={{ color: 'var(--lj-muted)' }}>
-                                  Happy with these renders? Approve to lock the design and we'll move your ring into production.
-                                </p>
-                                <button
-                                  onClick={approveAndMoveToProduction}
-                                  disabled={approving}
-                                  data-testid="approve-and-produce-button"
-                                  className="w-full min-h-[46px] px-5 rounded-[12px] font-medium text-[15px] flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.99] disabled:opacity-60"
-                                  style={{ background: 'var(--lj-accent)', color: '#FFFFFF' }}>
-                                  {approving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-                                  {approving ? 'Sending to production...' : 'Approve & move to production'}
-                                </button>
-                                <p className="mt-2 text-[11.5px] text-center" style={{ color: 'var(--lj-muted)' }}>
-                                  This locks the current design. Want a change? Send a comment below instead.
-                                </p>
-                              </div>
-                            )}
-
-                            {/* Already approved indicator */}
-                            {detail.lead.order_stage && detail.lead.order_stage !== 'design_quotation' && (
-                              <div className="mt-4 px-3 py-2.5 rounded-[10px] flex items-center gap-2" style={{ background: 'rgba(15,94,76,0.06)', border: '1px solid rgba(15,94,76,0.18)' }}>
-                                <Check size={15} style={{ color: 'var(--lj-accent)' }} />
-                                <span className="text-[13px]" style={{ color: 'var(--lj-text)' }}>You approved this design. It's in production.</span>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Tracking info */}
-                        {detail.lead.tracking_number && (
-                          <div className="mb-4 p-4 rounded-[10px]" style={{ background: 'var(--lj-bg)', border: '1px solid var(--lj-border)' }}>
-                            <h4 className="text-[14px] font-medium mb-2 flex items-center gap-2" style={{ color: 'var(--lj-text)' }}>
-                              <Truck size={16} style={{ color: 'var(--lj-accent)' }} /> Shipping
-                            </h4>
-                            <p className="text-[14px]" style={{ color: 'var(--lj-text)' }}>
-                              Tracking: <span className="font-mono font-medium">{detail.lead.tracking_number}</span>
-                            </p>
-                            {detail.lead.shipping_provider && (
-                              <p className="text-[13px] mt-1" style={{ color: 'var(--lj-muted)' }}>via {detail.lead.shipping_provider}</p>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Comments */}
-                        <div className="p-4 rounded-[10px]" style={{ background: 'var(--lj-bg)', border: '1px solid var(--lj-border)' }}>
-                          <h4 className="text-[14px] font-medium mb-3 flex items-center gap-2" style={{ color: 'var(--lj-text)' }}>
-                            <MessageCircle size={16} style={{ color: 'var(--lj-accent)' }} /> Comments
-                          </h4>
-                          <div className="space-y-3 mb-3 max-h-[300px] overflow-y-auto">
-                            {(!detail.lead.comments || detail.lead.comments.length === 0) && (
-                              <p className="text-[13px] text-center py-3" style={{ color: 'var(--lj-muted)' }}>No comments yet. Send a message to discuss your order.</p>
-                            )}
-                            {(detail.lead.comments || []).map((c, ci) => (
-                              <div key={ci} className={`flex ${c.role === 'customer' ? 'justify-end' : 'justify-start'}`}>
-                                <div className="max-w-[80%] px-3 py-2 rounded-[10px]"
-                                  style={{ background: c.role === 'customer' ? 'rgba(15,94,76,0.08)' : 'var(--lj-surface)', border: `1px solid ${c.role === 'customer' ? 'rgba(15,94,76,0.15)' : 'var(--lj-border)'}` }}>
-                                  <p className="text-[14px]" style={{ color: 'var(--lj-text)' }}>{c.text}</p>
-                                  <p className="text-[11px] mt-1" style={{ color: 'var(--lj-muted)' }}>{c.author} · {formatTime(c.created_at)}</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="flex gap-2">
-                            <input value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Type a message..." onKeyDown={e => e.key === 'Enter' && addComment()}
-                              className="flex-1 min-h-[40px] px-3 rounded-[10px] text-[14px]" style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)', color: 'var(--lj-text)' }} />
-                            <button onClick={addComment} disabled={sendingComment || !commentText.trim()} className="w-10 h-10 rounded-[10px] flex items-center justify-center transition-colors"
-                              style={{ background: commentText.trim() ? 'var(--lj-accent)' : '#E5E5E3', color: commentText.trim() ? '#FFFFFF' : 'var(--lj-muted)' }}>
-                              {sendingComment ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )
-        ) : activeTab === 'messages' ? (
-          <MessagesPanel headers={headers} />
-        ) : (
-          orders.length === 0 ? (
-            <EmptyState title="No orders yet" subtitle="Once your quote is confirmed, orders will appear here" />
-          ) : (
-            <div className="space-y-3 max-w-2xl mx-auto">
-              {orders.map((o, i) => (
-                <div key={i} className="p-4 rounded-[14px]" style={{ background: 'var(--lj-surface)', border: '1px solid var(--lj-border)' }}>
-                  <h3 className="text-[16px] font-medium" style={{ color: 'var(--lj-text)' }}>{o.product_description || `Order ${o.order_id}`}</h3>
-                  <p className="text-[13px] mt-1" style={{ color: 'var(--lj-muted)' }}>{formatDate(o.created_at)}</p>
-                </div>
-              ))}
-            </div>
-          )
-        )}
-      </div>
-    </div>
-  );
-}
-
-function EmptyState({ title, subtitle, onAction }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6" style={{ background: 'rgba(15,94,76,0.06)', border: '1px solid rgba(15,94,76,0.1)' }}>
-        <FileText size={32} style={{ color: 'var(--lj-accent)' }} />
-      </div>
-      <h3 className="text-[22px] leading-[28px] font-medium mb-2" style={{ color: 'var(--lj-text)' }}>{title}</h3>
-      <p className="text-[16px] leading-[24px] mb-6" style={{ color: 'var(--lj-muted)' }}>{subtitle}</p>
-      {onAction && (
-        <button onClick={onAction} data-testid="dashboard-empty-state-start-wizard-button" className="min-h-[44px] px-6 rounded-[14px] font-medium text-[16px] flex items-center gap-2" style={{ background: 'var(--lj-accent)', color: '#FFFFFF' }}>
-          <Plus size={18} /> Start a Quote
-        </button>
-      )}
+      <StoreFooter />
     </div>
   );
 }

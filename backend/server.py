@@ -107,6 +107,8 @@ async def lifespan(app: FastAPI):
     await db.message_threads.create_index("user_id")
     await db.message_threads.create_index("project_slug")
     await db.message_threads.create_index([("updated_at", -1)])
+    await db.shop_orders.create_index("email")
+    await db.user_sessions.create_index("session_token")
     await db.users.update_many({"phone": ""}, {"$unset": {"phone": ""}})
     # Refresh static sitemap on every startup so production deploys always have fresh URLs
     try:
@@ -1675,9 +1677,17 @@ async def submit_quick_quote(req: QuickQuoteRequest, request: Request):
 @app.post("/api/auth/request-otp")
 async def request_otp(req: OTPRequest):
     identifier = req.identifier.strip().lower()
+    if not identifier:
+        raise HTTPException(status_code=400, detail="Enter your email or phone")
     user = await db.users.find_one({"$or": [{"email": identifier}, {"phone": identifier}]})
     if not user:
-        raise HTTPException(status_code=404, detail="No account found with this email/phone")
+        # Frictionless signup: first login attempt creates the account.
+        user = {"user_id": f"user_{uuid.uuid4().hex[:12]}", "auth_provider": "otp", "created_at": datetime.now(timezone.utc)}
+        if "@" in identifier:
+            user["email"] = identifier
+        else:
+            user["phone"] = identifier
+        await db.users.insert_one(user)
     recent = await db.otp_codes.find_one({"identifier": identifier, "created_at": {"$gte": datetime.now(timezone.utc) - timedelta(seconds=60)}})
     if recent:
         raise HTTPException(status_code=429, detail="Please wait before requesting another OTP")
@@ -1745,7 +1755,9 @@ async def request_otp(req: OTPRequest):
         print(f"[OTP] Code for {identifier}: {otp} (delivery failed)")
     
     msg = "Verification code sent to your email" if delivery_method == "email" else "Verification code sent to your phone" if delivery_method == "sms" else "Verification code generated"
-    return {"status": "sent", "message": msg}
+    # On-screen OTP: the code is returned and shown directly in the UI so login
+    # never depends on SMS/email delivery (per owner's request).
+    return {"status": "sent", "message": msg, "otp": otp}
 
 @app.post("/api/auth/verify-otp")
 async def verify_otp(req: OTPVerify):
@@ -1760,6 +1772,66 @@ async def verify_otp(req: OTPVerify):
         raise HTTPException(status_code=404, detail="User not found")
     token = create_jwt(user["user_id"], user.get("email"))
     return {"status": "verified", "token": token, "user": serialize_doc(user)}
+
+
+# ── API: Google login (Emergent-managed) ─────────────────────
+# REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+EMERGENT_SESSION_DATA_URL = "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data"
+
+@app.post("/api/auth/google/session")
+async def google_session(request: Request, response: Response):
+    session_id = request.headers.get("X-Session-ID", "")
+    if not session_id:
+        raise HTTPException(status_code=400, detail="Missing X-Session-ID header")
+    async with httpx.AsyncClient(timeout=15) as hc:
+        r = await hc.get(EMERGENT_SESSION_DATA_URL, headers={"X-Session-ID": session_id})
+    if r.status_code != 200:
+        raise HTTPException(status_code=401, detail="Invalid or expired Google session")
+    data = r.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        raise HTTPException(status_code=401, detail="Google account has no email")
+
+    name = (data.get("name") or "").strip()
+    name_parts = name.split(" ") if name else []
+    user = await db.users.find_one({"email": email})
+    if user:
+        update = {"auth_provider": "google", "last_login_at": datetime.now(timezone.utc)}
+        if data.get("picture"):
+            update["picture"] = data["picture"]
+        if name_parts and not user.get("first_name"):
+            update["first_name"] = name_parts[0]
+            if len(name_parts) > 1:
+                update["last_name"] = " ".join(name_parts[1:])
+        await db.users.update_one({"user_id": user["user_id"]}, {"$set": update})
+        user = await db.users.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    else:
+        user = {
+            "user_id": f"user_{uuid.uuid4().hex[:12]}",
+            "email": email,
+            "first_name": name_parts[0] if name_parts else "",
+            "last_name": " ".join(name_parts[1:]) if len(name_parts) > 1 else "",
+            "picture": data.get("picture", ""),
+            "auth_provider": "google",
+            "created_at": datetime.now(timezone.utc),
+        }
+        await db.users.insert_one(user)
+        user = {k: v for k, v in user.items() if k != "_id"}
+
+    session_token = data.get("session_token", "")
+    if session_token:
+        await db.user_sessions.insert_one({
+            "user_id": user["user_id"],
+            "session_token": session_token,
+            "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
+            "created_at": datetime.now(timezone.utc),
+        })
+        response.set_cookie(
+            "session_token", session_token,
+            max_age=7 * 24 * 3600, httponly=True, secure=True, samesite="none", path="/",
+        )
+    token = create_jwt(user["user_id"], user.get("email"))
+    return {"status": "ok", "token": token, "user": serialize_doc(user)}
 
 # ── API: Dashboard ───────────────────────────────────────────
 
@@ -1831,6 +1903,77 @@ async def customer_approve_design(lead_id: str, user=Depends(get_current_user)):
 async def get_my_orders(user=Depends(get_current_user)):
     orders = [serialize_doc(o) async for o in db.orders.find({"user_id": user["user_id"]}).sort("created_at", -1)]
     return {"orders": orders}
+
+class ProfileUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    ring_size: Optional[str] = None
+    address: Optional[dict] = None
+
+@app.put("/api/me/profile")
+async def update_my_profile(req: ProfileUpdate, user=Depends(get_current_user)):
+    update, unset = {}, {}
+    if req.first_name is not None:
+        update["first_name"] = req.first_name.strip()
+    if req.last_name is not None:
+        update["last_name"] = req.last_name.strip()
+    if req.ring_size is not None:
+        update["ring_size"] = req.ring_size.strip()
+    if req.phone is not None:
+        phone = req.phone.strip()
+        if phone:
+            clash = await db.users.find_one({"phone": phone, "user_id": {"$ne": user["user_id"]}})
+            if clash:
+                raise HTTPException(400, "This phone number is already in use")
+            update["phone"] = phone
+        else:
+            unset["phone"] = ""
+    if req.email is not None:
+        email = req.email.strip().lower()
+        if email and email != (user.get("email") or ""):
+            clash = await db.users.find_one({"email": email, "user_id": {"$ne": user["user_id"]}})
+            if clash:
+                raise HTTPException(400, "This email is already in use")
+            update["email"] = email
+    if req.address is not None:
+        update["address"] = {
+            k: str(req.address.get(k, "") or "").strip()
+            for k in ["line1", "line2", "city", "state", "zip", "country"]
+        }
+    ops = {}
+    if update:
+        update["updated_at"] = datetime.now(timezone.utc)
+        ops["$set"] = update
+    if unset:
+        ops["$unset"] = unset
+    if ops:
+        await db.users.update_one({"user_id": user["user_id"]}, ops)
+    fresh = await db.users.find_one({"user_id": user["user_id"]}, {"_id": 0})
+    return {"user": serialize_doc(fresh)}
+
+@app.get("/api/me/shop-orders")
+async def get_my_shop_orders(user=Depends(get_current_user)):
+    email = (user.get("email") or "").strip().lower()
+    if not email:
+        return {"orders": []}
+    orders = [
+        serialize_doc(o)
+        async for o in db.shop_orders.find({"email": email}, {"_id": 0}).sort("created_at", -1)
+    ]
+    return {"orders": orders}
+
+@app.get("/api/me/shop-orders/{order_id}/invoice")
+async def get_my_shop_order_invoice(order_id: str, user=Depends(get_current_user)):
+    from invoices import build_invoice_pdf, get_business
+    email = (user.get("email") or "").strip().lower()
+    order = await db.shop_orders.find_one({"order_id": order_id, "email": email}, {"_id": 0})
+    if not order:
+        raise HTTPException(404, "Order not found")
+    pdf = build_invoice_pdf(order, await get_business(db))
+    filename = f"{order.get('invoice_number') or order_id}.pdf"
+    return Response(content=pdf, media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="{filename}"'})
 
 # ── API: Events (Enhanced with UA + Geo Enrichment) ─────────
 

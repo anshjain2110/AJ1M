@@ -5,6 +5,7 @@ import {
   Loader2, ChevronRight, ChevronLeft, ChevronDown, Star, Heart, Share2,
   ShieldCheck, Truck, RotateCcw, MapPin, Clock, BadgeCheck, Sparkles,
   ShoppingBag, Lock, Plus, Minus, Flame, Gem, Award, MessageCircle, Box,
+  Hand, PenLine,
 } from 'lucide-react';
 import MegaMenuHeader from '../components/store/MegaMenuHeader';
 import StoreFooter from '../components/store/StoreFooter';
@@ -183,6 +184,7 @@ export default function ProjectDetailPageV2() {
   const { slug } = useParams();
   const [project, setProject] = useState(null);
   const [sale, setSale] = useState(null);
+  const [info, setInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [showFullDesc, setShowFullDesc] = useState(false);
@@ -209,11 +211,13 @@ export default function ProjectDetailPageV2() {
     Promise.all([
       axios.get(`${BACKEND_URL}/api/projects/${slug}`).catch(() => null),
       axios.get(`${BACKEND_URL}/api/shop/sale`).catch(() => null),
-    ]).then(([pr, sr]) => {
+      axios.get(`${BACKEND_URL}/api/admin/settings/public`).catch(() => null),
+    ]).then(([pr, sr, ir]) => {
       if (!mounted) return;
       if (!pr || !pr.data) { setNotFound(true); setLoading(false); return; }
       setProject(pr.data);
       setSale((sr && sr.data && sr.data.sale) || null);
+      setInfo((ir && ir.data) || null);
       setLoading(false);
     });
     return () => { mounted = false; };
@@ -294,11 +298,23 @@ export default function ProjectDetailPageV2() {
   const story = project.customer_story;
   const estDelivery = fmtEstDelivery();
 
-  // Materials line built from selected variant + specs
-  const materialsList = [
-    metalLabel(tier, color),
-    specs.shape || 'Lab-grown diamond',
-    specs.certification ? `${specs.certification} certified` : 'IGI certified',
+  // Admin-editable product-page details (Admin → Settings → Product Page Details)
+  const shipsFrom = (info && info.ships_from) || 'Winter Park, Florida';
+  const leadTime = (info && info.lead_time) || '2–3 weeks';
+  const returnsPolicy = (info && info.returns_policy) || '30-day exchanges, hassle-free';
+  const warrantyText = (info && info.warranty_text) || 'Lifetime warranty on every piece';
+  const careText = (info && info.care_text) || 'Clean with warm soapy water and a soft brush. Avoid harsh chemicals and chlorine. We offer complimentary lifetime cleaning and inspection for every piece we make.';
+  const makerText = (info && info.maker_text) || 'The Local Jewel is an independent custom jewelry studio. Every piece is designed, rendered, and hand-set by us — no middlemen, no chain-store markups.';
+
+  // "About this piece" highlights — Etsy-inspired but derived from real product data
+  const aboutHighlights = [
+    { icon: Hand, label: 'Made by', value: 'The Local Jewel — hand-crafted to order' },
+    { icon: MapPin, label: 'Ships from', value: `${shipsFrom} · free insured delivery` },
+    { icon: Gem, label: 'Materials', value: [...tiers.map((t) => t.label), 'Lab-grown diamond'].join(', ') },
+    (specs.shape || hasCarat) && { icon: Sparkles, label: 'Gemstone', value: ['Lab-grown diamond', specs.shape, specs.color && `Color ${specs.color}`, specs.clarity].filter(Boolean).join(' · ') },
+    specs.setting_style && { icon: Award, label: 'Style', value: specs.setting_style },
+    { icon: BadgeCheck, label: 'Certification', value: `${specs.certification || 'IGI'} certified${specs.cert_number ? ` · #${specs.cert_number}` : ''}` },
+    { icon: PenLine, label: 'Personalization', value: 'Free engraving & ring sizing on request' },
   ].filter(Boolean);
 
   const buildLine = () => ({
@@ -512,19 +528,12 @@ export default function ProjectDetailPageV2() {
 
             {/* Tiny reassurance row */}
             <div className="grid grid-cols-2 gap-2 text-[12px]" style={{ color: '#3F4A45' }}>
-              <div className="inline-flex items-center gap-1.5"><Truck size={14} style={{ color: '#0F5E4C' }} /> Ships from Rochester, NY</div>
+              <div className="inline-flex items-center gap-1.5"><Truck size={14} style={{ color: '#0F5E4C' }} /> Ships from {shipsFrom}</div>
               <div className="inline-flex items-center gap-1.5"><RotateCcw size={14} style={{ color: '#0F5E4C' }} /> 30-day exchange</div>
               <div className="inline-flex items-center gap-1.5"><ShieldCheck size={14} style={{ color: '#0F5E4C' }} /> Lifetime warranty</div>
-              <div className="inline-flex items-center gap-1.5"><Clock size={14} style={{ color: '#0F5E4C' }} /> Made-to-order · 2–3 weeks</div>
+              <div className="inline-flex items-center gap-1.5"><Clock size={14} style={{ color: '#0F5E4C' }} /> Made-to-order · {leadTime}</div>
             </div>
           </div>
-        </section>
-
-        {/* DESCRIPTION TEASER ---------------------------------------- */}
-        <section className="px-5 lg:px-6 pt-6">
-          <p className="text-[15px] leading-[1.7] max-w-[640px]" style={{ color: '#3F4A45' }} data-testid="v2-subtitle">
-            {project.subtitle || project.description?.slice(0, 180)}
-          </p>
         </section>
 
         {/* REVIEWS --------------------------------------------------- */}
@@ -556,53 +565,70 @@ export default function ProjectDetailPageV2() {
           </div>
         </section>
 
-        {/* ITEM DETAILS --------------------------------------------- */}
-        <section className="px-5 lg:px-6 pt-12" data-testid="v2-item-details">
-          <h2 className="text-[24px] font-semibold mb-4" style={{ color: '#1A2520' }}>Item details</h2>
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div className="p-4 rounded-[14px] flex items-start gap-3" style={{ background: '#fff', border: '1px solid #E5E0D7' }}>
-              <Gem size={20} style={{ color: '#0F5E4C', marginTop: 2 }} />
-              <div>
-                <div className="text-[12px] uppercase tracking-wider mb-1" style={{ color: '#6B746F' }}>Materials</div>
-                <div className="text-[14px] font-medium" style={{ color: '#1A2520' }}>{materialsList.join(' · ')}</div>
-              </div>
+        {/* ABOUT THIS PIECE ------------------------------------------ */}
+        <section className="px-5 lg:px-6 pt-12" data-testid="v2-about-piece">
+          <h2 className="text-[24px] font-semibold mb-6" style={{ color: '#1A2520' }}>About this piece</h2>
+          <div className="lg:grid lg:grid-cols-[0.95fr_1.05fr] lg:gap-12 lg:items-start">
+            {/* Highlights card */}
+            <div className="rounded-[18px] p-5 sm:p-6 mb-7 lg:mb-0" style={{ background: '#fff', border: '1px solid #E5E0D7' }} data-testid="v2-highlights">
+              <div className="text-[11.5px] uppercase tracking-[0.14em] font-semibold mb-4" style={{ color: '#6B746F' }}>Highlights</div>
+              <ul className="space-y-4">
+                {aboutHighlights.map((h, i) => (
+                  <li key={i} className="flex items-start gap-3.5" data-testid={`v2-highlight-${i}`}>
+                    <span className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: '#E9F5EE' }}>
+                      <h.icon size={16} style={{ color: '#0F5E4C' }} />
+                    </span>
+                    <span className="pt-0.5 min-w-0">
+                      <span className="block text-[11px] uppercase tracking-wider" style={{ color: '#9AA39E' }}>{h.label}</span>
+                      <span className="block text-[14px] font-medium leading-snug" style={{ color: '#1A2520' }}>{h.value}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <div className="p-4 rounded-[14px] flex items-start gap-3" style={{ background: '#fff', border: '1px solid #E5E0D7' }}>
-              <Sparkles size={20} style={{ color: '#0F5E4C', marginTop: 2 }} />
-              <div>
-                <div className="text-[12px] uppercase tracking-wider mb-1" style={{ color: '#6B746F' }}>Personalizable</div>
-                <div className="text-[14px] font-medium" style={{ color: '#1A2520' }}>Yes — engraving & sizing on request</div>
-              </div>
+
+            {/* Description with elegant read-more */}
+            <div>
+              {project.subtitle && (
+                <p className="text-[19px] leading-[1.5] mb-4 italic" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", color: '#1A2520' }} data-testid="v2-subtitle">
+                  {project.subtitle}
+                </p>
+              )}
+              {project.description ? (
+                <div className="relative">
+                  <p className="text-[15px] leading-[1.85] whitespace-pre-line" data-testid="v2-about-description"
+                    style={{
+                      color: '#3F4A45',
+                      ...(showFullDesc ? {} : { display: '-webkit-box', WebkitLineClamp: 7, WebkitBoxOrient: 'vertical', overflow: 'hidden' }),
+                    }}>
+                    {project.description}
+                  </p>
+                  {!showFullDesc && project.description.length > 320 && (
+                    <div className="absolute bottom-0 inset-x-0 h-14 pointer-events-none" style={{ background: 'linear-gradient(to bottom, rgba(251,247,240,0), #FBF7F0)' }} />
+                  )}
+                  {project.description.length > 320 && (
+                    <button onClick={() => setShowFullDesc(!showFullDesc)} data-testid="v2-about-readmore"
+                      className="mt-3 inline-flex items-center gap-1.5 text-[13.5px] font-semibold transition-colors"
+                      style={{ color: '#0F5E4C' }}>
+                      {showFullDesc ? 'Show less' : 'Read the full story'}
+                      <ChevronDown size={15} className="transition-transform" style={{ transform: showFullDesc ? 'rotate(180deg)' : 'none' }} />
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <p className="text-[15px] leading-[1.8]" style={{ color: '#3F4A45' }}>
+                  A one-of-a-kind piece, hand-crafted to order by The Local Jewel. Have a question about it? Message us — we answer personally, usually within hours.
+                </p>
+              )}
             </div>
-            {specs.shape && (
-              <div className="p-4 rounded-[14px] flex items-start gap-3" style={{ background: '#fff', border: '1px solid #E5E0D7' }}>
-                <Award size={20} style={{ color: '#0F5E4C', marginTop: 2 }} />
-                <div>
-                  <div className="text-[12px] uppercase tracking-wider mb-1" style={{ color: '#6B746F' }}>Diamond shape</div>
-                  <div className="text-[14px] font-medium" style={{ color: '#1A2520' }}>{specs.shape}{specs.clarity ? ` · ${specs.clarity}` : ''}{specs.color ? ` · Color ${specs.color}` : ''}</div>
-                </div>
-              </div>
-            )}
-            {specs.cert_number && (
-              <div className="p-4 rounded-[14px] flex items-start gap-3" style={{ background: '#fff', border: '1px solid #E5E0D7' }}>
-                <BadgeCheck size={20} style={{ color: '#0F5E4C', marginTop: 2 }} />
-                <div>
-                  <div className="text-[12px] uppercase tracking-wider mb-1" style={{ color: '#6B746F' }}>Certificate</div>
-                  <div className="text-[14px] font-medium" style={{ color: '#1A2520' }}>{specs.certification || 'IGI'} #{specs.cert_number}</div>
-                </div>
-              </div>
-            )}
           </div>
         </section>
 
         {/* ACCORDIONS ----------------------------------------------- */}
         <section className="px-5 lg:px-6 pt-10" data-testid="v2-accordions">
           {/* Story behind */}
-          {(project.description || journey.length > 0) && (
+          {(journey.length > 0 || (story && story.quote)) && (
             <Accordion title="The story behind this piece" icon={<Sparkles size={17} />} defaultOpen={false} testid="v2-acc-story">
-              {project.description && (
-                <p className="mb-6 whitespace-pre-line">{project.description}</p>
-              )}
               {journey.length > 0 && (
                 <ol className="space-y-5 mt-2">
                   {journey.map((step, i) => (
@@ -628,22 +654,22 @@ export default function ProjectDetailPageV2() {
           {/* Shipping & policies */}
           <Accordion title="Shipping & policies" icon={<Truck size={17} />} defaultOpen={false} testid="v2-acc-shipping">
             <ul className="space-y-2.5">
-              <li className="flex items-center gap-2"><MapPin size={15} style={{ color: '#0F5E4C' }} /> Ships from <strong>Rochester, NY</strong> — worldwide insured delivery</li>
-              <li className="flex items-center gap-2"><Clock size={15} style={{ color: '#0F5E4C' }} /> Made-to-order, hand-crafted: <strong>2–3 weeks</strong></li>
+              <li className="flex items-center gap-2"><MapPin size={15} style={{ color: '#0F5E4C' }} /> Ships from <strong>{shipsFrom}</strong> — worldwide insured delivery</li>
+              <li className="flex items-center gap-2"><Clock size={15} style={{ color: '#0F5E4C' }} /> Made-to-order, hand-crafted: <strong>{leadTime}</strong></li>
               <li className="flex items-center gap-2"><Truck size={15} style={{ color: '#0F5E4C' }} /> Estimated delivery: <strong>{estDelivery}</strong></li>
-              <li className="flex items-center gap-2"><RotateCcw size={15} style={{ color: '#0F5E4C' }} /> 30-day exchanges, hassle-free</li>
-              <li className="flex items-center gap-2"><ShieldCheck size={15} style={{ color: '#0F5E4C' }} /> Lifetime warranty on every piece</li>
+              <li className="flex items-center gap-2"><RotateCcw size={15} style={{ color: '#0F5E4C' }} /> {returnsPolicy}</li>
+              <li className="flex items-center gap-2"><ShieldCheck size={15} style={{ color: '#0F5E4C' }} /> {warrantyText}</li>
             </ul>
           </Accordion>
 
           {/* Care */}
           <Accordion title="Care & cleaning" icon={<Sparkles size={17} />} defaultOpen={false} testid="v2-acc-care">
-            <p>Clean with warm soapy water and a soft brush. Avoid harsh chemicals, chlorine, and ultrasonic cleaners for diamonds with halos or pavé. We offer complimentary lifetime cleaning and inspection for every piece we make.</p>
+            <p>{careText}</p>
           </Accordion>
 
           {/* About the maker */}
           <Accordion title="About the maker" icon={<Gem size={17} />} defaultOpen={false} testid="v2-acc-maker">
-            <p>The Local Jewel is a Rochester-based custom jewelry studio specializing in lab-grown diamond engagement rings and wedding bands. Every piece is designed, rendered, and hand-set by us — no middlemen, no chain-store markups. We've delivered hundreds of custom rings nationwide with a 4.9★ average rating.</p>
+            <p>{makerText}</p>
           </Accordion>
         </section>
 

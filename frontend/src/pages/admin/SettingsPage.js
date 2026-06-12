@@ -44,6 +44,26 @@ export default function SettingsPage() {
           <Field label="WhatsApp Link" value={settings?.whatsapp_link || ''} onChange={v => updateField('whatsapp_link', v)} />
         </Section>
 
+        {/* Business & Invoice details */}
+        <Section title="Business & Invoice Details">
+          <p className="text-[12px] -mt-1 mb-2" style={{ color: 'var(--lj-muted)' }}>Shown in the header & footer of every PDF invoice.</p>
+          <Field label="Business Name" value={settings?.business_name || ''} onChange={v => updateField('business_name', v)} />
+          <Field label="Business Address" value={settings?.business_address || ''} onChange={v => updateField('business_address', v)} />
+          <Field label="Business Phone" value={settings?.business_phone || ''} onChange={v => updateField('business_phone', v)} />
+          <Field label="Business Email" value={settings?.business_email || ''} onChange={v => updateField('business_email', v)} />
+        </Section>
+
+        {/* Product page details */}
+        <Section title="Product Page Details">
+          <p className="text-[12px] -mt-1 mb-2" style={{ color: 'var(--lj-muted)' }}>Shown on every product page (highlights, shipping & policies, care, about the maker).</p>
+          <Field label="Ships From" value={settings?.ships_from || ''} onChange={v => updateField('ships_from', v)} placeholder="e.g. Winter Park, Florida" />
+          <Field label="Lead Time" value={settings?.lead_time || ''} onChange={v => updateField('lead_time', v)} placeholder="e.g. 2–3 weeks" />
+          <Field label="Returns Policy" value={settings?.returns_policy || ''} onChange={v => updateField('returns_policy', v)} placeholder="e.g. 30-day exchanges, hassle-free" />
+          <Field label="Warranty" value={settings?.warranty_text || ''} onChange={v => updateField('warranty_text', v)} placeholder="e.g. Lifetime warranty on every piece" />
+          <TextArea label="Care & Cleaning" value={settings?.care_text || ''} onChange={v => updateField('care_text', v)} />
+          <TextArea label="About the Maker" value={settings?.maker_text || ''} onChange={v => updateField('maker_text', v)} />
+        </Section>
+
         {/* Toggles */}
         <Section title="Visibility Toggles">
           <Toggle label="Live Chat Enabled" checked={settings?.live_chat_enabled} onChange={v => updateField('live_chat_enabled', v)} />
@@ -86,6 +106,15 @@ function Field({ label, value, onChange, placeholder }) {
     <div>
       <label className="text-[13px] block mb-1" style={{ color: 'var(--lj-muted)' }}>{label}</label>
       <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className="w-full min-h-[40px] px-3 rounded-[10px] text-[14px]" style={{ background: 'var(--lj-bg)', border: '1px solid var(--lj-border)', color: 'var(--lj-text)' }} />
+    </div>
+  );
+}
+
+function TextArea({ label, value, onChange, placeholder }) {
+  return (
+    <div>
+      <label className="text-[13px] block mb-1" style={{ color: 'var(--lj-muted)' }}>{label}</label>
+      <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={3} className="w-full px-3 py-2 rounded-[10px] text-[14px] resize-y" style={{ background: 'var(--lj-bg)', border: '1px solid var(--lj-border)', color: 'var(--lj-text)' }} />
     </div>
   );
 }
