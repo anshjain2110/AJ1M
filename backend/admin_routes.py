@@ -1348,6 +1348,7 @@ class ProjectPayload(BaseModel):
     price_prefix: Optional[str] = "Starting at"  # "Starting at", "From", or "" for none
     price_currency: Optional[str] = "USD"
     # Commerce — a project becomes buyable once it's in a collection and has a price matrix
+    product_type: Optional[str] = None              # engagement_ring | wedding_band | engagement_ring_set | pendant_studs | stand_alone | custom_project
     collections: List[str] = []                  # collection slugs
     price_matrix: Dict[str, Dict[str, float]] = {}  # {metal_tier: {carat: price}}
 
@@ -1382,6 +1383,16 @@ async def admin_create_project(req: ProjectPayload, admin=Depends(require_admin)
         raise HTTPException(400, "A project with this slug already exists")
     now = datetime.now(timezone.utc)
     doc = req.dict()
+    # Product type + matrix validation (admin UI always supplies a type)
+    from variant_options import PRODUCT_TYPE_MAP, normalize_price_matrix, DEFAULT_PRODUCT_TYPE
+    pt = doc.get("product_type") or DEFAULT_PRODUCT_TYPE
+    if pt not in PRODUCT_TYPE_MAP:
+        raise HTTPException(400, f"Invalid product_type '{pt}'")
+    clean_matrix, matrix_err = normalize_price_matrix(pt, doc.get("price_matrix") or {})
+    if matrix_err:
+        raise HTTPException(400, matrix_err)
+    doc["product_type"] = pt
+    doc["price_matrix"] = clean_matrix
     doc["project_id"] = f"proj_{uuid.uuid4().hex[:12]}"
     doc["created_at"] = now
     doc["updated_at"] = now
@@ -1400,6 +1411,16 @@ async def admin_update_project(project_id: str, req: ProjectPayload, admin=Depen
         if clash:
             raise HTTPException(400, "A project with this slug already exists")
     update = req.dict()
+    # Product type + matrix validation
+    from variant_options import PRODUCT_TYPE_MAP, normalize_price_matrix, DEFAULT_PRODUCT_TYPE
+    pt = update.get("product_type") or existing.get("product_type") or DEFAULT_PRODUCT_TYPE
+    if pt not in PRODUCT_TYPE_MAP:
+        raise HTTPException(400, f"Invalid product_type '{pt}'")
+    clean_matrix, matrix_err = normalize_price_matrix(pt, update.get("price_matrix") or {})
+    if matrix_err:
+        raise HTTPException(400, matrix_err)
+    update["product_type"] = pt
+    update["price_matrix"] = clean_matrix
     update["updated_at"] = datetime.now(timezone.utc)
     await db.projects.update_one({"project_id": project_id}, {"$set": update})
     doc = await db.projects.find_one({"project_id": project_id}, {"_id": 0})

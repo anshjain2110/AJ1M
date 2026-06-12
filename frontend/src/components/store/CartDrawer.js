@@ -70,7 +70,7 @@ export default function CartDrawer() {
                     <div className="flex-1 min-w-0">
                       <div className="text-[14px] font-medium leading-snug" style={{ color: 'var(--lj-text)' }}>{it.title}</div>
                       <div className="text-[12px] mt-0.5" style={{ color: 'var(--lj-muted)' }}>
-                        {[it.metal, it.carat && `${it.carat} ct`, it.size && `Size ${it.size}`].filter(Boolean).join(' · ')}
+                        {[it.metal, it.carat && it.carat !== '0' && `${it.carat} ct`, it.size && `Size ${it.size}`].filter(Boolean).join(' · ')}
                       </div>
                       <div className="flex items-center justify-between mt-2">
                         <div className="flex items-center" style={{ border: '1px solid var(--lj-border)' }}>

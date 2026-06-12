@@ -424,12 +424,13 @@ async def get_public_project_by_slug(slug: str):
         raise HTTPException(404, "Project not found")
     out = _project_strip_internal(doc)
     # Attach commerce buy-data so the project detail page can render the Buy box
-    from variant_options import project_from_price, is_buyable, normalize_sale
+    from variant_options import project_from_price, is_buyable, normalize_sale, DEFAULT_PRODUCT_TYPE
     sale_doc = await db.settings.find_one({"key": "global_sale"}, {"_id": 0})
     out["buyable"] = is_buyable(doc)
     out["from_price"] = project_from_price(doc)
     out["price_matrix"] = doc.get("price_matrix") or {}
     out["collections"] = doc.get("collections") or []
+    out["product_type"] = doc.get("product_type") or (DEFAULT_PRODUCT_TYPE if out["buyable"] else "custom_project")
     out["sale"] = normalize_sale(sale_doc)
     return out
 
@@ -782,6 +783,18 @@ async def projects_api_create(
     title = (data.get("title") or "").strip()
     if not title:
         raise HTTPException(400, "title is required in payload")
+
+    # ── Product type (required) + price-matrix validation ──
+    from variant_options import PRODUCT_TYPE_MAP, PRODUCT_TYPE_IDS, normalize_price_matrix
+    product_type = (data.get("product_type") or "").strip()
+    if not product_type:
+        raise HTTPException(400, "product_type is required. One of: " + ", ".join(PRODUCT_TYPE_IDS))
+    if product_type not in PRODUCT_TYPE_MAP:
+        raise HTTPException(400, f"Invalid product_type '{product_type}'. One of: " + ", ".join(PRODUCT_TYPE_IDS))
+    clean_matrix, matrix_err = normalize_price_matrix(product_type, data.get("price_matrix") or {})
+    if matrix_err:
+        raise HTTPException(400, matrix_err)
+
     slug = _slugify(data.get("slug") or title)
     if not slug:
         raise HTTPException(400, "slug could not be derived; provide a valid slug or title")
@@ -859,8 +872,9 @@ async def projects_api_create(
         "price_prefix": data.get("price_prefix", "Starting at"),
         "price_currency": data.get("price_currency", "USD"),
         # Commerce — buyable once in a collection with a price matrix
+        "product_type": product_type,
         "collections": data.get("collections") or [],
-        "price_matrix": data.get("price_matrix") or {},
+        "price_matrix": clean_matrix,
         "created_at": now,
         "updated_at": now,
     }
@@ -1005,11 +1019,27 @@ async def projects_api_update(
     update = {}
     for k in ["title", "subtitle", "description", "meta_title", "meta_description", "tags",
               "specs", "customer_story", "published", "featured", "position",
-              "price", "price_prefix", "price_currency", "collections", "price_matrix"]:
+              "price", "price_prefix", "price_currency", "collections"]:
         if k in data:
             update[k] = data[k]
     if "price" in update:
         update["price"] = _coerce_price(update["price"])
+
+    # ── Product type + price-matrix validation (matrix re-validated against the
+    #    effective type whenever either is provided) ──
+    from variant_options import PRODUCT_TYPE_MAP, PRODUCT_TYPE_IDS, normalize_price_matrix, DEFAULT_PRODUCT_TYPE
+    eff_type = existing.get("product_type") or DEFAULT_PRODUCT_TYPE
+    if "product_type" in data:
+        ptv = (data.get("product_type") or "").strip()
+        if ptv not in PRODUCT_TYPE_MAP:
+            raise HTTPException(400, f"Invalid product_type '{ptv}'. One of: " + ", ".join(PRODUCT_TYPE_IDS))
+        update["product_type"] = ptv
+        eff_type = ptv
+    if "price_matrix" in data:
+        clean_matrix, matrix_err = normalize_price_matrix(eff_type, data.get("price_matrix") or {})
+        if matrix_err:
+            raise HTTPException(400, matrix_err)
+        update["price_matrix"] = clean_matrix
 
     # meta_keywords → seo_phrases convenience
     if "seo_phrases" in data:

@@ -16,8 +16,9 @@ from pydantic import BaseModel, Field
 
 from admin_routes import db, serialize_doc, require_admin
 from variant_options import (
-    METAL_TIERS, CARAT_WEIGHTS, GOLD_COLORS,
+    METAL_TIERS, CARAT_WEIGHTS, GOLD_COLORS, PRODUCT_TYPES,
     variant_price, project_from_price, is_buyable, normalize_sale, apply_sale,
+    matrix_tiers, matrix_carats,
 )
 
 logger = logging.getLogger(__name__)
@@ -72,9 +73,10 @@ def _project_card(p: dict, sale: Optional[dict]) -> dict:
         {"url": video["url"], "media_type": "video"} if video
         else ({"url": alt_img["url"], "media_type": "image"} if alt_img else None)
     )
-    # Variant summary for cards (metal swatch dots + carat range)
-    tiers = [m["id"] for m in METAL_TIERS if any(variant_price(p, m["id"], c) > 0 for c in CARAT_WEIGHTS)]
-    carats = [c for c in CARAT_WEIGHTS if any(variant_price(p, t, c) > 0 for t in tiers)]
+    # Variant summary for cards (metal swatch dots + carat range), matrix-derived
+    # so any product type's carat set is reflected automatically.
+    tiers = matrix_tiers(p)
+    carats = matrix_carats(p)
     return {
         "slug": p.get("slug"),
         "title": p.get("title"),
@@ -558,7 +560,12 @@ async def public_get_sale():
 
 @router.get("/api/shop/variant-options")
 async def public_variant_options():
-    return {"metal_tiers": METAL_TIERS, "carat_weights": CARAT_WEIGHTS, "gold_colors": GOLD_COLORS}
+    return {
+        "metal_tiers": METAL_TIERS,
+        "carat_weights": CARAT_WEIGHTS,
+        "gold_colors": GOLD_COLORS,
+        "product_types": PRODUCT_TYPES,
+    }
 
 
 @router.get("/api/admin/sale")

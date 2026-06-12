@@ -27,7 +27,6 @@ import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
 import CutsPage from './pages/CutsPage';
 import ProjectsIndexPage from './pages/ProjectsIndexPage';
-import ProjectDetailPage from './pages/ProjectDetailPage';
 import ProjectDetailPageV2 from './pages/ProjectDetailPageV2';
 import ContactPage from './pages/ContactPage';
 import BlogIndexPage from './pages/BlogIndexPage';
@@ -66,7 +65,7 @@ function App() {
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/cuts" element={<CutsPage />} />
           <Route path="/projects" element={<ProjectsIndexPage />} />
-          <Route path="/projects/:slug" element={<ProjectDetailPage />} />
+          <Route path="/projects/:slug" element={<ProjectDetailPageV2 />} />
           <Route path="/projects/:slug/v2" element={<ProjectDetailPageV2 />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/blog" element={<BlogIndexPage />} />

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import { Plus, Trash2, Edit2, Loader2, Image, ArrowLeft, Upload, Star, X, Film, ArrowUp, ArrowDown, Eye, Maximize2, EyeOff } from 'lucide-react';
-import { METAL_TIERS, CARAT_WEIGHTS } from '../../utils/variantOptions';
+import { METAL_TIERS, PRODUCT_TYPES, caratsForType, typeHasCarat, typeIsBuyable, METAL_ONLY_KEY } from '../../utils/variantOptions';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -45,6 +45,7 @@ const EMPTY = {
   price_prefix: 'Starting at',
   price_currency: 'USD',
   // Commerce — buyable once in a collection with a price matrix
+  product_type: 'engagement_ring',
   collections: [],
   price_matrix: {},
 };
@@ -196,8 +197,9 @@ export default function ProjectsAdminPage() {
   });
   const fillAllMatrix = () => {
     if (bulkPrice === '') { setForm(f => ({ ...f, price_matrix: {} })); return; }
+    const cols = typeHasCarat(form.product_type) ? caratsForType(form.product_type) : [METAL_ONLY_KEY];
     const pm = {};
-    METAL_TIERS.forEach(m => { pm[m.id] = {}; CARAT_WEIGHTS.forEach(c => { pm[m.id][c] = bulkPrice; }); });
+    METAL_TIERS.forEach(m => { pm[m.id] = {}; cols.forEach(c => { pm[m.id][c] = bulkPrice; }); });
     setForm(f => ({ ...f, price_matrix: pm }));
   };
 
@@ -237,6 +239,7 @@ export default function ProjectsAdminPage() {
       gallery: p.gallery || [],
       journey: p.journey || [],
       tags: p.tags || [],
+      product_type: p.product_type || 'engagement_ring',
       collections: p.collections || [],
       price_matrix: p.price_matrix || {},
     });
@@ -261,6 +264,7 @@ export default function ProjectsAdminPage() {
         slug: toSlug(form.slug),
         position: Number(form.position) || 0,
         price: form.price === '' || form.price === null ? null : Number(form.price),
+        product_type: form.product_type || 'engagement_ring',
         collections: form.collections || [],
         price_matrix: cleanMatrix,
       };
@@ -388,9 +392,29 @@ export default function ProjectsAdminPage() {
         </Card>
 
         {/* Shop — Collections & Variation Pricing */}
-        <Card title="Shop — Collections & Variation Pricing">
-          <p className="text-[12px] mb-3" style={{ color: 'var(--lj-muted)' }}>
-            Add this piece to a collection to make it <strong>buyable</strong> with metal + carat options. Enter the exact price for each metal-tier × carat. Gold colour (White / Rose / Yellow) is a free style choice and doesn't change price. Leave a cell blank if that combination isn't offered.
+        <Card title="Shop — Type, Collections & Variation Pricing">
+          <Field label="Product type (decides the variations buyers pick)">
+            <select data-testid="admin-projects-product-type" value={form.product_type || 'engagement_ring'}
+              onChange={e => updateField('product_type', e.target.value)} className="input">
+              {PRODUCT_TYPES.map(pt => <option key={pt.id} value={pt.id}>{pt.label}</option>)}
+            </select>
+            <p className="text-[11.5px] mt-1.5" style={{ color: 'var(--lj-muted)' }}>
+              {!typeIsBuyable(form.product_type)
+                ? 'Custom projects are not buyable — no pricing table. The page shows the story, journey & a quote CTA.'
+                : (typeHasCarat(form.product_type)
+                  ? `Carat options: ${caratsForType(form.product_type).join(', ')} ct.`
+                  : 'Metal-only — one price per metal tier (no carat).')}
+            </p>
+          </Field>
+
+          {!typeIsBuyable(form.product_type) ? (
+            <div className="p-3 rounded-[10px] text-[12.5px]" style={{ background: 'var(--lj-bg)', border: '1px dashed var(--lj-border)', color: 'var(--lj-muted)' }} data-testid="admin-custom-no-pricing">
+              This is a <strong>Custom Project</strong>. It won't appear in the shop and has no pricing table — collections & price matrix are ignored.
+            </div>
+          ) : (
+          <>
+          <p className="text-[12px] mb-3 mt-1" style={{ color: 'var(--lj-muted)' }}>
+            Add this piece to a collection to make it <strong>buyable</strong>. Enter the exact price for each {typeHasCarat(form.product_type) ? 'metal-tier × carat' : 'metal tier'}. Gold colour (White / Rose / Yellow) is a free style choice and doesn't change price. Leave a cell blank if that combination isn't offered.
           </p>
           <Field label="Collections (pick at least one to make it buyable)">
             {allCollections.length === 0 ? (
@@ -424,41 +448,49 @@ export default function ProjectsAdminPage() {
             </button>
           </div>
 
-          {/* Price matrix */}
-          <div className="overflow-x-auto rounded-[10px]" style={{ border: '1px solid var(--lj-border)' }}>
-            <table className="w-full text-[13px]" data-testid="admin-price-matrix">
-              <thead>
-                <tr style={{ background: 'var(--lj-bg)' }}>
-                  <th className="text-left p-2.5 text-[11px] uppercase tracking-wide" style={{ color: 'var(--lj-muted)' }}>Metal \ Carat</th>
-                  {CARAT_WEIGHTS.map(c => <th key={c} className="p-2 text-center text-[11px] uppercase tracking-wide" style={{ color: 'var(--lj-muted)' }}>{c} ct</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {METAL_TIERS.map(m => (
-                  <tr key={m.id} style={{ borderTop: '1px solid var(--lj-border)' }}>
-                    <td className="p-2.5 font-medium whitespace-nowrap" style={{ color: 'var(--lj-text)' }}>{m.label}</td>
-                    {CARAT_WEIGHTS.map(c => {
-                      const cell = ((form.price_matrix || {})[m.id] || {})[c];
-                      return (
-                        <td key={c} className="p-1 text-center">
-                          <input type="number" min="0" step="50"
-                            value={cell === undefined || cell === null ? '' : cell}
-                            onChange={e => updateMatrixCell(m.id, c, e.target.value)}
-                            data-testid={`matrix-${m.id}-${c}`}
-                            placeholder="—"
-                            className="w-[76px] px-1.5 py-1.5 rounded-[7px] text-center text-[13px]"
-                            style={{ background: 'var(--lj-bg)', border: '1px solid var(--lj-border)', color: 'var(--lj-text)' }} />
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {/* Price matrix — columns depend on product type */}
+          {(() => {
+            const metalOnly = !typeHasCarat(form.product_type);
+            const cols = metalOnly ? [METAL_ONLY_KEY] : caratsForType(form.product_type);
+            return (
+              <div className="overflow-x-auto rounded-[10px]" style={{ border: '1px solid var(--lj-border)' }}>
+                <table className="w-full text-[13px]" data-testid="admin-price-matrix">
+                  <thead>
+                    <tr style={{ background: 'var(--lj-bg)' }}>
+                      <th className="text-left p-2.5 text-[11px] uppercase tracking-wide" style={{ color: 'var(--lj-muted)' }}>{metalOnly ? 'Metal' : 'Metal \\ Carat'}</th>
+                      {cols.map(c => <th key={c} className="p-2 text-center text-[11px] uppercase tracking-wide" style={{ color: 'var(--lj-muted)' }}>{metalOnly ? 'Price' : `${c} ct`}</th>)}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {METAL_TIERS.map(m => (
+                      <tr key={m.id} style={{ borderTop: '1px solid var(--lj-border)' }}>
+                        <td className="p-2.5 font-medium whitespace-nowrap" style={{ color: 'var(--lj-text)' }}>{m.label}</td>
+                        {cols.map(c => {
+                          const cell = ((form.price_matrix || {})[m.id] || {})[c];
+                          return (
+                            <td key={c} className="p-1 text-center">
+                              <input type="number" min="0" step="50"
+                                value={cell === undefined || cell === null ? '' : cell}
+                                onChange={e => updateMatrixCell(m.id, c, e.target.value)}
+                                data-testid={`matrix-${m.id}-${c}`}
+                                placeholder="—"
+                                className="w-[76px] px-1.5 py-1.5 rounded-[7px] text-center text-[13px]"
+                                style={{ background: 'var(--lj-bg)', border: '1px solid var(--lj-border)', color: 'var(--lj-text)' }} />
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })()}
           <p className="text-[11.5px] mt-2" style={{ color: 'var(--lj-muted)' }}>
             Tip: the lowest filled price shows as the "From" price on cards. A buyer can only check out combinations you've priced.
           </p>
+          </>
+          )}
         </Card>
 
         {/* Specs */}

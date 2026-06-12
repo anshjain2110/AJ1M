@@ -200,6 +200,12 @@ class TestProjectDetail:
 # ────────────────────────────────────────────────────────────
 class TestCheckout:
     def test_matrix_priced_checkout(self, api):
+        # Read the live matrix cell so the test is independent of seed pricing
+        pr = api.get(f"{BASE_URL}/api/projects/{BUYABLE_SLUG_A}")
+        assert pr.status_code == 200, pr.text
+        cell = ((pr.json().get("price_matrix") or {}).get("14k") or {}).get("2")
+        assert cell, f"expected a 14k/2ct price, got matrix={pr.json().get('price_matrix')}"
+        expected = round(float(cell) * 2, 2)
         payload = {
             "items": [{
                 "product_slug": BUYABLE_SLUG_A,
@@ -215,8 +221,7 @@ class TestCheckout:
         data = r.json()
         assert "url" in data and "session_id" in data
         assert "stripe.com" in data["url"]
-        # 2 * 1500 = 3000 (flat seeded matrix)
-        assert data["amount"] in (3000, 3000.0), data
+        assert data["amount"] in (expected, float(expected)), data
 
     def test_invalid_slug(self, api):
         r = api.post(f"{BASE_URL}/api/checkout/session", json={

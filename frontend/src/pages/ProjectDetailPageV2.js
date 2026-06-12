@@ -8,11 +8,12 @@ import {
 } from 'lucide-react';
 import MegaMenuHeader from '../components/store/MegaMenuHeader';
 import StoreFooter from '../components/store/StoreFooter';
+import CustomProjectView from '../components/store/CustomProjectView';
 import { useCart } from '../context/CartContext';
 import { useCountdown, fmtCountdown } from '../components/SaleAnnouncementBar';
 import {
   METAL_TIERS, availableTiers, availableCaratsForTier, variantPrice,
-  metalLabel, applySale, money, COLOR_SWATCH,
+  metalLabel, applySale, money, COLOR_SWATCH, typeHasCarat, METAL_ONLY_KEY,
 } from '../utils/variantOptions';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
@@ -221,23 +222,32 @@ export default function ProjectDetailPageV2() {
   // Initialize selectors when project loads
   useEffect(() => {
     if (!project) return;
-    const t = availableTiers(project.price_matrix || {})[0];
+    const pm = project.price_matrix || {};
+    const t = availableTiers(pm)[0];
     if (t) {
       setTier(t.id);
       setColor(t.colors?.length ? 'Yellow' : '');
-      const c = availableCaratsForTier(project.price_matrix || {}, t.id);
-      setCarat(c[0] || '');
+      if (typeHasCarat(project.product_type)) {
+        const c = availableCaratsForTier(pm, t.id);
+        setCarat(c[0] || '');
+      } else {
+        setCarat(METAL_ONLY_KEY);
+      }
     }
   }, [project]);
 
   // Re-validate when tier changes
   useEffect(() => {
-    if (!tier) return;
+    if (!tier || !project) return;
     const t = METAL_TIERS.find((m) => m.id === tier);
     setColor((c) => (t?.colors?.length ? (t.colors.includes(c) ? c : 'Yellow') : ''));
-    const cs = availableCaratsForTier(matrix, tier);
-    setCarat((c) => (cs.includes(c) ? c : (cs[0] || '')));
-  }, [tier, matrix]);
+    if (typeHasCarat(project.product_type)) {
+      const cs = availableCaratsForTier(matrix, tier);
+      setCarat((c) => (cs.includes(c) ? c : (cs[0] || '')));
+    } else {
+      setCarat(METAL_ONLY_KEY);
+    }
+  }, [tier, matrix, project]);
 
   if (loading) {
     return (
@@ -261,7 +271,13 @@ export default function ProjectDetailPageV2() {
     );
   }
 
+  // Custom (non-buyable) pieces render the story / lead-gen layout instead of the buy panel.
+  if (!project.buyable) {
+    return <CustomProjectView project={project} />;
+  }
+
   /* ---------- Derived values --------- */
+  const hasCarat = typeHasCarat(project.product_type);
   const base = variantPrice(matrix, tier, carat);
   const price = sale ? applySale(base, sale) : base;
   const available = base > 0;
@@ -424,6 +440,7 @@ export default function ProjectDetailPageV2() {
             </div>
 
             {/* Carat selector */}
+            {hasCarat && (
             <div data-testid="v2-carat-selector">
               <label className="text-[12px] uppercase tracking-[0.1em] font-semibold" style={{ color: '#1A2520' }}>
                 Center stone: <span className="font-normal" style={{ color: '#3F4A45' }}>{carat ? `${carat} ct` : '—'}</span>
@@ -443,6 +460,7 @@ export default function ProjectDetailPageV2() {
                 ))}
               </div>
             </div>
+            )}
 
             {/* Personalization toggle */}
             <div>
@@ -639,7 +657,7 @@ export default function ProjectDetailPageV2() {
         style={{ background: 'rgba(251,247,240,0.96)', backdropFilter: 'blur(12px)', borderTop: '1px solid #E5E0D7' }}
         data-testid="v2-sticky-cta">
         <div className="flex-1 min-w-0">
-          <div className="text-[11px] uppercase tracking-wider truncate" style={{ color: '#6B746F' }}>{metalLabel(tier, color)} · {carat} ct</div>
+          <div className="text-[11px] uppercase tracking-wider truncate" style={{ color: '#6B746F' }}>{metalLabel(tier, color)}{hasCarat ? ` · ${carat} ct` : ''}</div>
           <div className="text-[18px] font-semibold leading-tight" style={{ color: '#0F5E4C' }}>{money(price)}+</div>
         </div>
         <button onClick={buyNow} disabled={!available} data-testid="v2-sticky-buy"

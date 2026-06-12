@@ -47,6 +47,11 @@ Wrong/missing key → `401 Unauthorized`.
   "subtitle": "Custom designed for a proposal in Winter Park, FL",
   "description": "Short story / SEO copy that appears on the project page.",
 
+  // ─── PRODUCT TYPE (REQUIRED) — decides the variation table ───
+  // One of: engagement_ring | wedding_band | engagement_ring_set | pendant_studs | stand_alone | custom_project
+  // Missing/invalid → 400 "product_type is required...".
+  "product_type": "engagement_ring",
+
   "specs": {
     "carat": "4.41 ct",
     "shape": "Radiant",
@@ -89,11 +94,16 @@ Wrong/missing key → `401 Unauthorized`.
   "collections": ["engagement-rings"],
   // Exact price per metal-tier x carat. Gold colour (White/Rose/Yellow) is a free
   // choice and does NOT change price. Metal tiers: silver | 10k | 14k | 18k | platinum.
-  // Carats: "1" | "2" | "2.5" | "3" | "3.5" | "4". Omit a cell to mark it unavailable.
+  // The CARATS DEPEND ON product_type:
+  //   engagement_ring / engagement_ring_set : "1" | "1.5" | "2" | "2.5" | "3" | "4"
+  //   pendant_studs                         : "0.25" | "0.5" | "1" | "2" | "3" | "4" | "5" | "8" | "10"
+  //   wedding_band / stand_alone (METAL-ONLY): no carat — send {tier: price} OR {tier: {"0": price}}
+  //   custom_project                        : not buyable — price_matrix is ignored
+  // A carat key not allowed for the type → 400. Omit a cell to mark it unavailable.
   // The lowest filled price becomes the "From" price on cards.
   "price_matrix": {
     "silver":   {"1": 900,  "2": 1100, "3": 1400},
-    "14k":      {"1": 1500, "2": 1800, "2.5": 2100, "3": 2500, "3.5": 2900, "4": 3300},
+    "14k":      {"1": 1500, "1.5": 1700, "2": 1800, "2.5": 2100, "3": 2500, "4": 3300},
     "18k":      {"2": 2200, "3": 2900, "4": 3700},
     "platinum": {"3": 3400, "4": 4200}
   },
@@ -111,9 +121,12 @@ curl -X POST "https://thelocaljewel.com/api/projects/api/create" \
   -H "X-API-Key: $PROJECTS_API_KEY" \
   -F 'payload={
         "title":"5 Carat Oval Solitaire",
+        "product_type":"engagement_ring",
         "subtitle":"Custom statement piece",
         "specs":{"carat":"5.02 ct","shape":"Oval","metal":"Platinum","color":"D","clarity":"VVS2","certification":"IGI"},
         "tags":["engagement_ring","oval","solitaire","5ct","lab_grown","platinum"],
+        "collections":["engagement-rings"],
+        "price_matrix":{"14k":{"1":1500,"2":1800,"3":2500},"platinum":{"3":3400,"4":4200}},
         "featured": true
       }' \
   -F "hero=@/path/to/hero.jpg" \
