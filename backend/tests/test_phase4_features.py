@@ -15,7 +15,7 @@ import time
 import pytest
 import requests
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "").rstrip("/") or "https://jewel-lead-gen.preview.emergentagent.com"
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "").rstrip("/") or "https://local-jewel-v2.preview.emergentagent.com"
 ADMIN_EMAIL = "ansh@thelocaljewel.com"
 ADMIN_PASSWORD = "Rakesh@2709"
 SEED_PROJECT_SLUG = "4-41-carat-radiant-hidden-halo-engagement-ring"

@@ -24,7 +24,7 @@ files go to Cloudflare R2 and the project doc references the resulting URL.
 | Environment       | Base URL                                                |
 |-------------------|---------------------------------------------------------|
 | **Production**    | `https://thelocaljewel.com`                             |
-| Preview (testing) | `https://jewel-lead-gen.preview.emergentagent.com`     |
+| Preview (testing) | `https://local-jewel-v2.preview.emergentagent.com`     |
 
 > Test on **preview first**, then switch the base URL when ready.
 
