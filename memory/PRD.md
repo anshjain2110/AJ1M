@@ -173,3 +173,31 @@ See `/app/memory/test_credentials.md`
 
 **Backlog / next for commerce:** per-variant true pricing (admin to fill matrix), order confirmation email on paid + admin Shop Orders UI, sitemap to include `/collections/*`, variant-aware product cards, abandoned cart.
 
+
+---
+
+## Update 2026-06-12 — Product Types → per-type variation tables + V2 page is now the default PDP ✅ SHIPPED & TESTED (iteration_10 FE all-pass; backend test_unified_shop 16✓ + test_product_types 8✓)
+
+**User intent:** Retire the old buyable product page and use the Etsy-style **V2** layout for every priced product. Add a required **`product_type`** that decides the carat variations of the pricing table, and document it in the automation API.
+
+**Product types (`product_type`, required on every project):**
+| type | carats | buyable |
+|---|---|---|
+| `engagement_ring` | 1, 1.5, 2, 2.5, 3, 4 | yes |
+| `engagement_ring_set` | 1, 1.5, 2, 2.5, 3, 4 (center stone) | yes |
+| `pendant_studs` | 0.25, 0.5, 1, 2, 3, 4, 5, 8, 10 | yes |
+| `wedding_band` | **metal-only** (no carat) | yes |
+| `stand_alone` | **metal-only** (no carat) | yes |
+| `custom_project` | — | **no** (story/quote layout only) |
+
+**Delivered:**
+- **`/projects/:slug` now renders the V2 (Etsy) layout** for all buyable products; old `ProjectDetailPage.js` + `BuyBox.js` deleted. Non-buyable `custom_project` pieces render `components/store/CustomProjectView.js` (story/journey/specs + "Start a piece like this" quote CTA + inquiry chat). `/projects/:slug/v2` kept as an alias.
+- **`product_type` model + helpers** in `backend/variant_options.py` (`PRODUCT_TYPES`, `carats_for_type`, `type_has_carat`, `matrix_tiers/matrix_carats`, `normalize_price_matrix` strict for API, `sanitize_price_matrix` lenient for migrations, `METAL_ONLY_KEY="0"`). `is_buyable` now returns False for `custom_project`. Storefront helpers (`utils/variantOptions.js`) derive available tiers/carats **directly from the matrix keys** so any type's carat set renders automatically; metal-only types hide the carat selector and price under sentinel `"0"` (hidden in cart).
+- **Metal-only ergonomics:** API accepts a flat `{tier: price}` form → normalized to `{tier: {"0": price}}`. Checkout prices server-side via `price_matrix[tier]["0"]`.
+- **Validation (required + per-type):** `POST /api/projects/api/create` and `PUT /api/projects/api/{slug}` and the admin CRUD all require a valid `product_type` and reject carat keys not allowed for the type (400 with a clear message). Missing type → 400.
+- **Admin Projects editor:** new **Product type** dropdown swaps the matrix columns (engagement carats / pendant carats / single metal-only "Price" column); `custom_project` hides the pricing table entirely.
+- **Docs updated:** `PROJECTS_API.md` + `PRICING_API.md` document `product_type`, per-type carats, and the metal-only flat form.
+- **Migration:** `migrate_product_types.py` back-fills `product_type` (buyable→engagement_ring, else custom_project) and **leniently** drops now-invalid carat cells (e.g. legacy `3.5`) WITHOUT clearing whole matrices. Preview rings restored with graduated matrices (`restore_preview_matrices.py`, preview-only).
+
+**Notes:** V2 reviews remain statically mocked (prior explicit user choice). Engagement carat set changed from legacy `1,2,2.5,3,3.5,4` → `1,1.5,2,2.5,3,4` (3.5 removed, 1.5 added) per user.
+
