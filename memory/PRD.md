@@ -201,3 +201,22 @@ See `/app/memory/test_credentials.md`
 
 **Notes:** V2 reviews remain statically mocked (prior explicit user choice). Engagement carat set changed from legacy `1,2,2.5,3,3.5,4` → `1,1.5,2,2.5,3,4` (3.5 removed, 1.5 added) per user.
 
+
+---
+
+## Update 2026-06-12 — Auth overhaul + Account Portal + Invoices + "About this piece" ✅ SHIPPED & TESTED (iteration_11: 11/11 backend pytest, 100% frontend incl. full Stripe purchase)
+
+**User intent:** OTP delivery (Twilio/SendGrid) was failing → show the OTP on screen instead (no users yet, no risk). Add Google login (user approved Emergent-managed; Apple deferred — no Apple Developer account; Passkeys deferred). Build the full logged-in client experience (profile, orders), the post-payment page, and PDF invoice generation (business details editable in admin). Replace the thin product description with a modern Etsy-inspired "Item details" section.
+
+**Delivered:**
+- **On-screen OTP login** — `POST /api/auth/request-otp` now auto-creates an account for new identifiers and returns the 6-digit code in the response; `/login` displays it in a dashed green callout (`otp-display-code`). Email/SMS delivery still attempted best-effort. ⚠️ INTENTIONALLY exposes OTP in API response per owner's request — gate behind an env flag before real-customer scale.
+- **Google login (Emergent-managed)** — "Continue with Google" on `/login` → auth.emergentagent.com → `#session_id` handled by `AuthCallback.js` (synchronous hash check in `App.js` AppRoutes) → `POST /api/auth/google/session` (X-Session-ID) exchanges profile, upserts user by email, stores `user_sessions` + httpOnly cookie, returns our standard JWT. Playbook saved at `/app/auth_testing.md`. NOTE: consent screen shows Emergent's domain; swap to own Google OAuth creds for production branding later.
+- **Account portal redesign** (`DashboardPage.js`, storefront aesthetic w/ MegaMenuHeader + StoreFooter): tabs Overview · My Quotes · My Orders · Messages · Profile (`components/account/{AccountOverview,QuotesTab,OrdersTab,ProfileTab}.js`). Overview: stat cards + latest order + quick actions. Profile: name/email/phone/ring size/shipping address → `PUT /api/me/profile` (uniqueness checks). Orders: shop orders by email via `GET /api/me/shop-orders`, status chips (Being crafted/Shipped/Delivered), per-order authenticated invoice download. Deep-linkable `?tab=orders`. Google avatar shown when present.
+- **PDF invoices** (`invoices.py`, reportlab) — branded header (business name/address/phone/email from settings), PAID badge, items w/ variants, totals. Sequential numbering `INV-{year}-{seq}` via `db.counters` at order finalize. Endpoints: public `GET /api/checkout/invoice/{session_id}`, customer `GET /api/me/shop-orders/{id}/invoice`, admin `GET /api/admin/shop-orders/{id}/invoice`. Business details editable: Admin → Settings → "Business & Invoice Details" (defaults: The Local Jewel, 480 N Orlando Ave, Winter Park FL 32771, +1 (585) 710-8292, ansh@thelocaljewel.com).
+- **Post-payment page** (`CheckoutSuccessPage.js`) — animated verification ("Verifying payment…" rotator) → pop-in confirmation with invoice number, itemized summary (images/variants), total, Download invoice, Track in my account, "What happens next" 3-step timeline. `/api/checkout/status/{session_id}` now returns the full `order` object; checkout line items now store product `image`; cart passes logged-in user's email so orders link to the portal.
+- **"About this piece" PDP section** (replaces old Item details on `ProjectDetailPageV2.js`) — Highlights card (Made by, Ships from, Materials from matrix tiers, Gemstone from specs, Style, Certification, Personalization) + serif subtitle pull-quote + description with 7-line clamp, gradient fade and "Read the full story" expander. Shipping/Care/Maker accordions + reassurance row now driven by admin-editable settings (Admin → Settings → "Product Page Details": ships_from, lead_time, returns_policy, warranty_text, care_text, maker_text — read-time defaults via `SETTINGS_EXTRA_DEFAULTS`, exposed on `GET /api/admin/settings/public`).
+
+**Tests:** `backend/tests/test_auth_orders_invoices.py` (7) + `test_session11_extras.py` (4, by testing agent) + existing suites all green. Full E2E purchase verified (test card → INV-2026-0001 → portal).
+
+**Deferred (per user):** Apple login (needs Apple Developer account $99/yr), Passkeys.
+
