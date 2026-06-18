@@ -5,11 +5,12 @@ import {
   Loader2, ChevronRight, ChevronLeft, ChevronDown, Star, Heart, Share2,
   ShieldCheck, Truck, RotateCcw, MapPin, Clock, BadgeCheck, Sparkles,
   ShoppingBag, Lock, Plus, Minus, Flame, Gem, Award, MessageCircle, Box,
-  Hand, PenLine,
+  Hand, PenLine, Zap,
 } from 'lucide-react';
 import MegaMenuHeader from '../components/store/MegaMenuHeader';
 import StoreFooter from '../components/store/StoreFooter';
 import CustomProjectView from '../components/store/CustomProjectView';
+import ProductCard from '../components/store/ProductCard';
 import { useCart } from '../context/CartContext';
 import { useCountdown, fmtCountdown } from '../components/SaleAnnouncementBar';
 import {
@@ -67,11 +68,21 @@ const seededFrom = (slug = '') => {
 };
 
 /* ------------------------------------------------------------------ */
-/* Estimated delivery: today + 14–21 days (made-to-order window)       */
+/* Estimated delivery: today + 5 business days (skip weekends)         */
 /* ------------------------------------------------------------------ */
+const addBusinessDays = (start, days) => {
+  const d = new Date(start);
+  let added = 0;
+  while (added < days) {
+    d.setDate(d.getDate() + 1);
+    const dow = d.getDay();
+    if (dow !== 0 && dow !== 6) added += 1;
+  }
+  return d;
+};
 const fmtEstDelivery = () => {
-  const d1 = new Date(Date.now() + 14 * 86400000);
-  const d2 = new Date(Date.now() + 21 * 86400000);
+  const d1 = addBusinessDays(new Date(), 2);
+  const d2 = addBusinessDays(new Date(), 5);
   const opts = { month: 'short', day: 'numeric' };
   return `${d1.toLocaleDateString('en-US', opts)} – ${d2.toLocaleDateString('en-US', opts)}`;
 };
@@ -363,6 +374,11 @@ export default function ProjectDetailPageV2() {
           <div className="px-5 lg:px-0 pt-5 lg:pt-2 pb-8 space-y-5">
             {/* Urgency badge row */}
             <div className="flex flex-wrap items-center gap-2" data-testid="v2-urgency-row">
+              <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] font-bold uppercase tracking-[0.08em]"
+                style={{ background: 'linear-gradient(135deg, #0F5E4C 0%, #16876B 100%)', color: '#fff', boxShadow: '0 4px 12px rgba(15,94,76,0.25)' }}
+                data-testid="v2-fast-badge">
+                <Zap size={13} fill="#fff" /> Fast · Ships in {leadTime}
+              </span>
               {sale && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-semibold" style={{ background: '#E9F5EE', color: '#0F5E4C' }} data-testid="v2-sale-badge">
                   <Flame size={13} /> Sale ends in {left ? fmtCountdown(left) : '24 hours'}
@@ -672,6 +688,26 @@ export default function ProjectDetailPageV2() {
             <p>{makerText}</p>
           </Accordion>
         </section>
+
+        {/* RELATED — You may also love --------------------------------- */}
+        {project.related && project.related.length > 0 && (
+          <section className="px-5 lg:px-6 pt-16 pb-6" data-testid="v2-related">
+            <div className="flex items-end justify-between mb-5 flex-wrap gap-3">
+              <div>
+                <h2 className="text-[28px] sm:text-[32px] leading-tight" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", color: '#1A2520' }}>You may also love</h2>
+                <p className="text-[13.5px] mt-1" style={{ color: '#6B746F' }}>Hand-picked pieces in the same spirit.</p>
+              </div>
+              <Link to="/collections" className="hidden sm:inline-flex items-center gap-1 text-[13.5px] font-semibold" style={{ color: '#0F5E4C' }}>
+                Browse collections <ChevronRight size={14} />
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+              {project.related.slice(0, 4).map((p, i) => (
+                <ProductCard key={p.slug} product={p} index={i} />
+              ))}
+            </div>
+          </section>
+        )}
 
         <div className="h-16" />
       </main>

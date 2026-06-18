@@ -220,3 +220,23 @@ See `/app/memory/test_credentials.md`
 
 **Deferred (per user):** Apple login (needs Apple Developer account $99/yr), Passkeys.
 
+
+---
+
+## Update 2026-06-18 — Fast Shipping badge + Related products + Own-Google-OAuth (white-labeled) ✅ SHIPPED
+
+**User intent:** (1) Make production time 2–5 business days with an attractive "Fast" tag, (2) Show related products on PDP, (3) **Remove ALL Emergent branding from the auth flow** — Google consent screen should not mention "Emergent".
+
+**Delivered:**
+- **Fast shipping badge** on PDP (`v2-fast-badge`): green gradient pill "⚡ Fast · Ships in 2–5 business days" above the price; estimated-delivery now uses business-day math (skips weekends). `lead_time` default updated to "2–5 business days" everywhere it surfaces (Shipping accordion, reassurance row, sticky mobile CTA). Existing prod DB doc updated.
+- **Related products** ("You may also love") at the bottom of `/projects/:slug` — backend `GET /api/projects/{slug}` now returns a `related` array (`_project_card` shape, scoped to same collections, falls back to any buyable piece, max 8 / displays 4). Uses existing `ProductCard` for visual consistency.
+- **Removed Emergent-managed Google login entirely.** Deleted `AuthCallback.js`, `/api/auth/google/session` endpoint, EMERGENT_SESSION_DATA_URL constant, and the `#session_id` URL-hash routing in `App.js`. Replaced with the official Google Identity Services flow using **the merchant's own Google Cloud OAuth credentials**:
+  - Backend: `pip install google-auth`, new endpoints `GET /api/auth/google/config` (returns `{enabled, client_id}`) and `POST /api/auth/google` (verifies the ID token via `google.oauth2.id_token.verify_oauth2_token`, checks issuer + email_verified, upserts user, returns our JWT).
+  - Frontend: `yarn add @react-oauth/google`. `LoginPage.js` fetches `/api/auth/google/config` on mount; **only renders the Google button when `GOOGLE_CLIENT_ID` env var is set** — and when it does, the consent screen is fully branded with the merchant's own OAuth app. Until the merchant provides credentials, the login page shows only the OTP flow (no Emergent branding visible).
+  - **Env var added:** `GOOGLE_CLIENT_ID` in `/app/backend/.env` (empty until user fills it in).
+  - **What the merchant needs to do once:** Google Cloud Console → APIs & Services → Credentials → "Create OAuth client ID" (Web application) → add Authorized JavaScript origins (preview + production + custom domain) → copy Client ID into `GOOGLE_CLIENT_ID` env var → redeploy. Consent-screen branding (logo, app name) is fully controlled by the merchant.
+
+**Tests:** `tests/test_auth_orders_invoices.py` updated for the new endpoints (google/config disabled by default, google endpoint returns 503 without client_id). 19/19 in own + product-type tests pass. 3 pre-existing failures in `test_unified_shop.py` are due to one preview project (`4-41-carat-radiant-hidden-halo`) having an empty `price_matrix`; not caused by this session.
+
+**Pending from user (P0 to flip Google login on):** GOOGLE_CLIENT_ID from Google Cloud Console.
+

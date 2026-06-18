@@ -434,6 +434,35 @@ async def get_public_project_by_slug(slug: str):
     out["collections"] = doc.get("collections") or []
     out["product_type"] = doc.get("product_type") or (DEFAULT_PRODUCT_TYPE if out["buyable"] else "custom_project")
     out["sale"] = normalize_sale(sale_doc)
+
+    # "You may also love" — related buyable projects, scoped to same collections,
+    # falls back to any buyable project so the section is never empty.
+    from commerce_routes import _project_card
+    sale = normalize_sale(sale_doc)
+    related = []
+    seen = {slug}
+    cols = out["collections"]
+    if cols:
+        async for r in db.projects.find(
+            {"published": True, "slug": {"$ne": slug}, "collections": {"$in": cols}},
+            {"_id": 0},
+        ).limit(12):
+            if is_buyable(r) and r["slug"] not in seen:
+                related.append(_project_card(r, sale))
+                seen.add(r["slug"])
+            if len(related) >= 8:
+                break
+    if len(related) < 4:
+        async for r in db.projects.find(
+            {"published": True, "slug": {"$nin": list(seen)}},
+            {"_id": 0},
+        ).limit(20):
+            if is_buyable(r) and r["slug"] not in seen:
+                related.append(_project_card(r, sale))
+                seen.add(r["slug"])
+            if len(related) >= 8:
+                break
+    out["related"] = related
     return out
 
 
@@ -1774,64 +1803,70 @@ async def verify_otp(req: OTPVerify):
     return {"status": "verified", "token": token, "user": serialize_doc(user)}
 
 
-# ── API: Google login (Emergent-managed) ─────────────────────
+# ── API: Google login (own Google OAuth credentials) ─────────
 # REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-EMERGENT_SESSION_DATA_URL = "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data"
 
-@app.post("/api/auth/google/session")
-async def google_session(request: Request, response: Response):
-    session_id = request.headers.get("X-Session-ID", "")
-    if not session_id:
-        raise HTTPException(status_code=400, detail="Missing X-Session-ID header")
-    async with httpx.AsyncClient(timeout=15) as hc:
-        r = await hc.get(EMERGENT_SESSION_DATA_URL, headers={"X-Session-ID": session_id})
-    if r.status_code != 200:
-        raise HTTPException(status_code=401, detail="Invalid or expired Google session")
-    data = r.json()
-    email = (data.get("email") or "").strip().lower()
-    if not email:
-        raise HTTPException(status_code=401, detail="Google account has no email")
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
 
-    name = (data.get("name") or "").strip()
-    name_parts = name.split(" ") if name else []
+class GoogleCredential(BaseModel):
+    credential: str  # ID token JWT issued by Google Identity Services
+
+@app.get("/api/auth/google/config")
+async def google_config():
+    """Frontend reads this on mount to know whether to render the Google button
+    and which client_id to initialize Google Identity Services with."""
+    return {"enabled": bool(GOOGLE_CLIENT_ID), "client_id": GOOGLE_CLIENT_ID}
+
+
+@app.post("/api/auth/google")
+async def google_login(req: GoogleCredential):
+    """Verify a Google ID token client-side via google-auth, upsert the user,
+    issue our standard JWT (same shape as OTP login)."""
+    if not GOOGLE_CLIENT_ID:
+        raise HTTPException(status_code=503, detail="Google login is not configured")
+    from google.oauth2 import id_token as google_id_token
+    from google.auth.transport import requests as google_requests
+    try:
+        info = google_id_token.verify_oauth2_token(
+            req.credential, google_requests.Request(), GOOGLE_CLIENT_ID, clock_skew_in_seconds=10,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=f"Invalid Google credential: {e}")
+
+    if info.get("iss") not in ("accounts.google.com", "https://accounts.google.com"):
+        raise HTTPException(status_code=401, detail="Untrusted issuer")
+    email = (info.get("email") or "").strip().lower()
+    if not email or not info.get("email_verified", False):
+        raise HTTPException(status_code=401, detail="Google account email not verified")
+
+    name = (info.get("name") or "").strip()
+    parts = name.split(" ") if name else []
     user = await db.users.find_one({"email": email})
     if user:
         update = {"auth_provider": "google", "last_login_at": datetime.now(timezone.utc)}
-        if data.get("picture"):
-            update["picture"] = data["picture"]
-        if name_parts and not user.get("first_name"):
-            update["first_name"] = name_parts[0]
-            if len(name_parts) > 1:
-                update["last_name"] = " ".join(name_parts[1:])
+        if info.get("picture"):
+            update["picture"] = info["picture"]
+        if parts and not user.get("first_name"):
+            update["first_name"] = parts[0]
+            if len(parts) > 1:
+                update["last_name"] = " ".join(parts[1:])
         await db.users.update_one({"user_id": user["user_id"]}, {"$set": update})
         user = await db.users.find_one({"user_id": user["user_id"]}, {"_id": 0})
     else:
         user = {
             "user_id": f"user_{uuid.uuid4().hex[:12]}",
             "email": email,
-            "first_name": name_parts[0] if name_parts else "",
-            "last_name": " ".join(name_parts[1:]) if len(name_parts) > 1 else "",
-            "picture": data.get("picture", ""),
+            "first_name": parts[0] if parts else "",
+            "last_name": " ".join(parts[1:]) if len(parts) > 1 else "",
+            "picture": info.get("picture", ""),
             "auth_provider": "google",
             "created_at": datetime.now(timezone.utc),
         }
         await db.users.insert_one(user)
         user = {k: v for k, v in user.items() if k != "_id"}
-
-    session_token = data.get("session_token", "")
-    if session_token:
-        await db.user_sessions.insert_one({
-            "user_id": user["user_id"],
-            "session_token": session_token,
-            "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
-            "created_at": datetime.now(timezone.utc),
-        })
-        response.set_cookie(
-            "session_token", session_token,
-            max_age=7 * 24 * 3600, httponly=True, secure=True, samesite="none", path="/",
-        )
     token = create_jwt(user["user_id"], user.get("email"))
     return {"status": "ok", "token": token, "user": serialize_doc(user)}
+
 
 # ── API: Dashboard ───────────────────────────────────────────
 

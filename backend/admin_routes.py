@@ -1147,7 +1147,7 @@ SETTINGS_EXTRA_DEFAULTS = {
     "business_phone": "+1 (585) 710-8292",
     "business_email": "ansh@thelocaljewel.com",
     "ships_from": "Winter Park, Florida",
-    "lead_time": "2–3 weeks",
+    "lead_time": "2–5 business days",
     "returns_policy": "30-day exchanges, hassle-free",
     "warranty_text": "Lifetime warranty on every piece",
     "care_text": "Clean with warm soapy water and a soft brush. Avoid harsh chemicals, chlorine, and ultrasonic cleaners for diamonds with halos or pavé. We offer complimentary lifetime cleaning and inspection for every piece we make.",

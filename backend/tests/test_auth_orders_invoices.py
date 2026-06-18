@@ -43,14 +43,15 @@ def test_otp_creates_account_for_new_user(auth):
     assert auth["user"]["user_id"].startswith("user_")
 
 
-def test_google_session_requires_header(client):
-    r = client.post("/api/auth/google/session")
-    assert r.status_code == 400
+def test_google_endpoint_disabled_without_client_id(client):
+    r = client.post("/api/auth/google", json={"credential": "x"})
+    assert r.status_code == 503
 
 
-def test_google_session_rejects_bad_session(client):
-    r = client.post("/api/auth/google/session", headers={"X-Session-ID": "bogus-session"})
-    assert r.status_code == 401
+def test_google_config_disabled_by_default(client):
+    r = client.get("/api/auth/google/config")
+    assert r.status_code == 200
+    assert r.json()["enabled"] is False
 
 
 def test_me_endpoint(client, auth):
