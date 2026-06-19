@@ -2372,16 +2372,31 @@ async def _build_sitemap_xml(base: str) -> str:
     parts.append('</urlset>')
     return "\n".join(parts)
 
+async def _build_sitemap_index_xml(base: str) -> str:
+    """Tiny sitemap-INDEX file. In production the backend's filesystem isn't
+    what the frontend serves, so writing a 'live' static sitemap doesn't help —
+    we instead make /sitemap.xml a stable index that redirects crawlers to the
+    backend's always-live /api/sitemap.xml."""
+    now_iso = datetime.now(timezone.utc).date().isoformat()
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f'<sitemap><loc>{base}/api/sitemap.xml</loc><lastmod>{now_iso}</lastmod></sitemap>\n'
+        '</sitemapindex>\n'
+    )
+
+
 async def regenerate_static_sitemap():
-    """Write the full sitemap to /app/frontend/public/sitemap.xml so the root-domain
-    /sitemap.xml is served as proper XML by the static host (no SPA fallback risk)."""
+    """Write a sitemap-INDEX (not the full sitemap) to /app/frontend/public so
+    the root-domain /sitemap.xml always points crawlers at the live
+    /api/sitemap.xml, regardless of how stale the build artifact is."""
     try:
-        xml = await _build_sitemap_xml(SITE_BASE_URL)
+        xml = await _build_sitemap_index_xml(SITE_BASE_URL)
         async with aiofiles.open(SITEMAP_STATIC_PATH, "w") as f:
             await f.write(xml)
-        logger.info(f"Regenerated static sitemap with {xml.count('<loc>')} URLs")
+        logger.info("Regenerated static sitemap INDEX pointing to /api/sitemap.xml")
     except Exception as e:
-        logger.error(f"Failed to write static sitemap: {e}")
+        logger.error(f"Failed to write static sitemap index: {e}")
 
 @app.get("/sitemap.xml", include_in_schema=False)
 @app.get("/api/sitemap.xml", include_in_schema=False)

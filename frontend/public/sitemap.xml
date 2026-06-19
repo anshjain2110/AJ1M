@@ -1,16 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-<url><loc>https://www.thelocaljewel.com/</loc><lastmod>2026-06-19</lastmod><changefreq>weekly</changefreq><priority>1.00</priority></url>
-<url><loc>https://www.thelocaljewel.com/collections</loc><lastmod>2026-06-19</lastmod><changefreq>weekly</changefreq><priority>0.95</priority></url>
-<url><loc>https://www.thelocaljewel.com/projects</loc><lastmod>2026-06-19</lastmod><changefreq>weekly</changefreq><priority>0.90</priority></url>
-<url><loc>https://www.thelocaljewel.com/blog</loc><lastmod>2026-06-19</lastmod><changefreq>weekly</changefreq><priority>0.85</priority></url>
-<url><loc>https://www.thelocaljewel.com/cuts</loc><lastmod>2026-06-19</lastmod><changefreq>monthly</changefreq><priority>0.60</priority></url>
-<url><loc>https://www.thelocaljewel.com/contact</loc><lastmod>2026-06-19</lastmod><changefreq>monthly</changefreq><priority>0.50</priority></url>
-<url><loc>https://www.thelocaljewel.com/privacy</loc><lastmod>2026-06-19</lastmod><changefreq>yearly</changefreq><priority>0.30</priority></url>
-<url><loc>https://www.thelocaljewel.com/terms</loc><lastmod>2026-06-19</lastmod><changefreq>yearly</changefreq><priority>0.30</priority></url>
-<url><loc>https://www.thelocaljewel.com/collections/engagement-rings</loc><lastmod>2026-06-10</lastmod><changefreq>weekly</changefreq><priority>0.85</priority></url>
-<url><loc>https://www.thelocaljewel.com/projects/4-41-carat-radiant-hidden-halo-engagement-ring</loc><lastmod>2026-06-18</lastmod><changefreq>monthly</changefreq><priority>0.80</priority></url>
-<url><loc>https://www.thelocaljewel.com/projects/3-40-carat-oval-side-stone-engagement-ring</loc><lastmod>2026-06-18</lastmod><changefreq>monthly</changefreq><priority>0.80</priority></url>
-<url><loc>https://www.thelocaljewel.com/projects/5-carat-oval-solitaire-engagement-ring</loc><lastmod>2026-06-10</lastmod><changefreq>monthly</changefreq><priority>0.80</priority></url>
-<url><loc>https://www.thelocaljewel.com/blog/how-to-pick-a-lab-grown-diamond</loc><lastmod>2026-05-25</lastmod><changefreq>monthly</changefreq><priority>0.70</priority></url>
-</urlset>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<sitemap><loc>https://www.thelocaljewel.com/api/sitemap.xml</loc><lastmod>2026-06-19</lastmod></sitemap>
+</sitemapindex>
