@@ -2300,11 +2300,14 @@ def _ensure_indexnow_key() -> str:
 async def _build_sitemap_xml(base: str) -> str:
     now_iso = datetime.now(timezone.utc).date().isoformat()
     static_routes = [
-        ("/",         "1.00", "weekly"),
-        ("/projects", "0.90", "weekly"),
-        ("/blog",     "0.85", "weekly"),
-        ("/contact",  "0.50", "monthly"),
-        ("/login",    "0.30", "monthly"),
+        ("/",            "1.00", "weekly"),
+        ("/collections", "0.95", "weekly"),
+        ("/projects",    "0.90", "weekly"),
+        ("/blog",        "0.85", "weekly"),
+        ("/cuts",        "0.60", "monthly"),
+        ("/contact",     "0.50", "monthly"),
+        ("/privacy",     "0.30", "yearly"),
+        ("/terms",       "0.30", "yearly"),
     ]
     parts = ['<?xml version="1.0" encoding="UTF-8"?>',
              '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
@@ -2313,6 +2316,25 @@ async def _build_sitemap_xml(base: str) -> str:
             f"<url><loc>{base}{path}</loc><lastmod>{now_iso}</lastmod>"
             f"<changefreq>{changefreq}</changefreq><priority>{priority}</priority></url>"
         )
+    # ── Published collections (commerce + content category pages) ──
+    try:
+        ccursor = db.collections.find(
+            {"published": {"$ne": False}},
+            {"_id": 0, "slug": 1, "updated_at": 1, "created_at": 1},
+        )
+        async for col in ccursor:
+            slug = col.get("slug")
+            if not slug:
+                continue
+            last = col.get("updated_at") or col.get("created_at")
+            lastmod = last.date().isoformat() if hasattr(last, "date") else now_iso
+            parts.append(
+                f"<url><loc>{base}/collections/{slug}</loc><lastmod>{lastmod}</lastmod>"
+                f"<changefreq>weekly</changefreq><priority>0.85</priority></url>"
+            )
+    except Exception as e:
+        logger.error(f"sitemap collections fetch failed: {e}")
+    # ── Published projects (products) ──
     try:
         cursor = db.projects.find(
             {"published": {"$ne": False}},

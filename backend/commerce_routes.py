@@ -15,6 +15,16 @@ from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel, Field
 
 from admin_routes import db, serialize_doc, require_admin
+
+
+async def _seo_refresh_safe(*paths: str):
+    """Wraps admin_routes._seo_refresh — never raises (sitemap + IndexNow ping)."""
+    try:
+        from admin_routes import _seo_refresh
+        await _seo_refresh(*paths)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).debug(f"seo refresh failed: {e}")
 from variant_options import (
     METAL_TIERS, CARAT_WEIGHTS, GOLD_COLORS, PRODUCT_TYPES,
     variant_price, project_from_price, is_buyable, normalize_sale, apply_sale,
@@ -502,6 +512,7 @@ async def admin_create_collection(req: CollectionPayload, admin=Depends(require_
     doc["created_at"] = _now()
     doc["updated_at"] = _now()
     await db.collections.insert_one(doc)
+    await _seo_refresh_safe(f"/collections/{req.slug}", "/collections")
     return serialize_doc({k: v for k, v in doc.items() if k != "_id"})
 
 
@@ -526,6 +537,7 @@ async def admin_update_collection(collection_id: str, req: CollectionPayload, ad
         )
         await db.collections.update_many({"parent_slug": old_slug}, {"$set": {"parent_slug": req.slug}})
     doc = await db.collections.find_one({"collection_id": collection_id}, {"_id": 0})
+    await _seo_refresh_safe(f"/collections/{req.slug}", "/collections")
     return serialize_doc(doc)
 
 
@@ -538,6 +550,7 @@ async def admin_delete_collection(collection_id: str, admin=Depends(require_admi
     await db.collections.delete_one({"collection_id": collection_id})
     if slug:
         await db.products.update_many({"collections": slug}, {"$pull": {"collections": slug}})
+        await _seo_refresh_safe()
         await db.collections.update_many({"parent_slug": slug}, {"$set": {"parent_slug": ""}})
     return {"status": "deleted"}
 
