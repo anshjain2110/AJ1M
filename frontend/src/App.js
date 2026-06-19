@@ -4,6 +4,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { WizardProvider } from './context/WizardContext';
 import { AdminProvider } from './context/AdminContext';
 import { CartProvider } from './context/CartContext';
+import SiteSchema from './components/SiteSchema';
 import CollectionsIndexPage from './pages/store/CollectionsIndexPage';
 import CollectionDetailPage from './pages/store/CollectionDetailPage';
 import CartPage from './pages/store/CartPage';
@@ -47,6 +48,7 @@ function App() {
     <HelmetProvider>
       <Router>
         <CartProvider>
+        <SiteSchema />
         <Routes>
           {/* Customer-facing routes */}
           <Route path="/" element={

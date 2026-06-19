@@ -57,11 +57,26 @@ export default function SettingsPage() {
         <Section title="Product Page Details">
           <p className="text-[12px] -mt-1 mb-2" style={{ color: 'var(--lj-muted)' }}>Shown on every product page (highlights, shipping & policies, care, about the maker).</p>
           <Field label="Ships From" value={settings?.ships_from || ''} onChange={v => updateField('ships_from', v)} placeholder="e.g. Winter Park, Florida" />
-          <Field label="Lead Time" value={settings?.lead_time || ''} onChange={v => updateField('lead_time', v)} placeholder="e.g. 2–3 weeks" />
+          <Field label="Lead Time" value={settings?.lead_time || ''} onChange={v => updateField('lead_time', v)} placeholder="e.g. 2–5 business days" />
           <Field label="Returns Policy" value={settings?.returns_policy || ''} onChange={v => updateField('returns_policy', v)} placeholder="e.g. 30-day exchanges, hassle-free" />
           <Field label="Warranty" value={settings?.warranty_text || ''} onChange={v => updateField('warranty_text', v)} placeholder="e.g. Lifetime warranty on every piece" />
           <TextArea label="Care & Cleaning" value={settings?.care_text || ''} onChange={v => updateField('care_text', v)} />
           <TextArea label="About the Maker" value={settings?.maker_text || ''} onChange={v => updateField('maker_text', v)} />
+        </Section>
+
+        {/* Social profiles (SEO Organization schema sameAs) */}
+        <Section title="Social Profiles (SEO)">
+          <p className="text-[12px] -mt-1 mb-2" style={{ color: 'var(--lj-muted)' }}>
+            Used in the Organization schema's <code>sameAs</code> array — helps Google, ChatGPT, Perplexity & Claude identify your brand as a single entity across the web. Full URLs only (https://…).
+          </p>
+          <Field label="Instagram URL" value={settings?.instagram_url || ''} onChange={v => updateField('instagram_url', v)} placeholder="https://www.instagram.com/thelocaljewel" />
+          <Field label="TikTok URL" value={settings?.tiktok_url || ''} onChange={v => updateField('tiktok_url', v)} placeholder="https://www.tiktok.com/@thelocaljewel" />
+          <Field label="Pinterest URL" value={settings?.pinterest_url || ''} onChange={v => updateField('pinterest_url', v)} placeholder="https://www.pinterest.com/thelocaljewel" />
+          <Field label="Etsy Shop URL" value={settings?.etsy_url || ''} onChange={v => updateField('etsy_url', v)} placeholder="https://www.etsy.com/shop/thelocaljewel" />
+          <Field label="Facebook URL" value={settings?.facebook_url || ''} onChange={v => updateField('facebook_url', v)} placeholder="https://www.facebook.com/thelocaljewel" />
+          <Field label="YouTube URL" value={settings?.youtube_url || ''} onChange={v => updateField('youtube_url', v)} placeholder="https://www.youtube.com/@thelocaljewel" />
+          <Field label="Google Business URL" value={settings?.google_business_url || ''} onChange={v => updateField('google_business_url', v)} placeholder="https://g.page/thelocaljewel" />
+          <Field label="Wikidata URL" value={settings?.wikidata_url || ''} onChange={v => updateField('wikidata_url', v)} placeholder="https://www.wikidata.org/wiki/Q…" />
         </Section>
 
         {/* Toggles */}

@@ -110,6 +110,11 @@ async def lifespan(app: FastAPI):
     await db.shop_orders.create_index("email")
     await db.user_sessions.create_index("session_token")
     await db.users.update_many({"phone": ""}, {"$unset": {"phone": ""}})
+    # Ensure IndexNow key exists & verification file is written
+    try:
+        _ensure_indexnow_key()
+    except Exception as e:
+        logger.error(f"indexnow key bootstrap failed: {e}")
     # Refresh static sitemap on every startup so production deploys always have fresh URLs
     try:
         await regenerate_static_sitemap()
@@ -2254,6 +2259,43 @@ async def pitch_chat(req: PitchChatRequest):
 
 SITE_BASE_URL = os.environ.get("SITE_BASE_URL", "https://www.thelocaljewel.com").rstrip("/")
 SITEMAP_STATIC_PATH = "/app/frontend/public/sitemap.xml"
+INDEXNOW_KEY_PATH = "/app/frontend/public"
+
+
+def _ensure_indexnow_key() -> str:
+    """Lazily generate & persist a 32-char IndexNow key to backend/.env on first use."""
+    key = os.environ.get("INDEXNOW_KEY", "").strip()
+    if key and len(key) >= 16:
+        return key
+    import secrets
+    key = secrets.token_hex(16)
+    env_path = "/app/backend/.env"
+    try:
+        with open(env_path, "r") as f:
+            lines = f.read().splitlines()
+        found = False
+        for i, ln in enumerate(lines):
+            if ln.startswith("INDEXNOW_KEY="):
+                lines[i] = f"INDEXNOW_KEY={key}"
+                found = True
+        if not found:
+            lines.append(f"INDEXNOW_KEY={key}")
+        with open(env_path, "w") as f:
+            f.write("\n".join(lines) + "\n")
+        os.environ["INDEXNOW_KEY"] = key
+        logger.info(f"Generated IndexNow key (persisted to backend/.env)")
+    except Exception as e:
+        logger.error(f"Could not persist IndexNow key: {e}")
+        os.environ["INDEXNOW_KEY"] = key
+    # Also write the key-verification file to /app/frontend/public/{key}.txt
+    try:
+        keyfile = os.path.join(INDEXNOW_KEY_PATH, f"{key}.txt")
+        with open(keyfile, "w") as f:
+            f.write(key)
+        logger.info(f"Wrote IndexNow key verification file: {keyfile}")
+    except Exception as e:
+        logger.error(f"Could not write IndexNow key file: {e}")
+    return key
 
 async def _build_sitemap_xml(base: str) -> str:
     now_iso = datetime.now(timezone.utc).date().isoformat()
@@ -2334,18 +2376,48 @@ async def sitemap_xml(request: Request):
 @app.get("/robots.txt", include_in_schema=False)
 @app.get("/api/robots.txt", include_in_schema=False)
 async def robots_txt(request: Request):
-    host = request.headers.get("x-forwarded-host") or request.headers.get("host") or "thelocaljewel.com"
+    host = request.headers.get("x-forwarded-host") or request.headers.get("host") or "www.thelocaljewel.com"
     scheme = request.headers.get("x-forwarded-proto") or "https"
     base = f"{scheme}://{host}"
     body = (
+        "# The Local Jewel — robots.txt (AI search optimized)\n"
+        "# ---- AI SEARCH / RETRIEVAL CRAWLERS ----\n"
+        "User-agent: OAI-SearchBot\nAllow: /\n\n"
+        "User-agent: ChatGPT-User\nAllow: /\n\n"
+        "User-agent: Claude-SearchBot\nAllow: /\n\n"
+        "User-agent: Claude-User\nAllow: /\n\n"
+        "User-agent: PerplexityBot\nAllow: /\n\n"
+        "User-agent: Perplexity-User\nAllow: /\n\n"
+        "# ---- AI TRAINING CRAWLERS ----\n"
+        "User-agent: GPTBot\nAllow: /\n\n"
+        "User-agent: ClaudeBot\nAllow: /\n\n"
+        "User-agent: anthropic-ai\nAllow: /\n\n"
+        "User-agent: Google-Extended\nAllow: /\n\n"
+        "User-agent: CCBot\nAllow: /\n\n"
+        "User-agent: Bytespider\nAllow: /\n\n"
+        "User-agent: meta-externalagent\nAllow: /\n\n"
+        "# ---- CLASSIC SEARCH ----\n"
+        "User-agent: Googlebot\nAllow: /\n\n"
+        "User-agent: Googlebot-Image\nAllow: /\n\n"
+        "User-agent: Bingbot\nAllow: /\n\n"
+        "User-agent: DuckDuckBot\nAllow: /\n\n"
+        "User-agent: Slurp\nAllow: /\n\n"
+        "User-agent: YandexBot\nAllow: /\n\n"
+        "# ---- DEFAULT ----\n"
         "User-agent: *\n"
         "Allow: /\n"
         "Disallow: /admin\n"
         "Disallow: /admin/\n"
         "Disallow: /dashboard\n"
+        "Disallow: /dashboard/\n"
         "Disallow: /pitch\n"
         "Disallow: /pitch/\n"
+        "Disallow: /api/admin\n"
+        "Disallow: /api/admin/\n"
+        "Disallow: /checkout/success\n"
+        "Disallow: /auth/\n\n"
         f"Sitemap: {base}/sitemap.xml\n"
+        f"Sitemap: {base}/api/sitemap.xml\n"
     )
     return Response(content=body, media_type="text/plain")
 

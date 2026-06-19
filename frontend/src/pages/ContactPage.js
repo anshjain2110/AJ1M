@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Phone, Mail, MapPin, Send, Loader2, Check, MessageCircle } from 'lucide-react';
 import axios from 'axios';
 import PublicHeader from '../components/PublicHeader';
+import { LocalBusinessSchema } from '../utils/seoSchema';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -11,6 +12,11 @@ export default function ContactPage() {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [err, setErr] = useState('');
+  const [settings, setSettings] = useState({});
+
+  useEffect(() => {
+    axios.get(`${BACKEND_URL}/api/admin/settings/public`).then((r) => setSettings(r.data || {})).catch(() => {});
+  }, []);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -34,6 +40,7 @@ export default function ContactPage() {
         <meta name="description" content="Get in touch with The Local Jewel. Call 585-710-8292, email ansh@thelocaljewel.com, or visit our Winter Park, FL studio. Custom engagement rings, lab-grown diamonds, certified." />
         <link rel="canonical" href="https://thelocaljewel.com/contact" />
       </Helmet>
+      <LocalBusinessSchema settings={settings} />
 
       <PublicHeader />
 

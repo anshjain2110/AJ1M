@@ -12,6 +12,7 @@ import StoreFooter from '../components/store/StoreFooter';
 import CustomProjectView from '../components/store/CustomProjectView';
 import ProductCard from '../components/store/ProductCard';
 import { useCart } from '../context/CartContext';
+import { ProductSchema, BreadcrumbSchema } from '../utils/seoSchema';
 import { useCountdown, fmtCountdown } from '../components/SaleAnnouncementBar';
 import {
   METAL_TIERS, availableTiers, availableCaratsForTier, variantPrice,
@@ -317,6 +318,18 @@ export default function ProjectDetailPageV2() {
   const careText = (info && info.care_text) || 'Clean with warm soapy water and a soft brush. Avoid harsh chemicals and chlorine. We offer complimentary lifetime cleaning and inspection for every piece we make.';
   const makerText = (info && info.maker_text) || 'The Local Jewel is an independent custom jewelry studio. Every piece is designed, rendered, and hand-set by us — no middlemen, no chain-store markups.';
 
+  // Breadcrumb for header + JSON-LD
+  const primaryCollection = (project.collections || [])[0] || '';
+  const collectionName = primaryCollection
+    ? primaryCollection.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    : '';
+  const breadcrumb = [
+    { name: 'Home', url: '/' },
+    { name: 'Shop', url: '/collections' },
+    primaryCollection && { name: collectionName, url: `/collections/${primaryCollection}` },
+    { name: project.title, url: `/projects/${slug}` },
+  ].filter(Boolean);
+
   // "About this piece" highlights — Etsy-inspired but derived from real product data
   const aboutHighlights = [
     { icon: Hand, label: 'Made by', value: 'The Local Jewel — hand-crafted to order' },
@@ -350,6 +363,8 @@ export default function ProjectDetailPageV2() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#FBF7F0', fontFamily: "'Outfit', Inter, system-ui, sans-serif" }} data-testid="project-detail-v2">
       <TitleSetter title={pageTitle} description={pageDesc} />
+      <ProductSchema project={project} settings={info || {}} rating={avgRating} reviewCount={reviewCount} />
+      <BreadcrumbSchema items={breadcrumb} />
 
       <MegaMenuHeader />
 

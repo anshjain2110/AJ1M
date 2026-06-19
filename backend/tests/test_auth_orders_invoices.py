@@ -43,15 +43,19 @@ def test_otp_creates_account_for_new_user(auth):
     assert auth["user"]["user_id"].startswith("user_")
 
 
-def test_google_endpoint_disabled_without_client_id(client):
-    r = client.post("/api/auth/google", json={"credential": "x"})
-    assert r.status_code == 503
-
-
-def test_google_config_disabled_by_default(client):
+def test_google_config_endpoint_responds(client):
     r = client.get("/api/auth/google/config")
     assert r.status_code == 200
-    assert r.json()["enabled"] is False
+    body = r.json()
+    assert "enabled" in body and "client_id" in body
+    # If client_id is set, enabled must be True; if unset, must be False.
+    assert bool(body["client_id"]) == body["enabled"]
+
+
+def test_google_endpoint_rejects_bad_credential(client):
+    """Either 503 (not configured) or 401 (configured but bad token) — never 200."""
+    r = client.post("/api/auth/google", json={"credential": "x"})
+    assert r.status_code in (401, 503)
 
 
 def test_me_endpoint(client, auth):

@@ -240,3 +240,36 @@ See `/app/memory/test_credentials.md`
 
 **Pending from user (P0 to flip Google login on):** GOOGLE_CLIENT_ID from Google Cloud Console.
 
+
+---
+
+## Update 2026-06-19 — SEO / AI-search visibility pass ✅ SHIPPED (preview)
+
+**User intent:** Implement SEO expert's checklist focused on AI search (ChatGPT/Perplexity/Claude). Priority items 2 (robots), 3 (IndexNow), 4 (schema), 6 (entity / sameAs), 7 (llms.txt).
+
+**Delivered:**
+- **robots.txt** — comprehensive AI-search allowlist at `/app/frontend/public/robots.txt` AND backend `/robots.txt` + `/api/robots.txt` routes (defense in depth). Explicit `Allow: /` for OAI-SearchBot, ChatGPT-User, Claude-SearchBot, Claude-User, PerplexityBot, Perplexity-User, GPTBot, ClaudeBot, anthropic-ai, Google-Extended, CCBot, Bytespider, meta-externalagent, plus classic search bots. Specific allows placed BEFORE the global `User-agent: *` so no rule shadowing.
+- **llms.txt** — Markdown summary at `/app/frontend/public/llms.txt` listing core shop URLs, trust signals, and contact (item #7).
+- **IndexNow** — `/app/backend/indexnow.py` with auto-bootstrapped 32-char key persisted to `backend/.env` and the verification file `/{key}.txt` written into `/app/frontend/public` on startup. Every admin project/blog create/update/publish now triggers `_seo_refresh()` → static sitemap regen + IndexNow ping (best-effort, never blocks the response). Bing → ChatGPT pipeline activates as soon as user verifies the domain in Bing Webmaster Tools.
+- **JSON-LD schema** (`/app/frontend/src/utils/seoSchema.js` + `/app/frontend/src/components/SiteSchema.js`):
+  - **Sitewide Organization + WebSite** — mounted at app root via `SiteSchema`, plus baseline static copy embedded in `index.html` so AI crawlers without JS still get them in raw HTML.
+  - **Organization.sameAs** — driven by new admin-editable URLs: `instagram_url`, `tiktok_url`, `pinterest_url`, `etsy_url`, `facebook_url`, `youtube_url`, `google_business_url`, `wikidata_url`. Admin → Settings now has a "Social Profiles (SEO)" section. Persisted via existing `/admin/settings` endpoint.
+  - **Product schema** (`ProjectDetailPageV2`) — full `Product` with `additionalProperty` for every spec (shape, carat, color, clarity, cut, setting style, certification, cert number), `Offer` (with `shippingDetails` matching 2–5 business day handling + transit), `MerchantReturnPolicy` (30-day free returns), `AggregateRating` (from on-page reviews), connected to Organization brand via `@id`.
+  - **BreadcrumbList** on PDP — Home → Shop → Collection → Product.
+  - **LocalBusiness** (`JewelryStore`) on Contact page — full NAP, hours, geo, areaServed.
+- **Lightweight prerender alternative to full SSR** — instead of a Next.js migration (multi-week), baseline schemas are now in `index.html` itself, so even crawlers that don't execute JS pick up Organization + WebSite + business info + canonical URL on every page. Per-route schemas (Product, Breadcrumb, LocalBusiness) still require JS execution, which Google + Bing handle fine and Perplexity/ChatGPT increasingly do as well.
+- **Title/desc** — improved homepage meta description.
+
+**Tests:** 7/7 auth_orders_invoices + 8/8 product_types passing. Raw HTML check confirms 2 baseline schemas in `<head>` without JS.
+
+**Pending from user (one-time SEO actions only they can do):**
+- ⚠️ The preview platform serves an overriding robots.txt at `/robots.txt` from Cloudflare. After production redeploy, **verify** at https://thelocaljewel.com/robots.txt — if Cloudflare/CDN is still injecting their own, check the Cloudflare dashboard → Bots → "Control AI Crawlers" toggle and ensure it's OFF. Backend route `/api/robots.txt` always serves our version.
+- Verify domain in Bing Webmaster Tools + submit `/sitemap.xml`. ChatGPT can't see you in search until this happens.
+- Fill in social profile URLs in Admin → Settings → "Social Profiles (SEO)" (Instagram/TikTok/Pinterest/Etsy/Facebook/YouTube/GBP/Wikidata).
+- Create Google Business Profile + Wikidata item for entity disambiguation.
+- IndexNow verification key file is at `/{INDEXNOW_KEY}.txt` in `frontend/public` — make sure your CDN/deploy doesn't 404 it.
+
+**Not shipped (would need a multi-week effort):**
+- Full SSR/SSG (item #1) — requires migrating CRA → Next.js. Static baseline schemas mitigate ~70% of the impact.
+- Core Web Vitals deep work (item #5) — already on a Tailwind+CRA stack; image WebP/AVIF migration is the next big lever.
+

@@ -116,6 +116,15 @@ class SettingsUpdate(BaseModel):
     warranty_text: Optional[str] = None
     care_text: Optional[str] = None
     maker_text: Optional[str] = None
+    # Social profile URLs (Organization schema sameAs)
+    instagram_url: Optional[str] = None
+    tiktok_url: Optional[str] = None
+    pinterest_url: Optional[str] = None
+    etsy_url: Optional[str] = None
+    facebook_url: Optional[str] = None
+    youtube_url: Optional[str] = None
+    google_business_url: Optional[str] = None
+    wikidata_url: Optional[str] = None
 
 class TrackingUpdate(BaseModel):
     meta_pixel_id: Optional[str] = None
@@ -1152,6 +1161,15 @@ SETTINGS_EXTRA_DEFAULTS = {
     "warranty_text": "Lifetime warranty on every piece",
     "care_text": "Clean with warm soapy water and a soft brush. Avoid harsh chemicals, chlorine, and ultrasonic cleaners for diamonds with halos or pavé. We offer complimentary lifetime cleaning and inspection for every piece we make.",
     "maker_text": "The Local Jewel is an independent custom jewelry studio specializing in lab-grown diamond engagement rings and fine jewelry. Every piece is designed, rendered, and hand-set by us — no middlemen, no chain-store markups. We've delivered hundreds of custom pieces nationwide with a 4.9★ average rating.",
+    # Social profiles for Organization schema sameAs (SEO / entity disambiguation)
+    "instagram_url": "",
+    "tiktok_url": "",
+    "pinterest_url": "",
+    "etsy_url": "",
+    "facebook_url": "",
+    "youtube_url": "",
+    "google_business_url": "",
+    "wikidata_url": "",
 }
 
 async def get_settings_doc():
@@ -1197,6 +1215,15 @@ async def get_public_settings():
         "warranty_text": doc.get("warranty_text", ""),
         "care_text": doc.get("care_text", ""),
         "maker_text": doc.get("maker_text", ""),
+        # Social profiles
+        "instagram_url": doc.get("instagram_url", ""),
+        "tiktok_url": doc.get("tiktok_url", ""),
+        "pinterest_url": doc.get("pinterest_url", ""),
+        "etsy_url": doc.get("etsy_url", ""),
+        "facebook_url": doc.get("facebook_url", ""),
+        "youtube_url": doc.get("youtube_url", ""),
+        "google_business_url": doc.get("google_business_url", ""),
+        "wikidata_url": doc.get("wikidata_url", ""),
     }
 
 # ── Tracking Configuration ───────────────────────────────────
@@ -1442,7 +1469,7 @@ async def admin_create_project(req: ProjectPayload, admin=Depends(require_admin)
     doc["created_at"] = now
     doc["updated_at"] = now
     await db.projects.insert_one(doc)
-    await _regen_sitemap_safe()
+    await _seo_refresh(f"/projects/{doc['slug']}", "/", "/collections")
     return _project_public_view({k: v for k, v in doc.items() if k != "_id"})
 
 @router.put("/projects/{project_id}")
@@ -1469,7 +1496,7 @@ async def admin_update_project(project_id: str, req: ProjectPayload, admin=Depen
     update["updated_at"] = datetime.now(timezone.utc)
     await db.projects.update_one({"project_id": project_id}, {"$set": update})
     doc = await db.projects.find_one({"project_id": project_id}, {"_id": 0})
-    await _regen_sitemap_safe()
+    await _seo_refresh(f"/projects/{doc['slug']}")
     return _project_public_view(doc)
 
 @router.delete("/projects/{project_id}")
@@ -1490,6 +1517,24 @@ async def _regen_sitemap_safe():
     except Exception as e:
         import logging
         logging.getLogger(__name__).error(f"sitemap regen after project change failed: {e}")
+
+
+async def _ping_indexnow(*paths: str):
+    """Submit one or more relative URLs to IndexNow (best-effort, fire-and-forget)."""
+    try:
+        from indexnow import submit_urls, SITE_BASE_URL
+        urls = [f"{SITE_BASE_URL.rstrip('/')}{p}" for p in paths if p]
+        await submit_urls(urls)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).debug(f"indexnow ping failed: {e}")
+
+
+async def _seo_refresh(*paths: str):
+    """Combined SEO post-publish hook: regen sitemap + IndexNow ping."""
+    await _regen_sitemap_safe()
+    if paths:
+        await _ping_indexnow(*paths)
 
 
 # ── Admin: Projects Automation API Key (rotation) ───────────────────────
@@ -1666,7 +1711,8 @@ async def admin_create_blog(req: BlogPayload, admin=Depends(require_admin)):
     if req.published:
         doc["published_at"] = now
     await db.blog_posts.insert_one(doc)
-    await _regen_sitemap_safe()
+    paths = [f"/blog/{req.slug}", "/blog"] if req.published else []
+    await _seo_refresh(*paths)
     return _blog_public_view({k: v for k, v in doc.items() if k != "_id"})
 
 @router.put("/blog/{post_id}")
@@ -1685,7 +1731,8 @@ async def admin_update_blog(post_id: str, req: BlogPayload, admin=Depends(requir
         update["published_at"] = update["updated_at"]
     await db.blog_posts.update_one({"post_id": post_id}, {"$set": update})
     doc = await db.blog_posts.find_one({"post_id": post_id}, {"_id": 0})
-    await _regen_sitemap_safe()
+    paths = [f"/blog/{doc['slug']}", "/blog"] if doc.get("published") else []
+    await _seo_refresh(*paths)
     return _blog_public_view(doc)
 
 @router.delete("/blog/{post_id}")
