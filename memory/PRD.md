@@ -10,50 +10,49 @@ Production-ready lead-generation app for The Local Jewel custom-jewelry brand.
 - Founder-level analytics & tracking suite
 
 ## Tech Stack
-**Hybrid stack:** FastAPI · MongoDB · **Next.js 15 (App Router, primary)** + **legacy CRA (`/app/frontend-legacy`, internal port 3001, served via Next.js rewrites for `/admin`, `/dashboard`, `/cart`, `/checkout/success`, `/pitch/*`)**. Cloudflare R2 storage via boto3. JWT admin auth. Twilio/SendGrid OTP. Native Google OAuth via `@react-oauth/google`. Custom analytics events.
+FARM stack — FastAPI · React (CRA via craco) · MongoDB. Cloudflare R2 storage via boto3. JWT admin auth. Twilio/SendGrid OTP. React Router DOM. Custom analytics events. `react-helmet-async` for per-page SEO. Native Google OAuth via `@react-oauth/google`.
+
+> **Note (Feb 2026)** — The Next.js 15 App Router migration was attempted side-by-side and worked in preview but **the production deploy template rejected it** (nginx welcome page returned because the deployment pipeline expects a CRA static build, not a Node runtime). The Next.js code has been **preserved at `/app/frontend-next`** but the active frontend was **rolled back to the original CRA** at `/app/frontend`. All backend SEO improvements (robots.txt, llms.txt, dynamic sitemap, IndexNow auto-ping on admin save, JSON-LD via react-helmet-async) **remain in place and active**.
 
 ## Environments
-- **Preview / dev**: this environment — Next.js on port 3000, legacy CRA on port 3001
+- **Preview / dev**: this environment
 - **Production**: `https://thelocaljewel.com` — user must redeploy from the platform to push preview changes live
 
 ## Architecture
 ```
 /app/
 ├── backend/  (server.py, admin_routes.py, storage.py, seed_projects.py, indexnow.py, invoices.py)
-├── frontend/                        # Next.js 15 App Router (PRIMARY, port 3000)
-│   ├── app/
-│   │   ├── layout.js                # Root layout + sitewide Organization/WebSite JSON-LD
-│   │   ├── page.js                  # SSR homepage (hero, savings panel, featured, etsy reviews)
-│   │   ├── projects/page.js         # SSR projects index
-│   │   ├── projects/[slug]/page.js  # SSR PDP (Product+Breadcrumb JSON-LD)
-│   │   ├── collections/page.js      # SSR collections index
-│   │   ├── collections/[slug]/page.js
-│   │   ├── blog/page.js             # SSR blog index
-│   │   ├── blog/[slug]/page.js      # SSR blog detail (Article+Breadcrumb JSON-LD)
-│   │   ├── contact/page.js          # SSR with JewelryStore (LocalBusiness) JSON-LD
-│   │   ├── cuts/page.js, privacy/page.js, terms/page.js
-│   │   ├── login/                   # OTP + Google OAuth login (client)
-│   │   └── api/revalidate/route.js  # On-demand SSR cache invalidation
-│   ├── components/  (HomeHero, QuickQuoteModal, PriceTag, JsonLd, CartContext, store/...)
-│   ├── lib/  (api.js, seoSchema.js)
-│   └── next.config.js               # /products/:slug -> /projects/:slug 301 + legacy rewrites
-├── frontend-legacy/                 # Create React App (LEGACY, port 3001, served via rewrites)
-│   └── src/  (admin/*, dashboard/*, cart, checkout/success, pitch/*)
+├── frontend/                  # ACTIVE Create React App (port 3000)
+│   ├── src/
+│   │   ├── components/  (PublicHeader, RenderShowcase, wizard/, store/)
+│   │   ├── context/  (WizardContext, AdminContext, CartContext)
+│   │   ├── pages/
+│   │   │   ├── WizardPage / LoginPage / DashboardPage / ContactPage / BlogIndex / BlogDetail
+│   │   │   ├── ProjectsIndexPage / ProjectDetailPageV2
+│   │   │   ├── store/  (CollectionsIndexPage, CollectionDetailPage, CartPage, CheckoutSuccessPage)
+│   │   │   └── admin/  (Analytics, LeadsCRM, OrdersPage, ProjectsAdminPage, ShowcasePage, SettingsPage, TrackingPage, BlogAdminPage, MessagesAdminPage, MenuBuilderPage, SalePage, CollectionsAdminPage)
+│   │   └── utils/  (wizardConfig, analytics)
+│   └── plugins/visual-edits/babel-metadata-plugin.js  # hardened with try/catch + text-only-native exclusion
+├── frontend-next/             # PRESERVED Next.js 15 work (NOT active, NOT in supervisor)
 └── memory/, test_reports/
 ```
 
 ## Implemented (most recent first)
 
-### Feb 2026 — Next.js 15 App Router cutover (SSR for AI-bot crawlability)
-- Side-by-side migration cutover complete. All SEO-critical routes are now SSR Next.js:
-  - `/`, `/projects`, `/projects/[slug]`, `/collections`, `/collections/[slug]`, `/blog`, `/blog/[slug]`, `/contact`, `/cuts`, `/privacy`, `/terms`, `/login`
-- Legacy CRA preserved at `/app/frontend-legacy` on internal port 3001, accessed via Next.js rewrites for `/admin/*`, `/dashboard`, `/cart`, `/checkout/success`, `/pitch/*` — admin flows unchanged.
-- New supervisor program `legacy_frontend` (in `/etc/supervisor/conf.d/supervisord_legacy_frontend.conf`) keeps legacy CRA running.
-- 301 `/products/:slug → /projects/:slug` preserved via `next.config.js`.
-- JSON-LD types now emitted in SSR raw HTML: Organization, WebSite, Product, BreadcrumbList, Article, JewelryStore/LocalBusiness, Offer, MerchantReturnPolicy, OfferShippingDetails, ContactPoint, GeoCoordinates, OpeningHoursSpecification.
-- On-demand revalidation: FastAPI `_seo_refresh()` now pings Next.js `/api/revalidate` (token-protected) whenever admin edits a project/blog/collection/sale/settings, instantly flushing the SSR cache for those routes.
-- Homepage simplified the multi-step wizard into a single `QuickQuoteModal` posting to existing `/api/leads/quick` — same lead-gen endpoint, faster conversion.
-- Babel `visual-edits` plugin in legacy CRA wrapped in try/catch so plugin glitches no longer break the webpack compile.
+### Feb 2026 — Emergency rollback + bug fixes
+- Reverted active frontend from Next.js back to CRA after production deploy rejected the Next.js template.
+- Fixed pre-existing `Link is not defined` runtime error in `/app/frontend/src/components/store/ProductCard.js` (was using `<Link>` without importing it).
+- Fixed pre-existing `react-helmet-async` invariant error on `/collections/[slug]` by removing the dynamic `<title>` from inside `<Helmet>` (`document.title` is set imperatively elsewhere).
+- Added `<Route path="/products/:slug">` → `<Navigate to="/projects/:slug" replace>` client-side redirect (preserves SEO URL transitions).
+- Hardened `babel-metadata-plugin.js` (Emergent visual-edits): wrapped JSXElement + JSXOpeningElement visitors in try/catch + added `TEXT_ONLY_NATIVE` exclusion so the plugin no longer wraps expression children of `<title>/<meta>/<link>/<script>/<style>/<option>/<textarea>` (which broke react-helmet-async).
+- CORS expanded to include `https://www.thelocaljewel.com` and `https://local-jewel-v2.emergent.host` for the production deploy.
+
+### Feb 2026 — Backend SEO foundation (kept active, this was the work the user actually wanted)
+- `/robots.txt`, `/llms.txt`, dynamic `/api/sitemap.xml` (and `/sitemap.xml` index).
+- IndexNow auto-pinging on admin save (`_seo_refresh()` in admin_routes.py).
+- Sitewide JSON-LD via SiteSchema (Organization + WebSite + LocalBusiness).
+- Per-page JSON-LD (Product + Breadcrumb on PDP, Article + Breadcrumb on blog, JewelryStore on contact).
+- ZIP code in settings: 32789.
 
 
 ### Jun 2026 — Storefront polish & unified PDP layout
