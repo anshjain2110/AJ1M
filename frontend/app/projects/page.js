@@ -54,7 +54,7 @@ export default async function ProjectsIndexPage() {
           </div>
         </section>
 
-        <ProjectsFilter projects={projects} tags={tags} labelFor={labelFor} />
+        <ProjectsFilter projects={projects} tags={tags} />
 
         <section className="px-4 py-14 text-center" style={{ borderTop: '1px solid var(--lj-border)' }}>
           <div className="max-w-xl mx-auto">

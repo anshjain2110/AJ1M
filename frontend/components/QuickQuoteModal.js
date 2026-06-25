@@ -57,7 +57,7 @@ export default function QuickQuoteModal({ onClose }) {
             <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: 'var(--lj-accent)' }}>
               <Check size={28} style={{ color: '#fff' }} strokeWidth={2.8} />
             </div>
-            <h3 className="text-[24px] font-semibold mb-2" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", color: 'var(--lj-text)' }}>
+            <h3 className="text-[24px] font-semibold mb-2" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", color: 'var(--lj-text)' }} data-testid="qq-success">
               Got it. Talk soon!
             </h3>
             <p className="text-[14.5px] leading-[1.55] mb-5" style={{ color: 'var(--lj-muted)' }}>

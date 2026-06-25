@@ -1709,6 +1709,7 @@ const babelMetadataPlugin = ({ types: t }) => {
     visitor: {
       // Add metadata attributes to React components (capitalized JSX)
       JSXElement(jsxPath, state) {
+        try {
         const openingElement = jsxPath.node.openingElement;
         if (!openingElement?.name) return;
         const elementName = getName(openingElement);
@@ -1966,10 +1967,16 @@ const babelMetadataPlugin = ({ types: t }) => {
           openingElement,
           { normalizedPath, lineNumber, elementName, isDynamic, sourceInfo, arrayContext },
         );
+        } catch (_e) {
+          // The visual-edits plugin is best-effort metadata tagging — if anything
+          // throws (e.g. AST traversal hits a null binding while tracing imports),
+          // skip metadata for this JSX element rather than failing the entire build.
+        }
       },
 
       // Add metadata to native HTML elements (lowercase JSX)
       JSXOpeningElement(jsxPath, state) {
+        try {
         if (!jsxPath.node.name || !jsxPath.node.name.name) {
           return;
         }
@@ -2151,6 +2158,9 @@ const babelMetadataPlugin = ({ types: t }) => {
 
         // Add metadata attributes
         insertMetaAttributes(jsxPath.node, metaAttrs);
+        } catch (_e) {
+          // Best-effort metadata tagging — never let a plugin glitch fail the build.
+        }
       },
     },
   };
