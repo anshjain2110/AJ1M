@@ -1,0 +1,81 @@
+# The Local Jewel — robots.txt
+# Last updated: 2026 — AI search optimized
+# ============================================================
+
+# ---- AI SEARCH / RETRIEVAL CRAWLERS (drive live citations) ----
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+# ---- AI TRAINING CRAWLERS (allow to be in long-term model memory) ----
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
+# ---- CLASSIC SEARCH ENGINES ----
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+# ---- DEFAULT / EVERYTHING ELSE ----
+# This rule is intentionally LAST so the specific Allows above are evaluated first.
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /dashboard
+Disallow: /dashboard/
+Disallow: /pitch
+Disallow: /pitch/
+Disallow: /api/admin
+Disallow: /api/admin/
+Disallow: /checkout/success
+Disallow: /auth/
+
+Sitemap: https://www.thelocaljewel.com/sitemap.xml
+Sitemap: https://www.thelocaljewel.com/api/sitemap.xml

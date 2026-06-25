@@ -1,0 +1,75 @@
+{
+  "summary": "Frontend-only testing of Next.js 15 App Router cutover for The Local Jewel. SSR raw-HTML inspection PASS on all 8 SEO-critical pages (/, /collections, /projects[*], /blog, /contact, /cuts, /privacy, /terms). PDP JSON-LD includes Organization+WebSite+Product+BreadcrumbList. Contact LocalBusiness/JewelryStore schema present. 308 redirect /products/:slug -> /projects/:slug works. QuickQuoteModal lead flow works end-to-end (POSTs lead, success state, stores tlj_token). PDP buy-box (v2-title/v2-fast-badge/v2-from-price/add-to-bag) works. Header + Footer testids present on all Next.js pages. Customer OTP login (Next.js /login) reaches /dashboard. 3 CRITICAL issues found: (1) /projects returns HTTP 500 - function 'labelFor' passed from Server Component to Client Component; (2) Legacy CRA fails to compile in browser - babel-metadata-plugin crashes on frontend-legacy/src/components/wizard/QuickQuoteModal.js, breaking /admin, /dashboard, /cart, /checkout/success, /pitch (all served via Next.js rewrites); (3) QuickQuoteModal success state uses data-testid 'quick-quote-success' NOT 'qq-success' as the brief specified - minor naming mismatch.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "/app/frontend/app/projects/page.js",
+        "issue": "GET /projects returns HTTP 500. Cause: server component passes the JS function `labelFor` as a prop to the Client Component <ProjectsFilter>. Next.js 15 App Router does not serialize functions across the server/client boundary. Logs: 'Functions cannot be passed directly to Client Components ... labelFor={function labelFor} ... digest: 2463296782'. Effect: filter chips and project cards never render; entire /projects index is broken.",
+        "selector": "[data-testid='filter-chip-*'], [data-testid^='project-card-']",
+        "priority": "CRITICAL"
+      },
+      {
+        "component": "/app/frontend-legacy/* (rewritten under /admin, /dashboard, /cart, /checkout/success, /pitch)",
+        "issue": "Legacy CRA fails to compile in browser. Babel build error: 'TypeError: /app/frontend-legacy/src/components/wizard/QuickQuoteModal.js: Cannot read properties of null (reading \"traverse\")' originating in /app/frontend-legacy/plugins/visual-edits/babel-metadata-plugin.js:1879:32 (PluginPass.JSXElement). The CRA dev server returns 200 for /dashboard and /admin/login internally, but the bundle fails to compile and the browser shows the React error overlay 'Uncaught runtime errors:'. This means after a Next.js /login OTP redirect to /dashboard, users see a runtime-error overlay instead of the account portal. /admin/login form does not render (0 inputs found). Cart drawer route /cart is also broken via the rewrite path.",
+        "selector": "[data-testid='account-overview'], any admin/dashboard testid",
+        "priority": "CRITICAL"
+      },
+      {
+        "component": "/app/frontend/components/QuickQuoteModal.js (line 56)",
+        "issue": "Success state uses data-testid='quick-quote-success' but the review request and likely automation/QA scripts expect 'qq-success'. The flow itself works (POST /api/leads/quick succeeds, modal shows 'Got it. Talk soon!' with Go-to-my-account CTA, tlj_token is stored in localStorage). Pure testid naming inconsistency vs the other qq-* testids (qq-name, qq-email, qq-phone, qq-notes, qq-submit, qq-error).",
+        "selector": "[data-testid='quick-quote-success']",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Customer login -> /dashboard (Next.js -> legacy CRA via rewrite)",
+        "issue": "Next.js OTP login works (otp-display-code shows 6-digit code, typing it auto-submits and navigates to /dashboard). However /dashboard is served by the broken legacy CRA bundle, so the dashboard tabs (account-overview, tab-overview, tab-quotes, tab-orders, tab-messages, tab-profile) never render - the page shows the React error overlay instead. Blocks the full login -> dashboard flow.",
+        "affected_selectors": ["[data-testid='account-overview']", "[data-testid='tab-overview']", "[data-testid='tab-orders']", "[data-testid='tab-profile']"]
+      },
+      {
+        "flow": "Admin login -> /admin/login (Next.js -> legacy CRA via rewrite)",
+        "issue": "/admin/login renders but no email/password inputs appear in DOM (legacy CRA bundle crashed during compile). Cannot login with ansh@thelocaljewel.com / Rakesh@2709. Blocks ALL admin functionality (/admin analytics, /admin/leads, /admin/settings).",
+        "affected_selectors": ["input[type=email]", "input[type=password]"]
+      },
+      {
+        "flow": "Cart drawer (legacy CRA via Next.js rewrite)",
+        "issue": "Header cart icon (data-testid='header-cart-button') is present and the badge count updates after add-to-bag on Next.js PDP, but the actual /cart route is served by the broken legacy CRA, so the drawer/cart page cannot open."
+      }
+    ],
+    "design_issues": []
+  },
+  "ssr_verification": {
+    "homepage_title": "The Local Jewel - Custom Diamond Jewelry, Hand-Crafted in Winter Park, FL (in raw HTML)",
+    "all_seo_pages_render_titles_in_raw_html": ["/", "/collections", "/projects (BUT 500)", "/blog", "/contact", "/cuts", "/privacy", "/terms"],
+    "pdp_json_ld_types_found_in_raw_html": ["Organization", "WebSite", "Product", "BreadcrumbList", "Offer", "OfferShippingDetails", "MerchantReturnPolicy", "PostalAddress", "ContactPoint", "SearchAction"],
+    "blog_post_json_ld": "Article + BreadcrumbList present on /blog/how-to-pick-a-lab-grown-diamond (the slug 'local-jewel-v2' mentioned in the review brief does NOT exist - HTTP 404; only how-to-pick-a-lab-grown-diamond is seeded).",
+    "contact_json_ld": "JewelryStore + LocalBusiness-equivalent fields (PostalAddress, GeoCoordinates, OpeningHoursSpecification, ContactPoint) all present in raw HTML.",
+    "products_to_projects_redirect": "HTTP 308 permanent redirect /products/5-carat-oval-solitaire-engagement-ring -> /projects/5-carat-oval-solitaire-engagement-ring confirmed.",
+    "pdp_buy_box": "v2-title='5 Carat Oval Solitaire Engagement Ring', v2-fast-badge='Fast - Ships in 2-5 business days', v2-from-price='$1,800', v2-add-to-bag works, header cart badge increments to 1."
+  },
+  "critical_code_review_comments": [
+    "/app/frontend/app/projects/page.js: do NOT pass `labelFor` function to <ProjectsFilter />. Either (a) move labelFor INTO ProjectsFilter.js (client component), (b) pre-compute label strings server-side and pass a Record<string,string>, or (c) mark ProjectsFilter with 'use server' and call labelFor server-side. This is a hard P0 - the entire /projects index returns HTTP 500.",
+    "frontend-legacy/plugins/visual-edits/babel-metadata-plugin.js crashes on frontend-legacy/src/components/wizard/QuickQuoteModal.js at ImportDeclaration -> lookupCrossFilePropSource -> tracePropToSource. Either remove the plugin from the legacy CRA babel config OR delete the unused QuickQuoteModal.js file in frontend-legacy/ (the Next.js app already has its own components/QuickQuoteModal.js). Without this fix /admin, /dashboard, /cart, /checkout/success, /pitch are all unusable.",
+    "Naming consistency: /app/frontend/components/QuickQuoteModal.js uses data-testid='quick-quote-success' but every other field uses the qq-* prefix. Rename to 'qq-success' for consistency with the rest of the modal and with the review brief.",
+    "/app/frontend/app/projects/page.js exports `labelFor` as module-scope arrow fn but uses it both on the server (to build tags array) and passes it client-side. Build labelled tags array {tag,label} on the server and pass only that serializable array.",
+    "Browserslist data 6 months old in legacy CRA (warning only, but worth a refresh)."
+  ],
+  "test_report_links": [],
+  "action_items": [
+    "P0: Fix /projects HTTP 500 by removing the labelFor function prop crossing the server->client boundary in /app/frontend/app/projects/page.js.",
+    "P0: Fix legacy CRA Babel compile crash in frontend-legacy/plugins/visual-edits/babel-metadata-plugin.js OR delete frontend-legacy/src/components/wizard/QuickQuoteModal.js (it triggers the crash and isn't used by anything in the Next.js app). Without this fix ALL admin and dashboard routes are broken.",
+    "P3: Rename data-testid 'quick-quote-success' -> 'qq-success' in /app/frontend/components/QuickQuoteModal.js for consistency.",
+    "P3: Confirm the brief's intended blog slug. /blog/local-jewel-v2 returns 404. The only seeded post is /blog/how-to-pick-a-lab-grown-diamond.",
+    "P3: /collections index renders only 1 collection-card via [data-testid^='collection-card-'] although raw HTML contains anchors to engagement-rings AND wedding-bands - investigate (wedding-bands card may be missing the data-testid attribute or be filtered out)."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "N/A (frontend-only round)", "frontend": "~70% - SSR/SEO/JSON-LD/QuickQuote/PDP/Contact/Login pass; /projects 500, all legacy-CRA routes (admin, dashboard, cart) broken" },
+  "test_credentials": "Admin ansh@thelocaljewel.com / Rakesh@2709 - admin form did NOT render due to legacy CRA build failure; OTP customer login dynamic (otp-display-code).",
+  "seed_data_creation": "Created 1 test lead via QuickQuoteModal (sdet_nextjs_test@example.com) and 1 customer test user via OTP login (sdettest_kb_<ts>@example.com).",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "After P0 fixes land: (1) re-curl https://local-jewel-v2.preview.emergentagent.com/projects expecting 200 + project cards in raw HTML, (2) re-login via /login OTP and assert /dashboard renders [data-testid='account-overview'] + the 4 tab buttons, (3) re-test /admin/login with ansh@thelocaljewel.com / Rakesh@2709 expecting /admin analytics. The /projects/5-carat-oval-solitaire-engagement-ring PDP, all SSR SEO pages, and the QuickQuoteModal lead flow are already verified PASS this round so they can be smoke-tested only. Valid blog slug in this env is 'how-to-pick-a-lab-grown-diamond', NOT 'local-jewel-v2'.",
+  "rca of the issue": "1) /projects 500: /app/frontend/app/projects/page.js line 57 renders <ProjectsFilter projects={projects} tags={tags} labelFor={labelFor} />. ProjectsFilter has 'use client'. Next.js 15 RSC payload serialization rejects function props (only 'use server'-annotated functions can cross). Fix by either pre-computing tag labels into the tags array server-side (recommended) or moving the labelFor helper into ProjectsFilter.js. 2) Legacy CRA failure: /app/frontend-legacy/plugins/visual-edits/babel-metadata-plugin.js attempts AST traversal on a JSX file that imports a null-ish module path, throwing 'Cannot read properties of null (reading traverse)' specifically on frontend-legacy/src/components/wizard/QuickQuoteModal.js. The CRA dev server returns 200 but the resulting JS bundle never finishes compiling, so the browser shows the dev-mode error overlay. Verify by visiting https://local-jewel-v2.preview.emergentagent.com/dashboard or /admin/login post-login and seeing 'Uncaught runtime errors: Module build failed (from ./node_modules/babel-loader/lib/index.js): TypeError: ... QuickQuoteModal.js: Cannot read properties of null (reading traverse)'."
+}

@@ -3,6 +3,8 @@ import uuid
 import csv
 import io
 import hashlib
+import logging
+import httpx
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List, Dict
 from dotenv import load_dotenv
@@ -1530,11 +1532,26 @@ async def _ping_indexnow(*paths: str):
         logging.getLogger(__name__).debug(f"indexnow ping failed: {e}")
 
 
+async def _ping_nextjs_revalidate(*paths: str):
+    """Best-effort: tell the Next.js frontend to invalidate its SSR cache for these paths.
+    Configured via NEXT_REVALIDATE_URL + NEXT_REVALIDATE_TOKEN env vars. Never blocks the request."""
+    url = os.environ.get("NEXT_REVALIDATE_URL", "")
+    token = os.environ.get("NEXT_REVALIDATE_TOKEN", "")
+    if not url or not token or not paths:
+        return
+    try:
+        async with httpx.AsyncClient(timeout=4.0) as client:
+            await client.post(url, json={"paths": list(paths)}, headers={"x-revalidate-token": token})
+    except Exception as e:
+        logging.getLogger(__name__).debug(f"next.js revalidate ping failed: {e}")
+
+
 async def _seo_refresh(*paths: str):
-    """Combined SEO post-publish hook: regen sitemap + IndexNow ping."""
+    """Combined SEO post-publish hook: regen sitemap + IndexNow ping + Next.js revalidate."""
     await _regen_sitemap_safe()
     if paths:
         await _ping_indexnow(*paths)
+        await _ping_nextjs_revalidate(*paths)
 
 
 # ── Admin: Projects Automation API Key (rotation) ───────────────────────
