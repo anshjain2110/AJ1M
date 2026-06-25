@@ -1,0 +1,53 @@
+{
+  "summary": "Iteration 14 — Post-rollback smoke verification after EMERGENCY ROLLBACK from Next.js cutover back to legacy CRA. The rollback is COMPLETE and largely SUCCESSFUL: original Wizard lead-gen homepage renders, mega menu intact, PDP V2 with JSON-LD works, OTP login -> /dashboard works, admin login + all admin tabs load, backend SEO endpoints (robots.txt, llms.txt, /api/sitemap.xml) all 200, wizard /api/wizard endpoints respond, ProductCard 'Link is not defined' fix verified (no React error overlay on homepage). Supervisor cleaned: only frontend (CRA), backend, mongodb — no legacy_frontend, no Next.js. /app/frontend-next preserved off-to-the-side. ONE pre-existing CRITICAL bug surfaced: /collections/:slug throws an Uncaught react-helmet-async runtime error overlay ('Helmet expects a string as a child of <title>'), blocking the collection detail page in dev mode. /products/{slug} -> /projects/{slug} 301/308 backend redirect is MISSING (returns 200 from SPA catch-all, not a server redirect).",
+
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "/products/{slug}", "issue": "Expected 301/308 server-side redirect to /projects/{slug} is NOT implemented in backend (server.py / commerce_routes.py). Currently returns 200 HTML (SPA catch-all), so search engines and direct GETs do not get a permanent redirect. Review request explicitly says this should be a backend redirect.", "priority": "HIGH"}
+    ],
+    "minor": [
+      {"endpoint": "/api/settings/public", "issue": "Response does not include ZIP code 32789 anywhere (only phone/whatsapp/badge counts). Review checklist mentions 'including ZIP code 32789' — confirm if this is required and add to payload if so."},
+      {"endpoint": "/api/leads/quick", "issue": "Rejects payload missing 'name'/'email' with 422 — not a bug, just contract-tight. Confirm if quick-lead should accept phone-only."}
+    ]
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "CollectionDetailPage (/collections/:slug e.g. /collections/engagement-rings)", "issue": "Uncaught react-helmet-async runtime error overlay: 'Helmet expects a string as a child of <title>. Did you forget to wrap your children in braces? (<title>{``}</title>)'. Crashes the page in dev — body innerText length = 0, no products rendered. Bug is in /app/frontend/src/pages/store/CollectionDetailPage.js line 48-52: even though the `<title>` is guarded with `{col && ...}`, react-helmet-async still complains when the conditional Helmet child is a JSX expression evaluating to false. Fix: move title rendering inside Helmet only when col is loaded, e.g. wrap the entire <Helmet>...</Helmet> with `{col && (<Helmet>...</Helmet>)}` or use document.title imperatively (as already done on line 24).", "selector": "page body / CRA error overlay", "priority": "CRITICAL"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Admin /admin/leads", "issues": ["6 React hydration warnings 'In HTML, <span> cannot be a child of <select|tr|tbody|th>' caused by Emergent live-editing wrapper spans (data-ve-dynamic) injected around table elements. Cosmetic — doesn't break rendering — but pollutes console."]}
+    ]
+  },
+
+  "test_report_links": ["/app/test_reports/iteration_14.json"],
+
+  "action_items": [
+    "CRITICAL: Fix CollectionDetailPage Helmet bug — wrap the entire <Helmet> in the col-guard (or only render the <title> conditional after col is loaded). Currently blocks /collections/engagement-rings, /collections/wedding-bands, etc. with a red CRA error overlay.",
+    "HIGH: Add backend server-side redirect /products/{slug} -> /projects/{slug} (301 or 308). Currently not implemented anywhere in /app/backend/*.py.",
+    "Optional: Include ZIP 32789 in /api/settings/public response (if it's a required SEO/LocalBusiness field)."
+  ],
+
+  "critical_code_review_comments": [
+    "CollectionDetailPage.js — conditional <title> inside <Helmet> causes react-helmet-async to error in dev. Move guard up one level.",
+    "Missing /products/{slug} redirect on backend — was claimed to be 'server-side' in the review request but does not exist in server.py or commerce_routes.py.",
+    "Admin LeadsCRM renders tables with Emergent live-edit wrappers injecting <span> nodes inside <select>/<tr>/<tbody>/<th> — produces hydration warnings. Consider conditionally disabling the wrapper in admin views."
+  ],
+
+  "updated_files": [],
+
+  "success_rate": {"backend": "90%", "frontend": "85%"},
+
+  "test_credentials": "Admin ansh@thelocaljewel.com / Rakesh@2709 verified working. Customer OTP login: any email; OTP shown via [data-testid='otp-display-code'] — verified working with testuser_iter14@example.com, OTP 659549.",
+
+  "seed_data_creation": "Created 1 customer user via OTP login (testuser_iter14@example.com), 1 lead via POST /api/leads/quick (lead_a5ac70b8c6e0).",
+
+  "retest_needed": true,
+
+  "main_agent_can_self_test": true,
+
+  "context_for_next_testing_agent": "Rollback to legacy CRA is verified complete: supervisor shows only backend/frontend/mongodb (no legacy_frontend or next), /app/frontend is CRA with craco/src/React Router, /app/frontend-next preserved but inert. Working: homepage Wizard CTA, multi-step wizard modal advances to Step 2 'Metal preference', PDP /projects/5-carat-oval-solitaire-engagement-ring with full JSON-LD (Product+BreadcrumbList+Organization+WebSite), /collections index, /blog index + detail, /contact, OTP login -> /dashboard with account-overview, admin login + Analytics Intelligence dashboard + /admin/leads + /admin/orders + /admin/projects + /admin/settings all load. Backend SEO: /robots.txt 200, /llms.txt 200, /api/sitemap.xml 200, /api/settings/public 200. Two open bugs (one critical, one missing endpoint) listed above.",
+
+  "rca of the issue": "CollectionDetailPage Helmet bug: react-helmet-async warns 'Helmet expects a string as a child of <title>' when it encounters a JSX expression child even if guarded by a falsy short-circuit. Reproduction: navigate to /collections/engagement-rings. Mitigation: move the col-guard to wrap the whole <Helmet> block, OR always render a non-empty <title> with a sane default, OR remove the <title> from Helmet entirely and rely on the existing imperative document.title assignment on line 24. /products redirect: backend simply doesn't define any route handler for /products/{slug}, so the catch-all SPA route (likely served by nginx/ingress) returns index.html with 200. Mitigation: add @app.get('/products/{slug}') in server.py returning RedirectResponse(url=f'/projects/{slug}', status_code=308)."
+}
