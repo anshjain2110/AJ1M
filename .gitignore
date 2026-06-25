@@ -146,3 +146,5 @@ frontend/node_modules/.cache/default-development/33.pack
 frontend/node_modules/.cache/default-development/27.pack
 frontend/node_modules/.cache/default-development/31.pack
 frontend/node_modules/.cache/default-development/37.pack
+frontend-next/node_modules/@next/swc-linux-arm64-gnu/next-swc.linux-arm64-gnu.node
+frontend-next/node_modules/@next/swc-linux-arm64-musl/next-swc.linux-arm64-musl.node
