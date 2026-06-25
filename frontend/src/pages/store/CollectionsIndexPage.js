@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 import { ChevronRight } from 'lucide-react';
@@ -8,7 +8,6 @@ import StoreLayout from '../../components/store/StoreLayout';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
 export default function CollectionsIndexPage() {
-  const navigate = useNavigate();
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,7 +43,7 @@ export default function CollectionsIndexPage() {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8" data-testid="collections-grid">
             {collections.map((c) => (
-              <button key={c.slug} onClick={() => navigate(`/collections/${c.slug}`)} className="group text-left" data-testid={`collection-card-${c.slug}`}>
+              <Link key={c.slug} to={`/collections/${c.slug}`} className="group text-left no-underline" style={{ color: 'inherit' }} data-testid={`collection-card-${c.slug}`}>
                 <div className="relative overflow-hidden" style={{ aspectRatio: '3/4', background: 'var(--lj-surface)' }}>
                   {c.image_url && <img src={c.image_url} alt={c.title} loading="lazy" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />}
                   <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,0.55) 100%)' }} />
@@ -55,7 +54,7 @@ export default function CollectionsIndexPage() {
                     </div>
                   </div>
                 </div>
-              </button>
+              </Link>
             ))}
           </div>
         )}

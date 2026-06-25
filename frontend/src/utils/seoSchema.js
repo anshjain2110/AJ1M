@@ -66,7 +66,7 @@ export const buildOrganizationSchema = (settings = {}) => {
       streetAddress: '480 N Orlando Ave',
       addressLocality: 'Winter Park',
       addressRegion: 'FL',
-      postalCode: '32771',
+      postalCode: '32789',
       addressCountry: 'US',
     },
     contactPoint: {
@@ -210,7 +210,7 @@ export const LocalBusinessSchema = ({ settings = {} }) => tag({
     streetAddress: '480 N Orlando Ave',
     addressLocality: 'Winter Park',
     addressRegion: 'FL',
-    postalCode: '32771',
+    postalCode: '32789',
     addressCountry: 'US',
   },
   geo: { '@type': 'GeoCoordinates', latitude: 28.5995, longitude: -81.3490 },

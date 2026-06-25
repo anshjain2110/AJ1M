@@ -18,7 +18,6 @@ const dotsForTiers = (tiers = []) => {
 };
 
 export default function ProductCard({ product, index = 0 }) {
-  const navigate = useNavigate();
   // Mount the hover video lazily (first hover) so grids stay light
   const [warm, setWarm] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -37,13 +36,11 @@ export default function ProductCard({ product, index = 0 }) {
     : null;
   const hasPrice = Number(product.price) > 0;
 
-  const openProduct = () => navigate(`/projects/${product.slug}`);
-
   return (
-    <div
-      className="group cursor-pointer lj-card-reveal"
-      style={{ animationDelay: `${Math.min(index, 11) * 70}ms` }}
-      onClick={openProduct}
+    <Link
+      to={`/projects/${product.slug}`}
+      className="group block lj-card-reveal no-underline"
+      style={{ animationDelay: `${Math.min(index, 11) * 70}ms`, color: 'inherit' }}
       onMouseEnter={() => { setWarm(true); setHovered(true); }}
       onMouseLeave={() => setHovered(false)}
       data-testid={`product-card-${product.slug}`}
@@ -150,6 +147,6 @@ export default function ProductCard({ product, index = 0 }) {
           product.subtitle && <p className="text-[12px] mt-1.5 line-clamp-1" style={{ color: 'var(--lj-muted)' }}>{product.subtitle}</p>
         )}
       </div>
-    </div>
+    </Link>
   );
 }

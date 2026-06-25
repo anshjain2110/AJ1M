@@ -363,7 +363,11 @@ export default function ProjectDetailPageV2() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#FBF7F0', fontFamily: "'Outfit', Inter, system-ui, sans-serif" }} data-testid="project-detail-v2">
       <TitleSetter title={pageTitle} description={pageDesc} />
-      <ProductSchema project={project} settings={info || {}} rating={avgRating} reviewCount={reviewCount} />
+      {/* Product JSON-LD — AggregateRating intentionally OMITTED until a real
+          customer-review module replaces the seeded on-page reviews. Per Google
+          + the SEO audit: never emit Review/AggregateRating schema for reviews
+          that aren't genuinely first-party reviews collected on this site. */}
+      <ProductSchema project={project} settings={info || {}} />
       <BreadcrumbSchema items={breadcrumb} />
 
       <MegaMenuHeader />

@@ -14,7 +14,7 @@ SOFT = HexColor("#F7F3EC")
 
 BUSINESS_DEFAULTS = {
     "business_name": "The Local Jewel",
-    "business_address": "480 N Orlando Ave, Winter Park, Florida 32771",
+    "business_address": "480 N Orlando Ave, Winter Park, Florida 32789",
     "business_phone": "+1 (585) 710-8292",
     "business_email": "ansh@thelocaljewel.com",
 }

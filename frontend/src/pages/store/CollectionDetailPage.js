@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 import { ChevronRight } from 'lucide-react';
@@ -34,7 +34,7 @@ export default function CollectionDetailPage() {
       <StoreLayout>
         <div className="max-w-3xl mx-auto px-4 py-28 text-center">
           <h1 className="text-3xl mb-3" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", color: 'var(--lj-accent)' }}>Collection not found</h1>
-          <button onClick={() => navigate('/collections')} className="px-6 py-3 text-[13px] font-medium" style={{ background: 'var(--lj-accent)', color: '#fff' }}>Browse all collections</button>
+          <Link to="/collections" className="px-6 py-3 text-[13px] font-medium inline-block no-underline" style={{ background: 'var(--lj-accent)', color: '#fff' }}>Browse all collections</Link>
         </div>
       </StoreLayout>
     );
@@ -46,7 +46,8 @@ export default function CollectionDetailPage() {
   return (
     <StoreLayout>
       <Helmet>
-        {col && <meta name="description" content={col.meta_description || col.description || `Shop ${col.title} at The Local Jewel.`} />}
+        {col && <title>{col.meta_title || `${col.title} | The Local Jewel`}</title>}
+        {col && <meta name="description" content={col.meta_description || col.description || `Shop ${col.title} at The Local Jewel — IGI-certified lab-grown diamonds, hand-crafted in Winter Park, FL.`} />}
         <link rel="canonical" href={`https://www.thelocaljewel.com/collections/${slug}`} />
       </Helmet>
 
@@ -54,7 +55,7 @@ export default function CollectionDetailPage() {
       <section className="relative" style={{ background: 'var(--lj-surface)' }}>
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-12 md:py-16">
           <div className="flex items-center gap-1.5 text-[12px] mb-4" style={{ color: 'var(--lj-muted)' }}>
-            <button onClick={() => navigate('/collections')} data-testid="breadcrumb-collections">Collections</button>
+            <Link to="/collections" data-testid="breadcrumb-collections" className="no-underline" style={{ color: 'inherit' }}>Collections</Link>
             <ChevronRight size={13} /> <span style={{ color: 'var(--lj-text)' }}>{col?.title || '…'}</span>
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-none" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", color: 'var(--lj-accent)' }} data-testid="collection-title">
@@ -71,13 +72,13 @@ export default function CollectionDetailPage() {
           <div className="text-[11px] uppercase tracking-[0.2em] mb-4" style={{ color: 'var(--lj-muted)' }}>Explore</div>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-5">
             {data.children.map((c) => (
-              <button key={c.slug} onClick={() => navigate(`/collections/${c.slug}`)} className="group text-center" data-testid={`child-collection-${c.slug}`}>
+              <Link key={c.slug} to={`/collections/${c.slug}`} className="group text-center no-underline" style={{ color: 'inherit' }} data-testid={`child-collection-${c.slug}`}>
                 <div className="relative overflow-hidden rounded-full mx-auto" style={{ aspectRatio: '1', width: '100%', maxWidth: 140, background: 'var(--lj-surface)' }}>
                   {c.image_url && <img src={c.image_url} alt={c.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />}
                 </div>
                 <span className="block mt-2.5 text-[13px] font-medium" style={{ color: 'var(--lj-text)' }}>{c.title}</span>
                 <span className="block text-[11px]" style={{ color: 'var(--lj-muted)' }}>{c.product_count} {c.product_count === 1 ? 'piece' : 'pieces'}</span>
-              </button>
+              </Link>
             ))}
           </div>
         </section>
@@ -104,7 +105,7 @@ export default function CollectionDetailPage() {
         ) : products.length === 0 ? (
           <div className="py-20 text-center">
             <p className="text-[15px] mb-4" style={{ color: 'var(--lj-muted)' }}>No pieces in this collection yet.</p>
-            <button onClick={() => navigate('/collections')} className="px-6 py-3 text-[13px] font-medium" style={{ background: 'var(--lj-accent)', color: '#fff' }}>Browse all collections</button>
+            <Link to="/collections" className="px-6 py-3 text-[13px] font-medium inline-block no-underline" style={{ background: 'var(--lj-accent)', color: '#fff' }}>Browse all collections</Link>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-x-8 md:gap-y-12" data-testid="collection-products-grid">
