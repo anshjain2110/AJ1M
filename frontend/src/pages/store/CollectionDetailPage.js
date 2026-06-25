@@ -45,11 +45,12 @@ export default function CollectionDetailPage() {
 
   return (
     <StoreLayout>
-      <Helmet>
-        {col && <title>{col.meta_title || `${col.title} | The Local Jewel`}</title>}
-        {col && <meta name="description" content={col.meta_description || col.description || `Shop ${col.title} at The Local Jewel — IGI-certified lab-grown diamonds, hand-crafted in Winter Park, FL.`} />}
-        <link rel="canonical" href={`https://www.thelocaljewel.com/collections/${slug}`} />
-      </Helmet>
+      {col && (
+        <Helmet>
+          <meta name="description" content={col.meta_description || col.description || `Shop ${col.title} at The Local Jewel — IGI-certified lab-grown diamonds, hand-crafted in Winter Park, FL.`} />
+          <link rel="canonical" href={`https://www.thelocaljewel.com/collections/${slug}`} />
+        </Helmet>
+      )}
 
       {/* Hero */}
       <section className="relative" style={{ background: 'var(--lj-surface)' }}>

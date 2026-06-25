@@ -1720,6 +1720,10 @@ const babelMetadataPlugin = ({ types: t }) => {
           if (hasProp(openingElement, "data-ve-dynamic") || hasProp(openingElement, "x-excluded")) {
             return;
           }
+          // HTML elements whose children MUST be a single text node — react-helmet-async
+          // and React itself error if we wrap their expression children in <span>.
+          const TEXT_ONLY_NATIVE = new Set(["title", "meta", "link", "script", "style", "option", "textarea"]);
+          if (TEXT_ONLY_NATIVE.has(elementName)) return;
           wrapDynamicExpressionChildren(jsxPath, t);
           return;
         }

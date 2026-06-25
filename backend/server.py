@@ -15,7 +15,7 @@ load_dotenv("/app/backend/.env")
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, Response, RedirectResponse
 from pydantic import BaseModel, Field
 from motor.motor_asyncio import AsyncIOMotorClient
 import jwt
@@ -2397,6 +2397,13 @@ async def regenerate_static_sitemap():
         logger.info("Regenerated static sitemap INDEX pointing to /api/sitemap.xml")
     except Exception as e:
         logger.error(f"Failed to write static sitemap index: {e}")
+
+# Permanent redirect /products/{slug} -> /projects/{slug} so previously indexed
+# /products URLs keep their ranking after we standardized on /projects.
+@app.get("/products/{slug}", include_in_schema=False)
+async def products_to_projects_redirect(slug: str):
+    return RedirectResponse(url=f"/projects/{slug}", status_code=308)
+
 
 @app.get("/sitemap.xml", include_in_schema=False)
 @app.get("/api/sitemap.xml", include_in_schema=False)

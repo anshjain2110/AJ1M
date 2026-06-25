@@ -1,0 +1,48 @@
+{
+  "summary": "Iteration 15 — RE-TEST after fixing the two bugs from iteration_14. Both CRITICAL FIXES are CONFIRMED WORKING on the legacy CRA. The rollback from Next.js is complete and the app is fully operational. (1) /collections/engagement-rings now renders cleanly: no react-helmet-async runtime error overlay, document.title set to 'Lab Grown Diamond Engagement Rings | The Local Jewel', H1 'Engagement Rings' + breadcrumb + 2 product-card data-testids visible. (2) /products/5-carat-oval-solitaire-engagement-ring client-side-redirects to /projects/5-carat-oval-solitaire-engagement-ring (page.url() confirms) and the PDP renders with v2-title, v2-fast-badge, v2-add-to-bag, hero image, metal/carat selectors and price ($1,800+). Homepage Wizard CTA + headline + mega-menu present, /blog index + /blog/how-to-pick-a-lab-grown-diamond render, /contact form renders, admin login (ansh@thelocaljewel.com) lands on /admin Analytics dashboard, OTP login (testuser_iter15b@example.com → code 060159) lands on /dashboard with [data-testid='account-overview'] visible. Backend SEO endpoints all 200: /robots.txt (3155b), /llms.txt (1978b), /api/sitemap.xml (2419b, contains /projects/* URLs), /api/settings/public (217b). Supervisor shows only backend/frontend/mongodb (+nginx-code-proxy infra) — NO legacy_frontend, NO Next.js process. /app/frontend has craco.config.js + src/ (CRA), /app/frontend-next preserved off-to-the-side and inert. ZERO pageerrors, ZERO Helmet/Invariant console errors across all tested routes.",
+
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/products/{slug}", "issue": "Server-side returns HTTP 200 (SPA catch-all), not a 301/308 redirect. The review request explicitly notes the backend redirect at /products/local-jewel-v2 in server.py:2400-2405 does not fire because ingress routes /products/* to the frontend. Client-side <Navigate> in App.js handles the redirect for SPA users, but search engines / direct GETs do not get a permanent redirect. Acceptable per the review note; tracked for SEO follow-up only."}
+    ]
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/collections/wedding-bands", "issues": ["Route loads with no Helmet error (good) but renders no H1 and 0 product cards because the 'wedding-bands' collection does not exist in DB / returns notFound. Not a regression — same behavior as iter_14. Consider seeding a wedding-bands collection or removing the link if it's surfaced anywhere."]}
+    ]
+  },
+
+  "test_report_links": ["/app/test_reports/iteration_15.json"],
+
+  "action_items": [
+    "(Optional, SEO-only) Add server-side 301/308 redirect for /products/{slug} → /projects/{slug}. Current client-side Navigate is sufficient for browser users but does not help search engines. Note from review: ingress routes /products/* to frontend, so backend redirect must be implemented at the SPA index.html level or via a middleware that rewrites for non-HTML accept headers.",
+    "(Optional) Seed a 'wedding-bands' collection in DB or hide the link if no products exist."
+  ],
+
+  "critical_code_review_comments": [
+    "GOOD: CollectionDetailPage.js — Helmet now only contains <meta> and <link rel='canonical'>; <title> is set imperatively via document.title in the .then() callback. This is the correct pattern with react-helmet-async and resolves the iter_14 invariant error.",
+    "GOOD: App.js:78 — <Route path='/products/:slug' element={<ProductRedirect />}/> where ProductRedirect renders <Navigate to=`/projects/${slug}` replace>. Clean client-side migration of legacy product URLs to unified project URLs.",
+    "NOTE: The review request references a testid 'v2-from-price' but grep on /app/frontend/src/pages/ProjectDetailPageV2.js shows no such testid exists in the code. The price IS rendered (visible as '$1,800+' on the PDP), just under a different markup. If E1 wants this testid for automation, add data-testid='v2-from-price' on the price element.",
+    "NOTE: backend/server.py:2400-2405 hard-codes a single-slug redirect for /products/local-jewel-v2 but as the review acknowledges, ingress bypasses the backend for /products/*. Either delete the dead code or move the redirect logic to a Kubernetes ingress rule / nginx rewrite."
+  ],
+
+  "updated_files": [],
+
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+
+  "test_credentials": "Admin ansh@thelocaljewel.com / Rakesh@2709 verified working (lands on /admin Analytics). Customer OTP login verified with testuser_iter15b@example.com, on-screen OTP 060159.",
+
+  "seed_data_creation": "Created 1 new test customer via OTP login (testuser_iter15b@example.com) and 1 ephemeral OTP request for testuser_iter15@example.com. No new leads/projects.",
+
+  "retest_needed": false,
+
+  "main_agent_can_self_test": true,
+
+  "context_for_next_testing_agent": "Iteration_14 had two CRITICAL bugs (CollectionDetailPage Helmet invariant error, missing /products/* redirect). BOTH are now FIXED and verified in iteration_15. The app is in a green state: rollback complete, supervisor clean (backend/frontend/mongodb), all critical user flows work (Wizard home → OTP login → dashboard, admin login → analytics, PDP, collection detail, blog, contact, sitemap, robots, llms.txt). Only remaining open item is the OPTIONAL SEO-grade server-side 301/308 redirect for /products/{slug} which would require an ingress/nginx rewrite (cannot be done from the FastAPI app because ingress doesn't route /products/* to it).",
+
+  "rca of the issue": "Iteration_14 bugs root-cause: (1) react-helmet-async v2 throws an invariant when a JSX expression child of <title> is processed even when guarded by a falsy short-circuit such as {col && (...)} — because the conditional was inside <Helmet> instead of wrapping it. FIX (applied by main agent): removed the <title> JSX from inside <Helmet> entirely; document.title is now set imperatively in the axios .then() callback. The <Helmet> block only renders <meta name='description'> and <link rel='canonical'> with safe string children. Verified: 0 Helmet errors across /collections/engagement-rings, /collections/wedding-bands, /, /projects/5-carat-oval-solitaire-engagement-ring. (2) /products/{slug} returned the SPA index.html because no backend route handled it and no client route was registered. FIX (applied by main agent): added <Route path='/products/:slug' element={<ProductRedirect/>}> in App.js with ProductRedirect using <Navigate to=`/projects/${slug}` replace>. Verified: page.goto('/products/5-carat-oval-solitaire-engagement-ring') ends with page.url ending in '/projects/5-carat-oval-solitaire-engagement-ring' and PDP renders fully."
+}
