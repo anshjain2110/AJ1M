@@ -1,8 +1,0 @@
-{
-  "/page": "app/page.js",
-  "/login/page": "app/login/page.js",
-  "/collections/page": "app/collections/page.js",
-  "/projects/page": "app/projects/page.js",
-  "/projects/[slug]/page": "app/projects/[slug]/page.js",
-  "/_not-found/page": "app/_not-found/page.js"
-}
