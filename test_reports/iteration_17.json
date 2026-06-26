@@ -1,0 +1,36 @@
+{
+  "summary": "Iteration_17 regression smoke test PASSED 100%. Verified that adding /app/.dockerignore (and removal of /app/frontend/build & /app/frontend-next) caused zero regression in the live preview environment. All 8 smoke checks (7 functional + 1 filesystem) green. Live app is unaffected since /app/frontend supervisor runs CRA dev server (yarn start) which does not consult .dockerignore.",
+  "smoke_results": {
+    "1_homepage_wizard": "PASS - / returns 200, title='The Local Jewel | Custom Quote'. 'Get me a quote' CTA present, paste-link input present, mega menu shows Engagement Rings (6 ER references confirming nav + collection links). 0 console errors during navigation.",
+    "2_pdp_5_carat_oval": "PASS - /projects/5-carat-oval-solitaire-engagement-ring renders with [data-testid=v2-title], [data-testid=v2-fast-badge], [data-testid=v2-add-to-bag], hero image, metal selectors (Silver/10K/14K/18K/Platinum), carat selectors (1ct..4ct), price $1,800+, IGI Certified badge. 6 JSON-LD blocks via react-helmet-async: Organization, WebSite, Organization, WebSite, Product, BreadcrumbList — Product and BreadcrumbList both confirmed.",
+    "3_collection_engagement_rings": "PASS - /collections/engagement-rings rendered with 2 [data-testid^=product-card] cards. No Helmet 'expects a string as a child of <title>' error. 0 console errors.",
+    "4_products_redirect": "PASS - /products/5-carat-oval-solitaire-engagement-ring client-side redirected to /projects/5-carat-oval-solitaire-engagement-ring as expected.",
+    "5_admin_login": "PASS - /admin/login → submit ansh@thelocaljewel.com / Rakesh@2709 → lands on /admin (analytics dashboard, 3 Analytics/Dashboard/Overview indicators).",
+    "6_otp_login": "PASS - /login → filled smoke17@example.com → Send code → [data-testid=otp-display-code]='394169' → otp-login-otp-input filled → Verify → /dashboard rendered with [data-testid=account-overview] (Hi, smoke17; Overview tab; Custom quotes / Orders / Messages tiles).",
+    "7_backend_seo_endpoints": "PASS - GET /robots.txt → 200 (3155 bytes), /llms.txt → 200 (1978 bytes), /api/sitemap.xml → 200 (2419 bytes, contains 3 /projects/ URLs), /api/settings/public → 200, /api/projects → 200.",
+    "8_filesystem_check": "PASS - /app/.dockerignore exists with all expected exclusions (node_modules, .git, build, .next, .pytest_cache, .ruff_cache, test_reports, frontend-next, memory, etc.). /app/frontend/build does NOT exist. /app/frontend-next does NOT exist."
+  },
+  "dockerignore_verification": {
+    "path": "/app/.dockerignore",
+    "size_bytes": "~1.4KB",
+    "exclusions_confirmed": ["**/node_modules", ".git", "**/build", "**/dist", "**/.next", "**/.pytest_cache", "**/.ruff_cache", "test_reports", "frontend-next", "frontend-next-bak", "memory", "**/__pycache__", "yarn.lock", "*.log"],
+    "expected_context_reduction": "818 MB → ~26 MB (32x reduction)"
+  },
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "Admin ansh@thelocaljewel.com / Rakesh@2709 verified. Customer OTP via [data-testid=otp-display-code] verified.",
+  "seed_data_creation": "Created ephemeral customer 'smoke17@example.com' via OTP flow during test (no cleanup required).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration_17 was a pure deploy-context regression smoke check after adding /app/.dockerignore. The live preview is fully green and identical in behavior to iterations 15 and 16. /app/frontend supervisor runs CRA dev server (yarn start), which does not consult .dockerignore — the .dockerignore only affects the Emergent build pipeline's docker context. User can safely re-trigger the Emergent production deploy. If Step #34 still fails with the .dockerignore in place, the issue is on the Emergent platform side (R2 upload infra) and they should contact Emergent support.",
+  "rca of the issue": "N/A - regression smoke test only; root-cause already mitigated by main agent: missing .dockerignore caused 818 MB build context (node_modules 1.9 GB + .git 161 MB) that overwhelmed the Cloudflare R2 upload step. Adding /app/.dockerignore reduces context to ~26 MB."
+}
