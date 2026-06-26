@@ -1,0 +1,31 @@
+{
+  "summary": "Iteration_16 regression smoke test PASSED 100%. Verified that moving /app/frontend-next to /root/frontend-next-bak caused no regression in the live preview environment. All 8 smoke checks from the request green.",
+  "smoke_results": {
+    "1_homepage_wizard": "PASS - WizardPage rendered, 'Get me a quote' CTA present, link box present, mega menu shows Engagement Rings / Collections / Custom Design / Past Projects / Journal / Contact. No React error overlay, no 'Link is not defined' or 'Cannot read properties of undefined' errors.",
+    "2_pdp_5_carat_oval": "PASS - /projects/5-carat-oval-solitaire-engagement-ring renders with [data-testid=v2-title], v2-fast-badge, v2-add-to-bag, hero image, metal selectors (Silver/10K/14K/18K/Platinum), carat selectors (1ct..4ct), price $1,800+. 6 JSON-LD blocks injected (Organization, WebSite, Product, BreadcrumbList, etc.) via react-helmet-async.",
+    "3_collection_engagement_rings": "PASS - /collections/engagement-rings rendered with 2 [data-testid^=product-card] cards. No Helmet 'expects a string as a child of <title>' error in console.",
+    "4_products_redirect": "PASS - /products/5-carat-oval-solitaire-engagement-ring client-side redirected to /projects/5-carat-oval-solitaire-engagement-ring.",
+    "5_admin_login": "PASS - /admin/login → submit ansh@thelocaljewel.com / Rakesh@2709 → lands on /admin Analytics dashboard.",
+    "6_otp_login": "PASS - /login → filled email → Send code → [data-testid=otp-display-code] returned 6-digit OTP → otp-login-otp-input → /dashboard rendered with [data-testid=account-overview] (Overview tab, 'Hi, smoketest', Custom quotes/Orders/Messages tiles).",
+    "7_backend_seo_endpoints": "PASS - GET /robots.txt 200 (3155 bytes), /llms.txt 200 (1978 bytes), /api/sitemap.xml 200 includes project URLs (4-41-carat-radiant-hidden-halo, 3-40-carat-oval-side-stone, 5-carat-oval-solitaire), /api/settings/public 200, /api/projects 200 returns 3 projects.",
+    "8_supervisor_status": "PASS - supervisorctl status shows ONLY: backend RUNNING, frontend RUNNING, mongodb RUNNING, nginx-code-proxy RUNNING, code-server STOPPED (infra only). NO legacy_frontend program present."
+  },
+  "filesystem_verification": {
+    "app_frontend_next_removed": "Confirmed - /app/frontend-next does not exist",
+    "backup_preserved": "Confirmed - /root/frontend-next-bak/{app,components,lib,next.config.js,node_modules,...} present",
+    "active_frontend_env": "REACT_APP_BACKEND_URL=https://local-jewel-v2.preview.emergentagent.com (correct)"
+  },
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "Admin ansh@thelocaljewel.com / Rakesh@2709 verified working. Customer OTP works with any email; code revealed via [data-testid=otp-display-code].",
+  "seed_data_creation": "None. Created an ephemeral customer account 'smoketest@example.com' via OTP login flow.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "This was iteration_16 — a pure infra/build-context smoke check after moving the unused /app/frontend-next directory out of /app. The live preview env is fully green and matches iteration_15 behavior. User can now safely re-trigger the Emergent production deploy.",
+  "rca of the issue": "N/A - regression smoke test only, no bugs found."
+}
