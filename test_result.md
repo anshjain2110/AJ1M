@@ -101,3 +101,98 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: |
+  Complete the Next.js 15 App Router SSR migration for SEO + AI-crawler visibility WITHOUT touching the
+  live CRA at /app/frontend. Build side-by-side in /app/frontend-next, preserve exact slugs
+  (/projects/[slug], /collections/[slug]), unique per-page metadata + single www canonical, dedupe
+  Org/WebSite JSON-LD, NO AggregateRating (Etsy reviews are third-party), full Product/Offer/ProductGroup/
+  Breadcrumb structured data, real 404s, sitemap.xml + robots.txt, ISR revalidation wired to FastAPI
+  _seo_refresh(). Cut over in waves; Wave 1 = homepage + /collections + /collections/[slug] + PDP.
+
+backend:
+  - task: "ISR revalidation hook (_seo_refresh -> _ping_nextjs_revalidate -> Next /api/revalidate)"
+    implemented: true
+    working: true
+    file: "/app/backend/admin_routes.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: true
+        -agent: "main"
+        -comment: "Existing backend hook (unchanged code). Set NEXT_REVALIDATE_URL=http://localhost:3001/api/revalidate + NEXT_REVALIDATE_TOKEN in backend/.env and restarted backend. Verified end-to-end: backend _ping_nextjs_revalidate POSTs {paths} with x-revalidate-token; Next /api/revalidate returns 200 and flushes ISR cache (stale collection title -> revalidate -> fresh)."
+
+frontend:
+  - task: "Next.js 15 SSR app scaffolded side-by-side in /app/frontend-next (Wave 1)"
+    implemented: true
+    working: true
+    file: "/app/frontend-next"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: true
+        -agent: "main"
+        -comment: "Production `yarn build` clean. Live CRA at /app/frontend UNTOUCHED. Ported real components as client comps (SSR'd); react-router-dom + react-helmet-async aliased to compat shims; analytics/CartContext SSR-guarded + global ls/ss stub."
+  - task: "Homepage SSR (real homepage: hero, quote wizard, engagement, featured, Etsy social proof) + Org/WebSite JSON-LD once + www canonical"
+    implemented: true
+    working: true
+    file: "/app/frontend-next/app/page.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: true
+        -agent: "main"
+        -comment: "View-Source has full real content (H1, all marketing sections, real <a href> nav). Exactly ONE Organization + ONE WebSite JSON-LD; ZERO AggregateRating. Unique title + meta description + single canonical https://www.thelocaljewel.com. NOTE: benign hydration warning from framer-motion entrance anim / time-based delivery date (SSR HTML is correct for crawlers) - polish item."
+  - task: "/collections + /collections/[slug] SSR + BreadcrumbList + 404"
+    implemented: true
+    working: true
+    file: "/app/frontend-next/app/collections"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: true
+        -agent: "main"
+        -comment: "Both SSR real content + real product <a href> links + BreadcrumbList + unique title/desc + www self-canonical. Missing collection slug returns real HTTP 404. collection/[slug] is dynamic SSR (always fresh)."
+  - task: "PDP /projects/[slug] SSR + Product/Offer/ProductGroup/Breadcrumb + 404 + NO AggregateRating"
+    implemented: true
+    working: true
+    file: "/app/frontend-next/app/projects/[slug]/page.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: true
+        -agent: "main"
+        -comment: "Visible price seeded server-side ($1,800) matches Product Offer JSON-LD. 3 valid ld+json blocks: Product (price/cur/availability/itemCondition + OfferShippingDetails + MerchantReturnPolicy + IGI Certification), ProductGroup (productGroupID + variesBy material/size + 40 hasVariant w/ offers), BreadcrumbList(4). ZERO aggregateRating/review schema. /projects/does-not-exist returns real 404. Variant selectors + add-to-cart interactive."
+  - task: "sitemap.xml + robots.txt (www, products+collections, exclude admin/login/dashboard)"
+    implemented: true
+    working: true
+    file: "/app/frontend-next/app/sitemap.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: true
+        -agent: "main"
+        -comment: "Removed conflicting static public/robots.txt + public/sitemap.xml. Dynamic sitemap lists products + collections + static routes (all www host), excludes admin/login/dashboard. robots.txt disallows /admin /login /dashboard /cart /checkout and references sitemap."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 0
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Wave 1 verified via curl + screenshots; awaiting user approval before cutover"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    -agent: "main"
+    -message: "Wave 1 of the Next.js SSR migration is built side-by-side in /app/frontend-next and verified manually (View-Source content, unique metadata + single www canonical, single Org/WebSite, zero AggregateRating, valid Product/ProductGroup/Breadcrumb JSON-LD, real 404s, sitemap/robots, ISR revalidation loop). Live CRA at /app/frontend is UNTOUCHED. NOT cut over yet - awaiting user approval per the wave plan. The Next app runs on localhost:3001 (not the external preview URL, which still serves the live CRA on :3000)."
