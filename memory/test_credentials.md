@@ -7,7 +7,7 @@
 
 ## To enable Google login (one-time setup by merchant)
 1. Google Cloud Console → APIs & Services → Credentials → Create OAuth client ID → Web application.
-2. Authorized JavaScript origins: add `https://local-jewel-v2.preview.emergentagent.com`, `https://thelocaljewel.com`, and any other custom domains.
+2. Authorized JavaScript origins: add `https://seo-waves-cutover.preview.emergentagent.com`, `https://thelocaljewel.com`, and any other custom domains.
 3. Authorized redirect URIs: not needed for this Identity-Services flow (we use ID token only), but harmless to add the same origins.
 4. Copy the Client ID, set `GOOGLE_CLIENT_ID=<id>` in `/app/backend/.env`, then redeploy.
 

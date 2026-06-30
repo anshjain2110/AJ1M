@@ -13,7 +13,7 @@
   "filesystem_verification": {
     "app_frontend_next_removed": "Confirmed - /app/frontend-next does not exist",
     "backup_preserved": "Confirmed - /root/frontend-next-bak/{app,components,lib,next.config.js,node_modules,...} present",
-    "active_frontend_env": "REACT_APP_BACKEND_URL=https://local-jewel-v2.preview.emergentagent.com (correct)"
+    "active_frontend_env": "REACT_APP_BACKEND_URL=https://seo-waves-cutover.preview.emergentagent.com (correct)"
   },
   "backend_issues": {"critical": [], "minor": []},
   "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
