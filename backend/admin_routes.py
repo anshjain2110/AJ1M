@@ -974,7 +974,7 @@ async def export_leads_csv(admin=Depends(require_admin), status: Optional[str] =
         except Exception:
             pass
 
-    cursor = db.leads.find(query).sort("created_at", -1)
+    cursor = db.leads.find(query).sort("created_at", -1).limit(50000)
     fields = ["lead_id", "first_name", "phone", "email", "product_type", "diamond_shape", "carat_range", "priority", "metal", "budget", "status", "created_at", "notes"]
 
     output = io.StringIO()
