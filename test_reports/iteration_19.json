@@ -1,0 +1,42 @@
+{
+  "summary": "Deploy-hardening regression on live external URL after CRA-into-Next static SPA cutover. ALL 6 requested critical flows PASS end-to-end. The legacy CRA is now correctly served as a same-origin static SPA from Next.js public/ (no more :3002 proxy) and its /api/admin/* calls succeed same-origin. Buyable PDP + cart + Stripe checkout flow works and produces a real cs_test_* Stripe session on the live site.",
+  "results_per_requested_flow": {
+    "1_public_ssr_pages": "PASS. /, /collections, /blog, /contact all return 200 with real Next.js SSR content (homepage 6138 bytes with hero, /collections 975 bytes, /blog renders 'THE JOURNAL — Notes from the studio' with 2 articles, /contact 716 bytes). No blank/error pages.",
+    "2_admin_panel_login_and_data": "PASS (MOST IMPORTANT). GET /admin/login serves the CRA shell from /legacy.html. Filled ansh@thelocaljewel.com / Rakesh@2709 → POST /api/admin/auth/login (same-origin relative) → redirected to /admin with full Analytics dashboard sidebar (Analytics, Leads, Messages, Orders, Projects, Collections, Sale & Promo, Header/Menu, Journal, Showcase, Settings, Tracking, Logout). Navigated to Leads → 'Lead Management' table rendered with 4 real leads (Emily Rodriguez, Michael Chen, Sarah Johnson, E2E Tester) — proves authenticated /api/admin/leads works same-origin. JWT stored under localStorage tlj_admin_token.",
+    "3_pitch_gate": "PASS. /pitch returned 365-byte password gate ('CONFIDENTIAL · INVESTOR BRIEF ... Access requires the shared password'). Entered TLJ@2026 → 17,131 bytes of investor content rendered (Opportunity, Problem, Customer, Founder, Traction, Economics, Ramp, Outlook, LTV, Returns, Funds, Ask sections; header 'A profitable, founder-led custom jewelry brand. $300K in trailing sales').",
+    "4_customer_otp_login": "PASS. /login → filled [data-testid=otp-login-phone-input]=tester_deploy2@example.com → clicked [data-testid=otp-login-send-otp-button] → [data-testid=otp-display-code] shown ('911443') → filled OTP into [data-testid=otp-login-otp-input] → [data-testid=otp-login-verify-button] → redirected to /dashboard. (Note: first attempt failed because my extractor used raw .inner_text() which included the 'YOUR VERIFICATION CODE' label plus code — fixed with a regex to pull just the 6 digits. This is a test-script issue, not a product bug.)",
+    "5_buyable_pdp_cart_stripe": "PASS. /projects/2-carat-oval-hidden-halo-engagement-ring rendered the shop PDP correctly with $1,800+ price, IGI Certified badge, 'FAST · SHIPS IN 2-5 BUSINESS DAYS', metal selectors (14K/18K/Platinum + gold/rose/white color chips = 4 v2-metal-* testids), carat selectors (1ct/1.5ct/2ct/2.5ct/3ct/4ct = 7 v2-carat-* testids incl. hidden), and [data-testid=v2-add-to-bag]. Clicked Add to bag → cart badge updated to 1 → navigated to /cart → clicked [data-testid=cart-checkout-btn] → redirected to https://checkout.stripe.com/c/pay/cs_test_a1tRE1O2BxaF5tzeucV5VGZE7Y3Sm5h5e4IxEqydJOFyUw294Oga8CXxTk. Real cs_test_* session verified on Stripe's live checkout page. Stripe test card 4242 4242 4242 4242 not exercised (session creation is the requested acceptance criteria).",
+    "6_legacy_static_pages": "PASS with 1 informational nit. /privacy (2657B — 'Privacy Policy · Updated Feb 28, 2026'), /terms (2722B — 'Terms & Conditions'), /cuts (358B — 'Here are some cuts you probably haven't seen before.'), /projects (1591B — 'PAST PROJECTS — Real pieces. Real customers. Real journeys.' with 5 projects and IGI-Certified filter) all render the CRA SPA shell with actual content and status 200. /thank-you returns 200 and content renders but title = 'The Local Jewel | Custom Quote' and body shows the Next.js HOMEPAGE hero — i.e. /thank-you falls back to the Next.js homepage catch-all instead of showing a dedicated 'Thank you' confirmation page. Not blank/broken (meets the letter of the acceptance criterion: 'load 200, content renders, not blank'), but this is worth confirming with product intent — see action_items."
+  },
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/thank-you", "issues": ["Route returns 200 and is not blank, but renders the Next.js homepage instead of a dedicated 'thank you' confirmation page. Title is 'The Local Jewel | Custom Quote' and body is the /  hero. If this is intentional (SPA fallback), no action needed; otherwise a dedicated /thank-you page should be added to either the CRA build or a Next.js /thank-you/page.jsx."]}
+    ]
+  },
+  "console_noise_observed": [
+    "[GSI_LOGGER]: The given origin is not allowed for the given client ID. (Google Identity Services — the preview URL https://next-frontend-live.preview.emergentagent.com is not in Authorized JS origins for the merchant's Google OAuth client. Non-blocking: OTP email flow still works. To enable Google Login on the preview URL, add that origin in Google Cloud → OAuth Client → Authorized JavaScript origins.)",
+    "Meta Pixel + TikTok Pixel warnings about non-standard event names and duplicate pixel IDs — expected marketing-pixel noise per the request; not errors."
+  ],
+  "test_report_links": [],
+  "action_items": [
+    "OPTIONAL: Decide if /thank-you should have dedicated content vs. current homepage fallback. Not a deploy blocker.",
+    "OPTIONAL: Add the preview domain (https://next-frontend-live.preview.emergentagent.com) to Google Cloud OAuth 'Authorized JavaScript origins' for the merchant's Client ID if Google Login on the preview environment is desired. Not a deploy blocker for prod thelocaljewel.com."
+  ],
+  "critical_code_review_comments": [
+    "next.config.js beforeFiles rewrites now correctly route /admin, /pitch, /privacy, /terms, /cuts, /products/*, /projects, /projects/:slug/v2 to the static /legacy.html shell served from Next.js public/ — verified end-to-end (no more :3002 proxy required). Deploy footprint reduced to a single Next.js process. ✅",
+    "CRA (frontend-legacy) using relative /api/* calls works same-origin — admin JWT flow and Lead Management data load prove this. ✅",
+    "Buyable-vs-showcase PDP behavior is now correct: /projects/2-carat-oval-hidden-halo-engagement-ring shows metal/carat/v2-add-to-bag (buyable=true), consistent with the request spec. The iteration_18 regression on non-buyable /projects/5-... is expected per the current handoff (that slug is intentionally a showcase-only project without cart).",
+    "Stripe session creation verified live (cs_test_ prefixed session id present in Stripe checkout URL). Redirect works with 302→checkout.stripe.com."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "6/6 flows PASS (~100%)"},
+  "test_credentials": "Verified working: Admin ansh@thelocaljewel.com / Rakesh@2709; Pitch password TLJ@2026; Customer OTP (any email, code shown at [data-testid=otp-display-code]).",
+  "seed_data_creation": "Created ephemeral customer accounts tester_deploy@example.com and tester_deploy2@example.com via OTP flow. Created 1 cs_test_* Stripe session (test mode, not paid). No production data written.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Post-cutover deploy hardening is GREEN. Legacy CRA is served from Next.js public/legacy.html + public/static/*; the beforeFiles rewrites in /app/frontend/next.config.js correctly map /admin, /pitch, /privacy, /terms, /cuts, /projects, /projects/:slug/v2, /products/* to /legacy.html. Same-origin authenticated /api/admin/* works. Buyable PDP + cart + real Stripe cs_test_ session verified on live URL. Only cosmetic nit is /thank-you falls back to the Next.js homepage — flag to product team, not a blocker. Google Identity Services logs GSI warning on preview URL because the origin isn't in the OAuth client's authorized origins list — expected for preview, safe to ignore.",
+  "rca of the issue": "No blocking bugs found this iteration."
+}
