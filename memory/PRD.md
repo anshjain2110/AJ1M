@@ -60,6 +60,16 @@ sudo supervisorctl reread && sudo supervisorctl update && sudo supervisorctl res
   Product/ProductGroup/Offer schema on buyable PDPs, /admin login→dashboard through
   proxy, OTP customer login→dashboard, cart→Stripe checkout (real cs_test_ session),
   and all legacy public pages render (no 404s).
+- 2026-06: ✅ **Deployment readiness = GREEN (deployment_agent PASS).** Fixes:
+  `CORS_ORIGINS="*"` in backend/.env + removed hardcoded CORS fallback in server.py
+  (now `os.environ.get("CORS_ORIGINS","*")`); leads CSV export bounded with
+  `.limit(50000)`; `.gitignore` rewritten/cleaned so `.env` files deploy.
+  Verified live: per-page unique titles/descriptions (real, not placeholders),
+  apex→www 301 fires (Host: thelocaljewel.com → 301 www, path preserved; www → 200),
+  and a real admin `meta_title` edit auto-flushed the Next ISR cache (SSR `<title>`
+  updated with no manual revalidate) then reverted.
+  Deploy caveats to monitor: pipeline must `next build` before `next start`, and must
+  start the `legacy-cra` service (recognized in supervisor config) for the /admin proxy.
 - 2026 (pre-cutover): Waves 1–3 Next migration built + tested on :3001 (see test_result.md).
 - 2026-02: CRA deploy fix (craco deps), `.dockerignore`, `/products→/projects` redirect.
 
