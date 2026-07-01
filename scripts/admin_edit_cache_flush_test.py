@@ -1,6 +1,6 @@
 import json, time, urllib.request
 
-API = "https://seo-waves-cutover.preview.emergentagent.com"
+API = "https://next-frontend-live.preview.emergentagent.com"
 PROJECT_ID = "7e3af7a4-d266-4006-bb1a-0151675105f8"  # 3-carat-radiant-solitaire-engagement-ring
 SLUG = "3-carat-radiant-solitaire-engagement-ring"
 TEST_TITLE = "CACHE-FLUSH TEST — 3 Carat Radiant Solitaire | The Local Jewel"

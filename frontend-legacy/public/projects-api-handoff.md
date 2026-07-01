@@ -24,7 +24,7 @@ files go to Cloudflare R2 and the project doc references the resulting URL.
 | Environment       | Base URL                                                |
 |-------------------|---------------------------------------------------------|
 | **Production**    | `https://thelocaljewel.com`                             |
-| Preview (testing) | `https://seo-waves-cutover.preview.emergentagent.com`     |
+| Preview (testing) | `https://next-frontend-live.preview.emergentagent.com`     |
 
 > Test on **preview first**, then switch the base URL when ready.
 
