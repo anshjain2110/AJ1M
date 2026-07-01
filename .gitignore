@@ -78,3 +78,6 @@ agenthub/agents/youtube/db
 
 # Build caches
 .cache/
+.env
+.env.*
+*.env
