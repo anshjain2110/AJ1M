@@ -13,14 +13,16 @@ const formatDate = (d) => {
   return new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 };
 
-export default function BlogDetailPage() {
-  const { slug } = useParams();
-  const [post, setPost] = useState(null);
-  const [related, setRelated] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function BlogDetailPage({ initialPost = null, initialRelated = null, initialSlug = null }) {
+  const params = useParams();
+  const slug = initialSlug || params.slug;
+  const [post, setPost] = useState(initialPost);
+  const [related, setRelated] = useState(initialRelated || []);
+  const [loading, setLoading] = useState(!initialPost);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
+    if (initialPost) return;
     let mounted = true;
     setLoading(true); setNotFound(false); setPost(null);
     axios.get(`${BACKEND_URL}/api/blog/${slug}`).then(res => {
@@ -33,7 +35,7 @@ export default function BlogDetailPage() {
       if (mounted) setNotFound(true);
     }).finally(() => { if (mounted) setLoading(false); });
     return () => { mounted = false; };
-  }, [slug]);
+  }, [slug, initialPost]);
 
   // Compute SEO strings before early returns so hooks order stays stable
   const pageTitle = post
@@ -73,22 +75,9 @@ export default function BlogDetailPage() {
   }
 
   const desc = String((post.meta_description && post.meta_description.trim()) || (post.excerpt && post.excerpt.trim()) || 'Real advice from working jewelers — diamond buying guides, custom design stories, and behind-the-scenes from The Local Jewel.');
-  const canonical = `https://thelocaljewel.com/blog/${post.slug}`;
+  const canonical = `https://www.thelocaljewel.com/blog/${post.slug}`;
   const ogTitle = String(post.meta_title || post.title || 'The Local Jewel Journal');
   const heroImg = post.hero_image_url || '';
-
-  const jsonLdString = JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BlogPosting',
-    headline: post.title || '',
-    image: heroImg,
-    datePublished: post.published_at || post.created_at,
-    dateModified: post.updated_at || post.published_at || post.created_at,
-    author: { '@type': 'Organization', name: post.author_name || 'The Local Jewel' },
-    publisher: { '@type': 'Organization', name: 'The Local Jewel', url: 'https://thelocaljewel.com' },
-    description: desc,
-    mainEntityOfPage: canonical,
-  });
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--lj-bg)' }} data-testid="blog-detail-page">
@@ -102,8 +91,7 @@ export default function BlogDetailPage() {
         <meta property="og:url" content={canonical} />
         <meta name="twitter:card" content="summary_large_image" />
       </Helmet>
-      {/* JSON-LD outside Helmet to avoid react-helmet-async script-child quirk */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString }} />
+      {/* BlogPosting JSON-LD is emitted once, server-side, by app/blog/[slug]/page.jsx. */}
 
       <PublicHeader />
 

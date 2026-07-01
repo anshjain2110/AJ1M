@@ -274,13 +274,14 @@ export function blogPostingSchema(post) {
     '@type': 'BlogPosting',
     '@id': `${url}#post`,
     headline: post.title,
-    description: post.excerpt || post.meta_description || '',
-    image: post.cover_image || post.hero_image || `${SITE_URL}/logo-main.png`,
+    description: post.meta_description || post.excerpt || '',
+    image: post.hero_image_url || `${SITE_URL}/logo-main.png`,
     datePublished: post.published_at || post.created_at,
     dateModified: post.updated_at || post.published_at || post.created_at,
-    author: { '@type': 'Organization', name: 'The Local Jewel', '@id': ORG_ID },
+    author: { '@type': 'Organization', name: post.author_name || 'The Local Jewel', '@id': ORG_ID },
     publisher: { '@id': ORG_ID },
     mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+    articleSection: post.category || undefined,
     url,
   };
 }

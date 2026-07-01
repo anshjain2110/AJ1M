@@ -13,13 +13,14 @@ const formatDate = (d) => {
   return new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 };
 
-export default function BlogIndexPage() {
-  const [posts, setPosts] = useState([]);
-  const [categories, setCategories] = useState([]);
+export default function BlogIndexPage({ initialPosts = null, initialCategories = null }) {
+  const [posts, setPosts] = useState(initialPosts || []);
+  const [categories, setCategories] = useState(initialCategories || []);
   const [activeCategory, setActiveCategory] = useState('all');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialPosts);
 
   useEffect(() => {
+    if (initialPosts) return;
     let mounted = true;
     axios.get(`${BACKEND_URL}/api/blog`).then(res => {
       if (!mounted) return;
@@ -27,7 +28,7 @@ export default function BlogIndexPage() {
       setCategories(res.data.categories || []);
     }).catch(() => {}).finally(() => { if (mounted) setLoading(false); });
     return () => { mounted = false; };
-  }, []);
+  }, [initialPosts]);
 
   const filtered = useMemo(() => {
     if (activeCategory === 'all') return posts;

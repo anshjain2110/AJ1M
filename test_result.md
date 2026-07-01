@@ -198,10 +198,22 @@ frontend:
         -agent: "testing"
         -comment: "RE-TESTED quote wizard submission flow on http://localhost:3001. ✅ TEXT MODE: PASS - Typed description into notes field, submitted, completed 5-step contact modal (name, metal, carat, email, phone), reached success screen, backend POST /api/leads/quick returned 200. ✅ LINK MODE: PASS - Pasted URL into link field, submitted, completed modal flow, reached success screen, backend returned 200. ✅ IMAGE MODE: PASS - Uploaded image file, thumbnail appeared, backend POST /api/uploads returned 200, submitted, completed modal flow, reached success screen, backend POST /api/leads/quick returned 200. ✅ VOICE MODE: PASS (UI presence verified) - Voice recorder UI present with data-testid=quick-quote-voice-start, button text contains 'Talk to your jeweler' and 'Record'. All three submission flows (TEXT, LINK, IMAGE) working end-to-end with successful backend integration. Quote wizard fully functional."
 
+  - task: "Wave 2: /blog + /blog/[slug] (BlogPosting) + /contact (LocalBusiness) SSR"
+    implemented: true
+    working: true
+    file: "/app/frontend-next/app/blog"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: true
+        -agent: "main"
+        -comment: "Verified via curl+screenshot. /blog SSR real content + real post <a href> links + unique title + www canonical. /blog/[slug] SSR full article body; exactly ONE BlogPosting (headline/datePublished/author/image) + ONE BreadcrumbList server-side (removed client JSON-LD); 404 for missing. /contact SSR JewelryStore LocalBusiness (address/geo/hours, postalCode 32789) + BreadcrumbList; contact form POST /api/contact returns 200. sitemap now includes blog post URLs. All www canonicals. Wave 3 login/dashboard already added as noindex client routes."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 1
+  test_sequence: 2
   run_ui: true
 
 test_plan:

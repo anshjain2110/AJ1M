@@ -49,18 +49,29 @@ export async function getProducts(query = '') {
   return r.data || { products: [], total: 0 };
 }
 
+export async function getBlogPosts(query = '') {
+  const r = await getJSON(`/api/blog${query ? `?${query}` : ''}`, { tags: ['blog'] });
+  return r.data || { posts: [], categories: [], total: 0 };
+}
+
+export async function getBlogPost(slug) {
+  return getJSON(`/api/blog/${encodeURIComponent(slug)}`, { tags: ['blog', `blog:${slug}`] });
+}
+
 export async function getShowcasePairs() {
   const r = await getJSON('/api/showcase-pairs', { tags: ['showcase'] });
   return r.data || { pairs: [] };
 }
 
 export async function getAllSitemapData() {
-  const [projects, collections] = await Promise.all([
+  const [projects, collections, blog] = await Promise.all([
     getJSON('/api/projects?limit=100', { revalidate: 600, tags: ['projects'] }),
     getJSON('/api/collections?all=true', { revalidate: 600, tags: ['collections'] }),
+    getJSON('/api/blog?limit=100', { revalidate: 600, tags: ['blog'] }),
   ]);
   return {
     projects: (projects.data && projects.data.projects) || [],
     collections: (collections.data && collections.data.collections) || [],
+    blog: (blog.data && blog.data.posts) || [],
   };
 }

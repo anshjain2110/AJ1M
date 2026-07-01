@@ -4,7 +4,7 @@ import { SITE_URL } from '@/lib/seo';
 export const revalidate = 600;
 
 export default async function sitemap() {
-  const { projects, collections } = await getAllSitemapData();
+  const { projects, collections, blog } = await getAllSitemapData();
   const now = new Date();
   const staticRoutes = [
     ['/', 1.0, 'weekly'],
@@ -33,6 +33,14 @@ export default async function sitemap() {
       url: `${SITE_URL}/projects/${p.slug}`,
       lastModified: p.updated_at ? new Date(p.updated_at) : now,
       changeFrequency: 'monthly', priority: 0.8,
+    });
+  }
+  for (const b of blog) {
+    if (!b || !b.slug) continue;
+    entries.push({
+      url: `${SITE_URL}/blog/${b.slug}`,
+      lastModified: b.updated_at ? new Date(b.updated_at) : (b.published_at ? new Date(b.published_at) : now),
+      changeFrequency: 'monthly', priority: 0.7,
     });
   }
   return entries;
