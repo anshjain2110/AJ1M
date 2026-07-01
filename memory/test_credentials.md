@@ -22,6 +22,11 @@
 - STRIPE_API_KEY=sk_test_emergent (in /app/backend/.env)
 - Test card for checkout: 4242 4242 4242 4242, any future expiry, any CVC, any ZIP
 
+## Architecture note (post Next.js cutover, 2026-06)
+- Test everything on the live external URL (from frontend/.env REACT_APP_BACKEND_URL). Public routes are served by Next.js on :3000; `/admin/*` and `/pitch` (+ /privacy /terms /cuts /projects index /projects/:slug/v2 /products) are reverse-proxied to the legacy CRA (`legacy-cra` supervisor program, `serve` on internal :3002). `/api/*` still hits FastAPI.
+- Admin login works through the proxy at `/admin/login` (same creds below).
+- Buyable SHOP PDPs for cart/checkout testing: `/projects/2-carat-oval-hidden-halo-engagement-ring` and `/projects/3-carat-radiant-solitaire-engagement-ring` (metal + carat selectors, data-testid `v2-add-to-bag`). Non-buyable showcases (no cart): `/projects/5-carat-oval-solitaire-engagement-ring`, `/projects/4-41-carat-radiant-hidden-halo-engagement-ring`. To check buyable status use the SINGLE endpoint `/api/projects/{slug}` (the LIST endpoint always returns buyable=None).
+
 ## Notes
 - External automation APIs use X-API-Key (PROJECTS_API_KEY / BLOG_API_KEY in backend/.env).
 - Invoice PDFs: GET /api/checkout/invoice/{session_id} (public), GET /api/me/shop-orders/{order_id}/invoice (customer JWT), GET /api/admin/shop-orders/{order_id}/invoice (admin).
