@@ -53,6 +53,17 @@ sudo supervisorctl reread && sudo supervisorctl update && sudo supervisorctl res
 ```
 
 ## What's Implemented
+- 2026-06: ✅ **DEPLOY BUILD FIX — excluded /app/frontend-legacy from the deploy build
+  context (.dockerignore).** Prod Cloud Build kept FAILING at BuildImage (Deployments UI
+  showed blank logs). RCA by reproducing Cloud Build locally: the deployed frontend builds
+  clean from scratch (fresh `yarn install --frozen-lockfile` + `next build` = exit 0, no
+  OOM at 1GB) and backend deps resolve clean (pip dry-run = exit 0, all 136 incl.
+  emergentintegrations + google-auth==2.49.0.dev0). The ONLY anomaly was a SECOND frontend
+  (`/app/frontend-legacy`: react-scripts@5 + react@19 CRA with its own package.json +
+  yarn.lock) confusing/failing the deploy builder. It's not needed at runtime (its build is
+  already baked into frontend/public), so it's now excluded from the deploy image. Also
+  removed ~11MB of CRA source maps from frontend/public/static. Deploy context now ~28MB.
+
 - 2026-06: ✅ **DEPLOY HARDENING — legacy CRA made self-contained (no 2nd service).**
   Root cause of prior deploy failures: the standard Emergent deploy runs only `frontend`
   (Next) + `backend`, but the app secretly depended on a hand-added `legacy-cra` service

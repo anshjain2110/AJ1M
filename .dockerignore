@@ -61,6 +61,13 @@ yarn.lock
 frontend-next
 frontend-next-bak
 
+# Legacy CRA SOURCE — NOT needed at deploy runtime. Its production build is already
+# baked into frontend/public/legacy.html + frontend/public/static/*. Excluding it keeps
+# the build context small AND prevents the deploy builder from trying to install/build a
+# second frontend (react-scripts 5 + React 19, which fails a fresh install).
+frontend-legacy
+frontend-legacy/
+
 # Memory and design docs are not needed at runtime.
 memory
 design_guidelines.json
