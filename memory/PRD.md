@@ -64,6 +64,9 @@ sudo supervisorctl reread && sudo supervisorctl update && sudo supervisorctl res
   `legacy-cra` supervisor conf. Verified live with legacy-cra STOPPED: all legacy routes
   200, CRA admin SPA boots, admin login token via same-origin /api/admin/auth/login,
   authed /api/admin/leads + /api/admin/projects = 200. deployment_agent = GREEN (accurate).
+  testing_agent iteration_19 = 6/6 critical flows PASS on live URL (public SSR, admin
+  login+dashboard+leads, pitch gate, customer OTP→dashboard, buyable PDP→cart→real
+  cs_test_ Stripe session, legacy static pages). No blockers.
 - 2026-06: ✅ **Next.js cutover EXECUTED & VERIFIED (live).** Folder swap
   (`/app/frontend`=Next, `/app/frontend-legacy`=CRA) + new `legacy-cra` supervisor
   program (serve on :3002) + `beforeFiles` reverse-proxy of all non-migrated routes.
