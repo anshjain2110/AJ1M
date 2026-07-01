@@ -1,10 +1,11 @@
 const path = require('path');
 
 // Legacy CRA (non-migrated routes: /admin, /pitch, and a few static pages)
-// runs as an internal service. Proxy those exact paths + the CRA's /static
-// assets to it. Same-pod localhost by default; overridable for deploy.
-const LEGACY_ORIGIN = (process.env.LEGACY_CRA_URL || 'http://localhost:3002').replace(/\/$/, '');
-const legacy = (p) => ({ source: p, destination: `${LEGACY_ORIGIN}${p}` });
+// are served as a self-contained static SPA shell bundled into this Next.js
+// app itself: public/legacy.html (the CRA index) + public/static/* (its JS/CSS
+// bundles). No separate service, reverse proxy, or `serve` binary is required,
+// so the standard single-frontend Emergent deploy works out of the box.
+const legacy = (p) => ({ source: p, destination: '/legacy.html' });
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -29,7 +30,6 @@ const nextConfig = {
         legacy('/products/:path*'),
         legacy('/projects'),
         legacy('/projects/:slug/v2'),
-        legacy('/static/:path*'),
       ],
     };
   },
