@@ -1,3 +1,4 @@
+'use client';
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
 import { getScreenFlow, getWizardStepCount } from '../utils/wizardConfig';
 import { getAnonymousId, getSessionId, captureAttribution, trackEvent, initSession, startStepTimer, getStepElapsed, clearStepTimer, setCurrentWizardStep, clearCurrentWizardStep } from '../utils/analytics';

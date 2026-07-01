@@ -1,3 +1,4 @@
+'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { Send, X, MessageCircle, Loader2, Check, ArrowRight } from 'lucide-react';

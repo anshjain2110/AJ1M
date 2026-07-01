@@ -1,3 +1,4 @@
+'use client';
 import React from 'react';
 import { useWizard } from '../../../context/WizardContext';
 import { CheckCircle, ExternalLink, Instagram, Phone, ArrowRight } from 'lucide-react';

@@ -1,3 +1,4 @@
+'use client';
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Star, ArrowUpRight, Play } from 'lucide-react';

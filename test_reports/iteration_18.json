@@ -1,0 +1,55 @@
+{
+  "summary": "Post-cutover regression smoke on live external URL. 5 of 6 requested flows PASS. 1 flow FAILS: the cart/PDP flow on /projects/4-41-carat-radiant-hidden-halo-engagement-ring cannot be exercised because that route now renders the Next.js SSR project-showcase page ('Start a piece like this' CTA + Message box) instead of the v2 shop PDP with metal/carat selectors and [data-testid=v2-add-to-bag]. Because there is no Add-to-cart control, the Stripe checkout test (dependent on cart) was also not exercised.",
+  "results_per_requested_flow": {
+    "1_homepage_wizard_start_and_advance": "PASS. / (SSR) 200, [data-testid=landing-start-wizard-button] visible, click reveals [data-testid=how-it-works-screen] with step 1/2/3 and how-it-works-continue-button. Clicking Continue renders the product-type options ([data-testid=wizard-option-card-engagement_ring, wedding_bands, tennis_bracelet, studs_earrings, necklace_pendant, loose_diamond, price_checking]). No blank screen/chunk errors. Note: the screen wrapper is not tagged product-type-screen but the intent of 'advance to product-type step' is met.",
+    "2_cart_flow_on_4-41_project": "FAIL (regression vs iteration_17). /projects/4-41-carat-radiant-hidden-halo-engagement-ring returns 200 but renders the Next.js SSR project-showcase view. No metal selectors, no carat selectors, no Add-to-cart, no [data-testid=v2-add-to-bag]. Same for /projects/5-carat-oval-solitaire-engagement-ring and for the legacy-proxied /projects/:slug/v2 URL (which now shows the same Next.js styled 'showcase' with Message box). Iteration_17 previously verified metal/carat selectors + $1,800+ price + v2-add-to-bag on /projects/5-carat-oval-solitaire-engagement-ring. Cart drawer therefore cannot be opened via PDP; quantity/subtotal not verifiable.",
+    "3_otp_login": "PASS. /login → filled [data-testid=otp-login-phone-input]='tester@example.com' → click [data-testid=otp-login-send-otp-button] → [data-testid=otp-display-code] shown ('323401') → filled [data-testid=otp-login-otp-input] → click [data-testid=otp-login-verify-button] → redirected to /dashboard with 'Hi, tester', Overview tab, Custom quotes/Orders/Messages tiles.",
+    "4_stripe_checkout_redirect": "NOT TESTED (blocked by #2 - no cart items to check out).",
+    "5_admin_login_via_legacy_proxy": "PASS. /admin/login (proxied to legacy CRA on :3002) rendered the 'Admin Login' form (email + password + Sign In). Filled ansh@thelocaljewel.com / Rakesh@2709 → after Sign In landed on /admin with the full Analytics Intelligence dashboard (sidebar: Analytics/Leads/Messages/Orders/Projects/Collections/Sale & Promo/Header/Menu/Journal/Showcase/Settings/Tracking/Logout; Overview tab with SESSIONS=41, WIZARD STARTS=3, LEADS CREATED=4, Lead Quality Distribution, Lead Status Pipeline). Next→legacy CRA proxy + backend admin auth end-to-end confirmed working.",
+    "6_legacy_public_pages_no_404": "PASS. All 5 pages proxied and rendered actual content (no Next 404): /pitch = investor password gate ('CONFIDENTIAL · INVESTOR BRIEF ... Access requires...'), /privacy = Privacy Policy (Updated Feb 28, 2026), /terms = Terms & Conditions (Updated Feb 28, 2026), /cuts = 'Here are some cuts you probably haven't seen before.', /projects = 'Past Projects — Custom Lab Diamond Rings & Jewelry | The Local Jewel' index."
+  },
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "PDP /projects/[slug]",
+        "issue": "REGRESSION: /projects/4-41-carat-radiant-hidden-halo-engagement-ring and /projects/5-carat-oval-solitaire-engagement-ring now render the Next.js SSR project-showcase page ('Start a piece like this' CTA + Message-The-Local-Jewel box) instead of the v2 shop PDP. Missing v2-title, v2-fast-badge, v2-add-to-bag, metal selectors (Silver/10K/14K/18K/Platinum), carat selectors (1ct..4ct), and price. Add-to-cart / Cart Drawer flow cannot be exercised via PDP.",
+        "selector": "[data-testid=v2-add-to-bag] (not present)",
+        "priority": "HIGH"
+      },
+      {
+        "component": "Legacy /projects/:slug/v2 proxy",
+        "issue": "Even /projects/4-41.../v2 (in the beforeFiles rewrites -> legacy CRA :3002) renders a 'Start a piece like this' showcase (no v2 shop selectors). The CRA proxy returns 200 for the URL, but the legacy CRA client router seemingly no longer has the v2 shop PDP route wired, so the shop PDP is unreachable via either the Next SSR path or the legacy /v2 path.",
+        "selector": "n/a",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Stripe checkout",
+        "issue": "Not testable end-to-end because cart cannot be populated from the PDP (see PDP regression). No evidence Stripe is broken, but the requested validation cannot be completed.",
+        "affected_selectors": ["[data-testid=cart-checkout-btn]"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Restore the v2 shop PDP on /projects/[slug] (metal/carat selectors + v2-add-to-bag). Either (a) make the Next.js SSR /projects/[slug] render the shop variant (as iteration_17 saw), or (b) fix the /projects/:slug/v2 legacy-CRA proxy so the CRA client router renders its ShopProjectPage. Currently BOTH paths render the same 'Start a piece like this' showcase, blocking Add-to-cart.",
+    "Re-run cart flow + Stripe checkout verification once PDP is restored.",
+    "Optional: also add [data-testid=product-type-screen] wrapper on the wizard step-2 container to match the request spec (functionally the step is present via wizard-option-card-* testids, but the named wrapper is missing)."
+  ],
+  "critical_code_review_comments": [
+    "next.config.js beforeFiles rewrites correctly list /projects/:slug/v2 → legacy, but the browser end-state on /v2 is the same non-shop page as the Next route — verify the CRA build in /app/frontend-legacy still has the ShopPDP route and the CRA HTML shell references the right JS bundle.",
+    "Ensure the Next.js /app/frontend/app/projects/[slug]/page.jsx does NOT accidentally shadow /projects/:slug/v2 (Next's app router should skip because beforeFiles takes precedence — but if the CRA HTML shell doesn't hydrate to a shop route, the user sees a broken/blank showcase).",
+    "Consider adding a data-testid on the wizard product-type container (e.g., product-type-screen) — makes the QA spec deterministic."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "5/6 flows PASS (~83%); 1 blocker on PDP shop variant"},
+  "test_credentials": "Verified: Admin ansh@thelocaljewel.com / Rakesh@2709 (legacy CRA proxy). Customer OTP via [data-testid=otp-display-code] verified end-to-end to /dashboard.",
+  "seed_data_creation": "Created ephemeral customer 'tester@example.com' via OTP flow. No cleanup required.",
+  "retest_needed": true,
+  "main_agent_can_self_test": false,
+  "context_for_next_testing_agent": "Cutover largely healthy: SSR homepage + wizard start/advance, OTP→/dashboard, /admin/login → /admin dashboard through legacy CRA proxy, and all 5 legacy public pages (/pitch, /privacy, /terms, /cuts, /projects) render correctly. The remaining blocker is the shop PDP: /projects/[slug] and /projects/[slug]/v2 both render a 'Start a piece like this' showcase without metal/carat/add-to-bag. This blocks cart drawer + Stripe checkout verification. Iteration_17 (pre-cutover) explicitly confirmed the shop PDP worked on /projects/5-carat-oval-solitaire-engagement-ring, so this is a cutover regression. curl -I on /projects/:slug/v2 returns 200 with 6956 bytes CRA HTML shell — network path is fine; the CRA client-side route or Next.js precedence is the likely cause.",
+  "rca of the issue": "REGRESSION: After the Next 15 cutover, both /projects/[slug] (served by Next.js app router) and /projects/[slug]/v2 (proxied to legacy CRA :3002 by next.config.js beforeFiles rewrite) render the Next.js SSR project-showcase page instead of the v2 shop PDP with metal/carat selectors and [data-testid=v2-add-to-bag]. Reproduction: open https://seo-waves-cutover.preview.emergentagent.com/projects/5-carat-oval-solitaire-engagement-ring in a browser — observe 'Start a piece like this' CTA and a Message-The-Local-Jewel box, and note the absence of v2-add-to-bag, v2-title, v2-fast-badge, metal selectors, carat selectors, and price. Iteration_17 explicitly recorded all of those present on the same URL. Likely mitigation paths: (1) restore the v2 shop PDP rendering in the Next.js /app/frontend/app/projects/[slug]/page.jsx (so the Next route renders the shop variant), OR (2) ensure /app/frontend-legacy CRA still has the ShopProjectPage route wired for /projects/:slug/v2 and its build's static assets are accessible through the proxy (curl of /static/js/bundle.js currently returns HTML content-type, suggesting a hashed asset filename that browsers can find via the CRA index.html — verify the CRA index.html actually resolves the correct hashed bundle at runtime)."
+}

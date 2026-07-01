@@ -1,3 +1,4 @@
+'use client';
 import React, { useState, useCallback, useRef } from 'react';
 import { useWizard } from '../../context/WizardContext';
 import OptionCard from './OptionCard';

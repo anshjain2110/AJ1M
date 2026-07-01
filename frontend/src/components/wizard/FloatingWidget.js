@@ -1,3 +1,4 @@
+'use client';
 import React from 'react';
 import { Phone as PhoneIcon } from 'lucide-react';
 

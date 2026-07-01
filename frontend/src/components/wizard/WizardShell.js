@@ -1,3 +1,4 @@
+'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Phone, User, Menu, X, FolderOpen, BookOpen, MessageCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';

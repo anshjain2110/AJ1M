@@ -1,3 +1,4 @@
+'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import { useWizard } from '../../../context/WizardContext';
 import { ArrowLeft, ArrowRight, Shield, Sparkles, Loader2, Lock, User, Mail, Phone as PhoneIcon, MessageSquare, X } from 'lucide-react';

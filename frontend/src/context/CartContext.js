@@ -1,3 +1,4 @@
+'use client';
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const CartContext = createContext(null);
@@ -7,6 +8,7 @@ const lineKey = (i) => `${i.product_slug}|${i.metal_tier || ''}|${i.metal_color 
 
 export function CartProvider({ children }) {
   const [items, setItems] = useState(() => {
+    if (typeof window === 'undefined') return [];
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       return raw ? JSON.parse(raw) : [];

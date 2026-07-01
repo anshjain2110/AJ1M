@@ -1,3 +1,4 @@
+'use client';
 import React, { useState } from 'react';
 import { useWizard } from '../../../context/WizardContext';
 import { ArrowRight } from 'lucide-react';

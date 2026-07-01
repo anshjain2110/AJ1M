@@ -1,3 +1,4 @@
+'use client';
 import React, { useEffect } from 'react';
 import { ArrowLeft, ArrowRight, PenTool, Eye, Gem, Sparkles, ShieldCheck, Clock } from 'lucide-react';
 import { useWizard } from '../../../context/WizardContext';

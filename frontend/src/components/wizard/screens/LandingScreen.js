@@ -1,3 +1,4 @@
+'use client';
 import React from 'react';
 import { Star, Users, ArrowRight, ChevronRight, ExternalLink, Sparkles, MapPin, Phone, Globe, Clock, ShieldCheck } from 'lucide-react';
 import { useWizard } from '../../../context/WizardContext';

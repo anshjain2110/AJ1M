@@ -1,3 +1,4 @@
+'use client';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, Truck, Gem, RefreshCw } from 'lucide-react';

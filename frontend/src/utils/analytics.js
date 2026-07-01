@@ -1,5 +1,6 @@
 // Advanced Analytics & Attribution Utility for The Local Jewel
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
+const isBrowser = typeof window !== 'undefined';
 
 // ── ID Management ───────────────────────────────────────────
 
@@ -8,6 +9,7 @@ export function generateId(prefix = 'id') {
 }
 
 export function getAnonymousId() {
+  if (!isBrowser) return null;
   let id = localStorage.getItem('tlj_anonymous_id');
   if (!id) {
     id = generateId('anon');
@@ -17,6 +19,7 @@ export function getAnonymousId() {
 }
 
 export function getSessionId() {
+  if (!isBrowser) return null;
   let id = sessionStorage.getItem('tlj_session_id');
   if (!id) {
     id = generateId('sess');
@@ -28,11 +31,13 @@ export function getSessionId() {
 // ── Visit Counting (new vs returning) ───────────────────────
 
 export function getVisitCount() {
+  if (!isBrowser) return 0;
   const count = parseInt(localStorage.getItem('tlj_visit_count') || '0', 10);
   return count;
 }
 
 export function incrementVisitCount() {
+  if (!isBrowser) return 0;
   const current = getVisitCount();
   const next = current + 1;
   localStorage.setItem('tlj_visit_count', String(next));
@@ -47,6 +52,7 @@ export function getVisitorType() {
 // ── Attribution Capture ─────────────────────────────────────
 
 export function captureAttribution() {
+  if (!isBrowser) return {};
   const params = new URLSearchParams(window.location.search);
   const attribution = {
     utm_source: params.get('utm_source') || '',
@@ -83,6 +89,7 @@ export function captureAttribution() {
 }
 
 export function getStoredAttribution() {
+  if (!isBrowser) return {};
   try {
     const stored = sessionStorage.getItem('tlj_attribution');
     return stored ? JSON.parse(stored) : {};
@@ -148,6 +155,7 @@ export async function trackEvent(eventName, eventData = {}, ids = {}) {
 let sessionStarted = false;
 
 export function initSession() {
+  if (!isBrowser) return;
   if (sessionStarted) return;
   sessionStarted = true;
   

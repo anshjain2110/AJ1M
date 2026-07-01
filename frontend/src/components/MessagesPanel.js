@@ -1,3 +1,4 @@
+'use client';
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { Loader2, Send, MessageCircle, ChevronLeft, ExternalLink } from 'lucide-react';

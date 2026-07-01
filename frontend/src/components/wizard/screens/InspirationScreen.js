@@ -1,3 +1,4 @@
+'use client';
 import React, { useState, useRef } from 'react';
 import { useWizard } from '../../../context/WizardContext';
 import { Upload, X, Link, ArrowRight, Loader2 } from 'lucide-react';

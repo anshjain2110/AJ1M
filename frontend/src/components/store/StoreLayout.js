@@ -1,3 +1,4 @@
+'use client';
 import React from 'react';
 import MegaMenuHeader from './MegaMenuHeader';
 import StoreFooter from './StoreFooter';
