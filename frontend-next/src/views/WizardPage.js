@@ -1,17 +1,21 @@
 'use client';
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { useWizard } from '../context/WizardContext';
 import WizardShell from '../components/wizard/WizardShell';
 import FloatingWidget from '../components/wizard/FloatingWidget';
 import LandingScreen from '../components/wizard/screens/LandingScreen';
-import HowItWorksScreen from '../components/wizard/screens/HowItWorksScreen';
-import SingleSelectScreen from '../components/wizard/SingleSelectScreen';
-import DiamondShapeScreen from '../components/wizard/DiamondShapeScreen';
-import BraceletScreen from '../components/wizard/screens/BraceletScreen';
-import RingSizeScreen from '../components/wizard/screens/RingSizeScreen';
-import InspirationScreen from '../components/wizard/screens/InspirationScreen';
-import ContactScreen from '../components/wizard/screens/ContactScreen';
-import ThankYouScreen from '../components/wizard/screens/ThankYouScreen';
+// Non-landing wizard screens are code-split: they only render after the user
+// starts the wizard (client interaction), so lazy-loading keeps them out of the
+// homepage's initial JS bundle without affecting SSR/SEO (only LandingScreen is
+// server-rendered on the homepage).
+const HowItWorksScreen = lazy(() => import('../components/wizard/screens/HowItWorksScreen'));
+const SingleSelectScreen = lazy(() => import('../components/wizard/SingleSelectScreen'));
+const DiamondShapeScreen = lazy(() => import('../components/wizard/DiamondShapeScreen'));
+const BraceletScreen = lazy(() => import('../components/wizard/screens/BraceletScreen'));
+const RingSizeScreen = lazy(() => import('../components/wizard/screens/RingSizeScreen'));
+const InspirationScreen = lazy(() => import('../components/wizard/screens/InspirationScreen'));
+const ContactScreen = lazy(() => import('../components/wizard/screens/ContactScreen'));
+const ThankYouScreen = lazy(() => import('../components/wizard/screens/ThankYouScreen'));
 import {
   PRODUCT_TYPES,
   OCCASIONS,
@@ -166,7 +170,9 @@ export default function WizardPage() {
   return (
     <>
       <WizardShell>
-        {renderScreen()}
+        <Suspense fallback={<div style={{ minHeight: '40vh' }} aria-hidden="true" />}>
+          {renderScreen()}
+        </Suspense>
       </WizardShell>
       <FloatingWidget />
     </>

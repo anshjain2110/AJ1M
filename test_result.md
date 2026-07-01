@@ -210,15 +210,27 @@ frontend:
         -agent: "main"
         -comment: "Verified via curl+screenshot. /blog SSR real content + real post <a href> links + unique title + www canonical. /blog/[slug] SSR full article body; exactly ONE BlogPosting (headline/datePublished/author/image) + ONE BreadcrumbList server-side (removed client JSON-LD); 404 for missing. /contact SSR JewelryStore LocalBusiness (address/geo/hours, postalCode 32789) + BreadcrumbList; contact form POST /api/contact returns 200. sitemap now includes blog post URLs. All www canonicals. Wave 3 login/dashboard already added as noindex client routes."
 
+  - task: "Lazy-loaded wizard screens regression test (code-split multi-step wizard)"
+    implemented: true
+    working: true
+    file: "/app/frontend-next/src/components/wizard"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: true
+        -agent: "testing"
+        -comment: "REGRESSION TEST PASSED on http://localhost:3001. Tested lazy-loaded wizard flow after code-splitting: (1) Homepage loaded successfully, (2) Clicked wizard start button (data-testid='landing-start-wizard-button'), (3) First wizard screen (data-testid='how-it-works-screen') loaded successfully after lazy-loading within 2 seconds, (4) Clicked continue button and wizard advanced to product type selection screen showing 'What are you shopping for?' with 7 product options. ✅ ZERO chunk load errors detected. ✅ ZERO 'Loading chunk failed' errors. ✅ ZERO 'Failed to start wizard' console errors. ✅ ZERO /api/wizard/start failures. ✅ No blank screens. ✅ Smooth transitions between screens. Non-critical: Some Google Analytics and RSC prefetch requests failed (external/non-blocking). Lazy-loading working correctly - wizard screens load on-demand without errors."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 2
+  test_sequence: 3
   run_ui: true
 
 test_plan:
   current_focus:
-    - "Quote wizard (link/image/voice/text), Cart, OTP Login, Stripe Checkout on the Next app"
+    - "Lazy-loaded wizard screens regression test (code-split multi-step wizard)"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -230,3 +242,7 @@ agent_communication:
     -message: "Testing complete on http://localhost:3001. ✅ CART: PASS - All functionality working (metal/carat selection, price updates, add to cart, cart drawer, quantity changes). ✅ OTP LOGIN: PASS - Complete flow working (email input, OTP generation/display, code entry, dashboard redirect). ✅ STRIPE CHECKOUT: PASS (Partial) - Checkout button working, Stripe redirect confirmed, integration working. ⚠ QUOTE WIZARD: Voice/audio mode NOT IMPLEMENTED - file input only accepts images (accept='image/*'), not audio files. Link, image, and text modes have UI present but require full multi-step wizard flow testing to verify end-to-end (wizard steps → contact form → thank-you screen). Recommend main agent verify wizard completion flows if critical. Core e-commerce flows (cart, login, checkout) all working correctly."
     -agent: "testing"
     -message: "Quote wizard re-test complete on http://localhost:3001. Ran THREE complete submission flows covering all headless-testable input modes. ✅ ALL TESTS PASSED. TEXT mode: typed description → submitted → 5-step modal (name/metal/carat/email/phone) → success screen → backend 200. LINK mode: pasted URL → submitted → modal → success → backend 200. IMAGE mode: uploaded image → thumbnail appeared → upload API 200 → submitted → modal → success → backend 200. VOICE mode: UI presence confirmed (microphone recorder with 'Talk to your jeweler' button present). No issues found. Quote wizard submission flow fully functional end-to-end."
+    -agent: "main"
+    -message: "Focused regression test on the Next.js app at http://localhost:3001 ONLY. Recently code-split (lazy-loaded) the multi-step wizard screens and need to confirm the FULL wizard still starts and advances. Steps: (1) Go to http://localhost:3001/ and let it fully load. (2) Scroll down and click the main wizard start button: data-testid='landing-start-wizard-button' (it's in the 'Join a community…' hero section; there is also data-testid='landing-bottom-cta' and data-testid='savings-cta-button' that do the same thing — any of them is fine). (3) After clicking, the multi-step wizard should open — the first screen has data-testid='how-it-works-screen'. Confirm it appears (it is lazy-loaded, so allow a couple seconds). (4) Advance at least one more step in the wizard (there will be a Continue / Next / an option to pick, e.g. product type). Confirm the wizard progresses to a subsequent screen without a blank screen, chunk-load error, or console error. (5) Report whether the wizard start + advance WORKS. Explicitly list any console errors (especially 'ChunkLoadError', 'Loading chunk failed', or 'Failed to start wizard') and any failed network requests to /api/wizard/start. This is a pass/fail regression check on the wizard start flow specifically."
+    -agent: "testing"
+    -message: "✅ REGRESSION TEST PASSED. Wizard lazy-loading working perfectly on http://localhost:3001. Test results: (1) Homepage loaded successfully, (2) Wizard start button (data-testid='landing-start-wizard-button') clicked successfully, (3) First wizard screen (data-testid='how-it-works-screen') appeared within 2 seconds after lazy-loading - screen content verified with 'Here's how it works' heading and 3 steps displayed, (4) Continue button clicked and wizard advanced to product type selection screen showing 'What are you shopping for?' with 7 product options (Engagement Ring, Wedding Bands, Tennis Bracelet, Studs/Earrings, Necklace/Pendant, Loose Diamond, Just price-checking). ✅ ZERO chunk load errors. ✅ ZERO 'Loading chunk failed' errors. ✅ ZERO 'Failed to start wizard' console errors. ✅ ZERO /api/wizard/start failures. ✅ No blank screens. ✅ Smooth screen transitions. Non-critical issues: Some Google Analytics requests failed (external), some RSC prefetch requests for /projects/... URLs failed (non-blocking prefetch). Code-splitting implementation successful - wizard screens load on-demand without any critical errors."
