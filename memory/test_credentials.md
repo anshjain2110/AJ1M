@@ -23,7 +23,7 @@
 - Test card for checkout: 4242 4242 4242 4242, any future expiry, any CVC, any ZIP
 
 ## Architecture note (post Next.js cutover, 2026-06)
-- Test everything on the live external URL (from frontend/.env REACT_APP_BACKEND_URL). Public routes are served by Next.js on :3000; `/admin/*` and `/pitch` (+ /privacy /terms /cuts /projects index /projects/:slug/v2 /products) are reverse-proxied to the legacy CRA (`legacy-cra` supervisor program, `serve` on internal :3002). `/api/*` still hits FastAPI.
+- Test everything on the live external URL (from frontend/.env REACT_APP_BACKEND_URL). Public routes are served by Next.js on :3000; `/admin/*`, `/pitch`, `/privacy`, `/terms`, `/cuts`, `/projects` (index), `/projects/:slug/v2`, `/products` are served by the SAME Next.js process as a static CRA SPA shell (public/legacy.html + public/static/*) — NO more legacy-cra service or :3002 proxy (removed 2026-06 for deploy). The CRA makes same-origin RELATIVE `/api/*` calls. `/api/*` hits FastAPI.
 - Admin login works through the proxy at `/admin/login` (same creds below).
 - Buyable SHOP PDPs for cart/checkout testing: `/projects/2-carat-oval-hidden-halo-engagement-ring` and `/projects/3-carat-radiant-solitaire-engagement-ring` (metal + carat selectors, data-testid `v2-add-to-bag`). Non-buyable showcases (no cart): `/projects/5-carat-oval-solitaire-engagement-ring`, `/projects/4-41-carat-radiant-hidden-halo-engagement-ring`. To check buyable status use the SINGLE endpoint `/api/projects/{slug}` (the LIST endpoint always returns buyable=None).
 

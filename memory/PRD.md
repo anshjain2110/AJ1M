@@ -30,8 +30,9 @@ Primary goal of the current phase: **SEO + AI-crawler visibility via true SSR/IS
 - **Next.js (SSR/ISR):** `/`, `/collections`, `/collections/[slug]`, `/projects/[slug]`,
   `/blog`, `/blog/[slug]`, `/contact`, `/cart`, `/checkout/success`, `/login`, `/dashboard`,
   `/sitemap.xml`, `/robots.txt`, `/api/revalidate`.
-- **Legacy CRA (proxied):** `/admin/*`, `/pitch`, `/privacy`, `/terms`, `/cuts`,
-  `/products/:slug` (redirect), `/projects` (index), `/projects/:slug/v2`.
+- **Legacy CRA (static shell served from Next `public/legacy.html`, same process):**
+  `/admin/*`, `/pitch`, `/privacy`, `/terms`, `/cuts`, `/products/:slug` (redirect),
+  `/projects` (index), `/projects/:slug/v2`. No proxy, no second service.
 
 ### PDP behavior (important)
 `ProjectDetailPageV2` branches on `project.buyable` (`if (!project.buyable)` → lead-gen
@@ -52,6 +53,17 @@ sudo supervisorctl reread && sudo supervisorctl update && sudo supervisorctl res
 ```
 
 ## What's Implemented
+- 2026-06: ✅ **DEPLOY HARDENING — legacy CRA made self-contained (no 2nd service).**
+  Root cause of prior deploy failures: the standard Emergent deploy runs only `frontend`
+  (Next) + `backend`, but the app secretly depended on a hand-added `legacy-cra` service
+  (:3002) + a `serve` binary + `.dockerignore`d `build/` for /admin & other legacy routes,
+  so those 502'd in prod. Also the CRA bundle had a STALE preview host hardcoded at build
+  time. FIX: baked CRA build into Next `public/` (legacy.html + static/*), switched
+  next.config.js rewrites from :3002 proxy to the static `/legacy.html` shell, rebuilt CRA
+  with empty REACT_APP_BACKEND_URL (same-origin relative `/api`), and removed the
+  `legacy-cra` supervisor conf. Verified live with legacy-cra STOPPED: all legacy routes
+  200, CRA admin SPA boots, admin login token via same-origin /api/admin/auth/login,
+  authed /api/admin/leads + /api/admin/projects = 200. deployment_agent = GREEN (accurate).
 - 2026-06: ✅ **Next.js cutover EXECUTED & VERIFIED (live).** Folder swap
   (`/app/frontend`=Next, `/app/frontend-legacy`=CRA) + new `legacy-cra` supervisor
   program (serve on :3002) + `beforeFiles` reverse-proxy of all non-migrated routes.
@@ -76,12 +88,28 @@ sudo supervisorctl reread && sudo supervisorctl update && sudo supervisorctl res
 ## Backlog
 ### P1 — Next up
 - "Re-ping IndexNow for everything" admin button (force Bing recrawl of full catalog).
-- **Deployment**: production deploy must launch BOTH the Next `frontend` and the
-  `legacy-cra` service (supervisor `legacy-cra.conf` is preview-only). Confirm the
-  deploy pipeline `next build`+`next start` on :3000 and stands up the CRA proxy target,
-  or migrate the remaining legacy routes to Next.
+- ✅ RESOLVED (2026-06): deploy no longer needs a second service. The CRA is served as a
+  static SPA from Next `public/` with same-origin relative API calls, so the standard
+  single-frontend Emergent deploy (`next build` -> `next start` on :3000 + FastAPI) is
+  fully sufficient. deployment_agent = GREEN.
 ### P2 — Future
 - Migrate remaining legacy routes (`/admin/*`, `/pitch`, `/privacy`, `/terms`, `/cuts`) to Next.js to retire the CRA entirely.
+- Optional: add `data-testid="product-type-screen"` wrapper on wizard step 2 (QA nicety).
+- Apple Login + Passkeys (blocked on Apple Developer account).
+- Quote → Order conversion flow; Twilio SMS notifications.
+
+## 3rd Party Integrations
+- Google OAuth (`@react-oauth/google`) · Stripe (test mode: `sk_test_emergent`) · Twilio (SMS OTP) · SendGrid (email)
+
+## Key DB
+- `projects`: `{slug, title, product_type, collections[], price_matrix, buyable(computed), sale, ...}`
+- `collections`, `leads`, `payment_transactions`, `settings`.
+
+## Key Endpoints
+- `/api/projects`, `/api/projects/{slug}`, `/api/collections*`, `/api/leads/quick`
+- `/api/checkout/session` (Stripe) · `/api/auth/request-otp` · `/api/revalidate` (Next, internal)
+- `/api/sitemap.xml` (dynamic), robots
+e the CRA entirely.
 - Optional: add `data-testid="product-type-screen"` wrapper on wizard step 2 (QA nicety).
 - Apple Login + Passkeys (blocked on Apple Developer account).
 - Quote → Order conversion flow; Twilio SMS notifications.
